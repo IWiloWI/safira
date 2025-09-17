@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { 
-  AuthenticatedRequest, 
+import {
+  AuthenticatedRequest,
   CreateCategoryRequest,
   UpdateCategoryRequest
 } from '@/types/api';
+import { Category } from '@/types/database';
 import { authenticate } from '@/middleware/auth';
 import { validateCategory, handleValidationErrors } from '@/middleware/security';
 import { sendSuccess, sendError, sendNotFound, sendBadRequest, asyncHandler } from '@/utils/responseUtils';
@@ -21,7 +22,7 @@ router.post('/',
   authenticate, 
   validateCategory, 
   handleValidationErrors,
-  asyncHandler(async (req: AuthenticatedRequest & { body: CreateCategoryRequest }, res) => {
+  asyncHandler(async (req: AuthenticatedRequest & { body: CreateCategoryRequest }, res: any) => {
     try {
       console.log('📁 CREATE CATEGORY REQUEST:', req.body);
       
@@ -32,17 +33,17 @@ router.post('/',
         return;
       }
       
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
+      const products = await readJSONFile<{ categories: Category[] }>(PRODUCTS_FILE, { categories: [] });
       
       // Check if category already exists
-      const existingCategory = products.categories.find((cat: any) => cat.id === newCategory.id);
+      const existingCategory = products.categories.find((cat) => cat.id === newCategory.id);
       if (existingCategory) {
         sendBadRequest(res, 'Category with this ID already exists');
         return;
       }
       
       // Add new category with empty items array
-      const categoryWithItems = { ...newCategory, items: [] };
+      const categoryWithItems = { ...newCategory, items: [] } as Category;
       products.categories.push(categoryWithItems);
       await writeJSONFile(PRODUCTS_FILE, products);
       
@@ -72,7 +73,7 @@ router.post('/',
  */
 router.put('/:categoryId', 
   authenticate,
-  asyncHandler(async (req: AuthenticatedRequest & { body: UpdateCategoryRequest }, res) => {
+  asyncHandler(async (req: AuthenticatedRequest & { body: UpdateCategoryRequest }, res: any) => {
     try {
       console.log('📁 UPDATE CATEGORY REQUEST:', {
         categoryId: req.params.categoryId,
@@ -82,8 +83,8 @@ router.put('/:categoryId',
       const { categoryId } = req.params;
       const updatedCategory = req.body;
       
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat: any) => cat.id === categoryId);
+      const products = await readJSONFile<{ categories: Category[] }>(PRODUCTS_FILE, { categories: [] });
+      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
       
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
@@ -122,14 +123,14 @@ router.put('/:categoryId',
  */
 router.delete('/:categoryId', 
   authenticate,
-  asyncHandler(async (req: AuthenticatedRequest, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: any) => {
     try {
       console.log('📁 DELETE CATEGORY REQUEST:', req.params.categoryId);
       
       const { categoryId } = req.params;
       
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat: any) => cat.id === categoryId);
+      const products = await readJSONFile<{ categories: Category[] }>(PRODUCTS_FILE, { categories: [] });
+      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
       
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
@@ -139,7 +140,10 @@ router.delete('/:categoryId',
       const deletedCategory = products.categories[categoryIndex];
       
       // Check if category has products
-      if (deletedCategory.items && deletedCategory.items.length > 0) {
+      if (!deletedCategory.items) {
+        deletedCategory.items = [];
+      }
+      if (deletedCategory.items.length > 0) {
         sendBadRequest(res, 'Cannot delete category with products. Please delete all products first.');
         return;
       }

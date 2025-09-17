@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import type { Stats } from 'fs';
 import path from 'path';
 
 /**
@@ -88,7 +89,7 @@ export async function copyFile(source: string, destination: string): Promise<voi
 /**
  * Get file stats
  */
-export async function getFileStats(filePath: string): Promise<fs.Stats | null> {
+export async function getFileStats(filePath: string): Promise<Stats | null> {
   try {
     return await fs.stat(filePath);
   } catch (error: any) {

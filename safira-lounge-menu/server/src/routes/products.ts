@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { 
-  AuthenticatedRequest, 
+import {
+  AuthenticatedRequest,
   CreateProductRequest,
   UpdateProductRequest,
   ProductsResponse,
@@ -8,6 +8,7 @@ import {
   BulkPriceUpdateRequest,
   BulkPriceUpdateResponse
 } from '@/types/api';
+import { Category, Product } from '@/types/database';
 import { authenticate } from '@/middleware/auth';
 import { validateProduct, handleValidationErrors } from '@/middleware/security';
 import { sendSuccess, sendError, sendNotFound, asyncHandler } from '@/utils/responseUtils';
@@ -19,12 +20,16 @@ import path from 'path';
 const router = Router();
 const PRODUCTS_FILE = path.join(__dirname, '../../data/products.json');
 
+interface ProductsData {
+  categories: Category[];
+}
+
 /**
  * Get all products with categories
  */
 router.get('/', asyncHandler(async (req, res) => {
   try {
-    const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
+    const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
     const response: ProductsResponse = products;
     sendSuccess(res, response);
   } catch (error) {
@@ -34,76 +39,84 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 /**
- * Update all products
- */
-router.put('/', 
-  authenticate, 
-  asyncHandler(async (req: AuthenticatedRequest, res) => {
-    try {
-      const products = req.body;
-      await writeJSONFile(PRODUCTS_FILE, products);
-      sendSuccess(res, products, 'Products updated successfully');
-    } catch (error) {
-      console.error('Error updating products:', error);
-      sendError(res, 'Failed to update products');
-    }
-  })
-);
-
-/**
  * Add new product to category
  */
-router.post('/:categoryId/items', 
-  authenticate, 
-  validateProduct, 
+router.post('/:categoryId/items',
+  authenticate,
+  validateProduct,
   handleValidationErrors,
   asyncHandler(async (req: AuthenticatedRequest & { body: CreateProductRequest }, res: any) => {
     try {
       const { categoryId } = req.params;
-      let newItem = req.body;
-      
-      // Extract translation options from request body
-      const translationOptions = newItem.translationOptions || null;
-      delete newItem.translationOptions; // Remove from product data
-      
-      console.log('🆕 Adding new product:', { 
-        categoryId, 
-        name: newItem.name, 
-        translationOptions 
+      const newItem = req.body;
+
+      console.log('✅ Adding product with data:', {
+        categoryId,
+        requestBody: newItem,
+        translationServiceConfigured: translationService.isConfigured()
       });
-      
-      // Auto-translate if OpenAI is configured and text fields are strings
+
+      // Auto-translate if translation service is configured
       if (translationService.isConfigured()) {
-        console.log('🤖 Auto-translating new product...');
+        console.log('🌍 Auto-translating product fields...');
         try {
-          newItem = await translationService.autoTranslateProduct(newItem, categoryId, translationOptions);
-          console.log('✅ Auto-translation completed successfully');
+          const fieldsToTranslate = [];
+
+          // Check if name needs translation
+          if (typeof newItem.name === 'string') {
+            fieldsToTranslate.push({
+              key: 'name',
+              value: newItem.name,
+              currentField: newItem.name
+            });
+          }
+
+          // Check if description needs translation
+          if (typeof newItem.description === 'string') {
+            fieldsToTranslate.push({
+              key: 'description',
+              value: newItem.description,
+              currentField: newItem.description
+            });
+          }
+
+          // Translate all fields
+          for (const field of fieldsToTranslate) {
+            const translated = await translationService.translateText(field.currentField, ['da', 'en']);
+            (newItem as any)[field.key] = translated;
+            console.log(`✅ Translated ${field.key}:`, translated);
+          }
         } catch (translationError) {
-          console.error('⚠️ Auto-translation failed, using original product:', translationError);
+          console.error('⚠️ Translation failed (continuing without translation):', translationError);
         }
       } else {
         console.log('⚠️ Translation service not configured, skipping auto-translation');
       }
-      
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat: any) => cat.id === categoryId);
-      
+
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
-      
+
+      const category = products.categories[categoryIndex];
+      if (!category.items) {
+        category.items = [];
+      }
+
       newItem.id = Date.now().toString();
-      products.categories[categoryIndex].items.push(newItem);
-      
+      category.items.push(newItem);
+
       await writeJSONFile(PRODUCTS_FILE, products);
-      
-      console.log('💾 Product saved to database:', { 
-        id: newItem.id, 
-        name: newItem.name, 
-        hasTranslations: typeof newItem.name === 'object' || typeof newItem.description === 'object' 
+
+      console.log('💾 Product saved to database:', {
+        id: newItem.id,
+        name: newItem.name,
+        hasTranslations: typeof newItem.name === 'object' || typeof newItem.description === 'object'
       });
-      
+
       // Track activity
       await trackActivity(req, 'product_added', {
         productId: newItem.id,
@@ -126,7 +139,7 @@ router.post('/:categoryId/items',
 /**
  * Update product
  */
-router.put('/:categoryId/items/:itemId', 
+router.put('/:categoryId/items/:itemId',
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest & { body: UpdateProductRequest }, res) => {
     try {
@@ -136,44 +149,48 @@ router.put('/:categoryId/items/:itemId',
         body: req.body,
         headers: req.headers.authorization ? 'Token present' : 'No token'
       });
-      
+
       const { categoryId, itemId } = req.params;
       const updatedItem = req.body;
-      
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const category = products.categories.find((cat: any) => cat.id === categoryId);
-      
+
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+      const category = products.categories.find((cat) => cat.id === categoryId);
+
       if (!category) {
         console.log('❌ Category not found:', categoryId);
         sendNotFound(res, 'Category');
         return;
       }
-      
-      const itemIndex = category.items.findIndex((item: any) => item.id === itemId);
+
+      if (!category.items) {
+        category.items = [];
+      }
+
+      const itemIndex = category.items.findIndex((item) => item.id === itemId);
       if (itemIndex === -1) {
         console.log('❌ Product not found:', itemId, 'in category:', categoryId);
-        console.log('Available products:', category.items.map((item: any) => item.id));
+        console.log('Available products:', category.items.map((item) => item.id));
         sendNotFound(res, 'Product');
         return;
       }
-      
+
       category.items[itemIndex] = { ...category.items[itemIndex], ...updatedItem };
-      
+
       await writeJSONFile(PRODUCTS_FILE, products);
       console.log('✅ Product updated successfully:', category.items[itemIndex]);
-      
+
       // Track activity
       await trackActivity(req, 'product_updated', {
         productId: itemId,
-        productName: typeof category.items[itemIndex].name === 'string' ? 
-          category.items[itemIndex].name : 
+        productName: typeof category.items[itemIndex].name === 'string' ?
+          category.items[itemIndex].name :
           category.items[itemIndex].name.de || 'Unknown',
         categoryId: categoryId,
-        description: `Product "${typeof category.items[itemIndex].name === 'string' ? 
-          category.items[itemIndex].name : 
+        description: `Product "${typeof category.items[itemIndex].name === 'string' ?
+          category.items[itemIndex].name :
           category.items[itemIndex].name.de || 'Unknown'}" updated`
       });
-      
+
       sendSuccess(res, { product: category.items[itemIndex] }, 'Product updated successfully');
     } catch (error) {
       console.error('❌ Error updating product:', error);
@@ -185,43 +202,47 @@ router.put('/:categoryId/items/:itemId',
 /**
  * Delete product
  */
-router.delete('/:categoryId/items/:itemId', 
+router.delete('/:categoryId/items/:itemId',
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest, res) => {
     try {
       const { categoryId, itemId } = req.params;
-      
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const category = products.categories.find((cat: any) => cat.id === categoryId);
-      
+
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+      const category = products.categories.find((cat) => cat.id === categoryId);
+
       if (!category) {
         sendNotFound(res, 'Category');
         return;
       }
-      
-      const itemIndex = category.items.findIndex((item: any) => item.id === itemId);
+
+      if (!category.items) {
+        category.items = [];
+      }
+
+      const itemIndex = category.items.findIndex((item) => item.id === itemId);
       if (itemIndex === -1) {
         sendNotFound(res, 'Product');
         return;
       }
-      
+
       const deletedItem = category.items.splice(itemIndex, 1)[0];
-      
+
       await writeJSONFile(PRODUCTS_FILE, products);
-      
+
       // Track activity
       await trackActivity(req, 'product_deleted', {
         productId: itemId,
-        productName: typeof deletedItem.name === 'string' ? 
-          deletedItem.name : 
+        productName: typeof deletedItem.name === 'string' ?
+          deletedItem.name :
           deletedItem.name.de || 'Unknown',
         categoryId: categoryId,
-        description: `Product "${typeof deletedItem.name === 'string' ? 
-          deletedItem.name : 
+        description: `Product "${typeof deletedItem.name === 'string' ?
+          deletedItem.name :
           deletedItem.name.de || 'Unknown'}" deleted`
       });
-      
-      sendSuccess(res, deletedItem, 'Product deleted successfully');
+
+      sendSuccess(res, { product: deletedItem }, 'Product deleted successfully');
     } catch (error) {
       console.error('Error deleting product:', error);
       sendError(res, 'Failed to delete product');
@@ -230,56 +251,68 @@ router.delete('/:categoryId/items/:itemId',
 );
 
 /**
- * Move product between categories
+ * Move product to different category
  */
-router.put('/move/:fromCategoryId/:itemId/:toCategoryId', 
+router.put('/move/:itemId',
   authenticate,
-  asyncHandler(async (req: AuthenticatedRequest, res) => {
+  asyncHandler(async (req: AuthenticatedRequest & { body: { fromCategoryId: string; toCategoryId: string } }, res) => {
     try {
-      const { fromCategoryId, itemId, toCategoryId } = req.params;
-      
-      console.log('🔄 Moving product:', { fromCategoryId, itemId, toCategoryId });
-      
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      
-      // Find source category
-      const fromCategoryIndex = products.categories.findIndex((cat: any) => cat.id === fromCategoryId);
-      if (fromCategoryIndex === -1) {
-        sendNotFound(res, 'Source category');
+      const { itemId } = req.params;
+      const { fromCategoryId, toCategoryId } = req.body;
+
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+
+      // Check if both categories exist
+      const fromCategoryIndex = products.categories.findIndex((cat) => cat.id === fromCategoryId);
+      const toCategoryIndex = products.categories.findIndex((cat) => cat.id === toCategoryId);
+
+      if (fromCategoryIndex === -1 || toCategoryIndex === -1) {
+        sendNotFound(res, 'One or both categories');
         return;
       }
-      
-      // Find target category
-      const toCategoryIndex = products.categories.findIndex((cat: any) => cat.id === toCategoryId);
-      if (toCategoryIndex === -1) {
-        sendNotFound(res, 'Target category');
-        return;
+
+      const sourceCategory = products.categories[fromCategoryIndex];
+      const targetCategory = products.categories[toCategoryIndex];
+
+      if (!sourceCategory.items) {
+        sourceCategory.items = [];
       }
-      
+
+      if (!targetCategory.items) {
+        targetCategory.items = [];
+      }
+
       // Find product in source category
-      const productIndex = products.categories[fromCategoryIndex].items.findIndex((item: any) => item.id === itemId);
+      const productIndex = sourceCategory.items.findIndex((item) => item.id === itemId);
       if (productIndex === -1) {
         sendNotFound(res, 'Product in source category');
         return;
       }
-      
+
       // Move product
-      const [product] = products.categories[fromCategoryIndex].items.splice(productIndex, 1);
-      products.categories[toCategoryIndex].items.push(product);
-      
+      const [product] = sourceCategory.items.splice(productIndex, 1);
+      targetCategory.items.push(product);
+
       // Save changes
       await writeJSONFile(PRODUCTS_FILE, products);
-      
-      console.log('✅ Product moved successfully:', { 
-        productName: product.name, 
-        from: fromCategoryId, 
-        to: toCategoryId 
+
+      // Track activity
+      await trackActivity(req, 'product_moved', {
+        productId: itemId,
+        productName: typeof product.name === 'string' ?
+          product.name :
+          product.name.de || 'Unknown',
+        fromCategoryId,
+        toCategoryId,
+        description: `Product "${typeof product.name === 'string' ?
+          product.name :
+          product.name.de || 'Unknown'}" moved from category ${fromCategoryId} to ${toCategoryId}`
       });
-      
+
       sendSuccess(res, {
         product,
-        from: fromCategoryId,
-        to: toCategoryId
+        fromCategory: fromCategoryId,
+        toCategory: toCategoryId
       }, 'Product moved successfully');
     } catch (error) {
       console.error('Error moving product:', error);
@@ -289,55 +322,55 @@ router.put('/move/:fromCategoryId/:itemId/:toCategoryId',
 );
 
 /**
- * Update product translations
+ * Update product field with translations
  */
-router.put('/:categoryId/items/:itemId/translations', 
+router.put('/:categoryId/items/:itemId/translate',
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest & { body: TranslationFieldUpdateRequest }, res) => {
     try {
       const { categoryId, itemId } = req.params;
       const { field, translations } = req.body;
-      
-      console.log('🔄 Updating translations:', { categoryId, itemId, field, translations });
-      
-      if (!field || !translations) {
-        sendError(res, 'Field and translations are required', 400);
-        return;
-      }
-      
-      if (!['name', 'description'].includes(field)) {
-        sendError(res, 'Field must be name or description', 400);
-        return;
-      }
-      
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat: any) => cat.id === categoryId);
-      
+
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
-      
-      const productIndex = products.categories[categoryIndex].items.findIndex((item: any) => item.id === itemId);
+
+      const category = products.categories[categoryIndex];
+      if (!category.items) {
+        category.items = [];
+      }
+
+      const productIndex = category.items.findIndex((item) => item.id === itemId);
       if (productIndex === -1) {
         sendNotFound(res, 'Product');
         return;
       }
-      
-      // Update the specific field with new translations
-      products.categories[categoryIndex].items[productIndex][field] = translations;
-      
+
+      // Create multilingual field
+      const fieldKey = field as keyof Product;
+      const translatedField = {
+        de: translations.de,
+        da: translations.da,
+        en: translations.en
+      };
+
+      (category.items[productIndex] as any)[fieldKey] = translatedField;
+
       await writeJSONFile(PRODUCTS_FILE, products);
-      
-      const updatedProduct = products.categories[categoryIndex].items[productIndex];
-      
-      console.log('✅ Translations updated successfully:', { 
-        productName: updatedProduct.name, 
-        field, 
-        updatedTranslations: translations 
+
+      // Track activity
+      await trackActivity(req, 'product_translated', {
+        productId: itemId,
+        field,
+        languages: Object.keys(translations),
+        description: `Product field "${field}" translated`
       });
-      
-      sendSuccess(res, { product: updatedProduct }, 'Translations updated successfully');
+
+      sendSuccess(res, { product: category.items[productIndex] });
     } catch (error) {
       console.error('Error updating translations:', error);
       sendError(res, 'Failed to update translations');
@@ -346,55 +379,56 @@ router.put('/:categoryId/items/:itemId/translations',
 );
 
 /**
- * Bulk price update for category products
+ * Bulk update prices for a category (tobacco products)
  */
-router.post('/bulk-price-update', 
+router.put('/:categoryId/bulk-price',
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest & { body: BulkPriceUpdateRequest }, res) => {
     try {
-      const { categoryId, newPrice } = req.body;
-      
-      if (!categoryId || !newPrice || newPrice <= 0) {
-        sendError(res, 'Category ID and valid price are required', 400);
-        return;
-      }
+      const { categoryId } = req.params;
+      const { newPrice } = req.body;
 
-      const products = await readJSONFile(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat: any) => cat.id === categoryId);
-      
+      const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
+      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
 
+      const category = products.categories[categoryIndex];
+      if (!category.items) {
+        category.items = [];
+      }
+
       let updatedCount = 0;
-      products.categories[categoryIndex].items.forEach((product: any) => {
-        if (product.brand) { // Only update products that have a brand (tobacco products)
+      category.items.forEach((product) => {
+        if ((product as any).brand) { // Only update products that have a brand (tobacco products)
           product.price = newPrice;
           updatedCount++;
         }
       });
 
       await writeJSONFile(PRODUCTS_FILE, products);
-      
+
       // Track activity
       await trackActivity(req, 'bulk_price_update', {
-        categoryId: categoryId,
-        newPrice: newPrice,
-        updatedCount: updatedCount,
-        description: `Bulk price update for ${updatedCount} tobacco products to ${newPrice}€`
-      });
-      
-      const response: BulkPriceUpdateResponse = {
-        message: 'Bulk price update successful',
+        categoryId,
+        newPrice,
         updatedCount,
-        newPrice 
+        description: `Updated prices for ${updatedCount} products in category`
+      });
+
+      const response: BulkPriceUpdateResponse = {
+        updatedCount,
+        newPrice,
+        message: `Successfully updated ${updatedCount} product prices`
       };
-      
-      sendSuccess(res, response);
+
+      sendSuccess(res, response, `Successfully updated ${updatedCount} product prices`);
     } catch (error) {
-      console.error('Error updating prices:', error);
-      sendError(res, 'Failed to update prices');
+      console.error('Error updating bulk prices:', error);
+      sendError(res, 'Failed to update product prices');
     }
   })
 );

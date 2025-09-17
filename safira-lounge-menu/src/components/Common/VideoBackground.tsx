@@ -165,14 +165,13 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
     }
     
     // Use video mappings, with specific fallback
-    let videoSource = videoMappings[mappedCategory || ''];
+    let videoSource: string | null = videoMappings[mappedCategory || ''];
     if (!videoSource && mappedCategory === 'shisha') {
-      // Force shisha video even if not in mappings
-      videoSource = '/videos/shisha-background.mp4';
-      console.log('VideoBackground: Using direct shisha video path');
+      // Skip forcing shisha video when files are missing
+      console.log('VideoBackground: Shisha video not available in development');
     }
     if (!videoSource) {
-      videoSource = videoMappings['home'] || '/videos/Home_Rosen_Background.mp4';
+      videoSource = videoMappings['home'] || null;
     }
     
     console.log(`VideoBackground selected video for ${mappedCategory}:`, videoSource);
@@ -180,15 +179,16 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
     // Filter out blob URLs and invalid sources
     if (videoSource && (videoSource.startsWith('blob:') || videoSource === 'undefined' || videoSource === 'null')) {
       console.info('VideoBackground: Filtering out invalid video source:', videoSource, 'for category:', mappedCategory);
-      return '/videos/Home_Rosen_Background.mp4'; // Use fallback instead
+      return null; // Return null when videos are not available
     }
     
     return videoSource;
   }, [category, videoMappings]);
 
   const getFallbackVideo = () => {
-    // Always fallback to the working Home background video
-    return "/videos/Home_Rosen_Background.mp4";
+    // Return null to disable video when files are missing
+    // In production, this would return a valid fallback video path
+    return null;
   };
 
 
