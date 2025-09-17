@@ -57,7 +57,7 @@ router.post('/:categoryId/items',
   authenticate, 
   validateProduct, 
   handleValidationErrors,
-  asyncHandler(async (req: AuthenticatedRequest & { body: CreateProductRequest }, res) => {
+  asyncHandler(async (req: AuthenticatedRequest & { body: CreateProductRequest }, res: any) => {
     try {
       const { categoryId } = req.params;
       let newItem = req.body;

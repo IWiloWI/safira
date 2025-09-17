@@ -138,20 +138,19 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const DropupMenu = styled(motion.div)<{ $buttonIndex?: number }>`
-  position: fixed;
-  bottom: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 280px;
-  max-width: 90vw;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  width: 100%;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px) saturate(120%);
   -webkit-backdrop-filter: blur(20px) saturate(120%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+  border-radius: 12px;
+  margin-bottom: 8px;
   z-index: 1001;
-  transform-origin: bottom center;
+  transform-origin: center bottom;
 `;
 
 const ModalHeader = styled.div`
@@ -465,17 +464,17 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   };
 
   const dropupVariants = {
-    hidden: { 
-      scaleY: 0,
+    hidden: {
       opacity: 0,
-      y: 20,
-      transformOrigin: "bottom center"
+      y: 10,
+      scale: 0.95,
+      transformOrigin: "center bottom"
     },
-    visible: { 
-      scaleY: 1,
+    visible: {
       opacity: 1,
       y: 0,
-      transformOrigin: "bottom center",
+      scale: 1,
+      transformOrigin: "center bottom",
       transition: {
         type: "spring",
         damping: 25,
@@ -483,11 +482,11 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         mass: 0.8
       }
     },
-    exit: { 
-      scaleY: 0,
+    exit: {
       opacity: 0,
       y: 10,
-      transformOrigin: "bottom center",
+      scale: 0.95,
+      transformOrigin: "center bottom",
       transition: {
         duration: 0.15,
         ease: "easeIn"
