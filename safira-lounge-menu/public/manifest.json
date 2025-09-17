@@ -1,0 +1,25 @@
+{
+  "short_name": "Safira Menu",
+  "name": "Safira Lounge Digital Menu",
+  "icons": [
+    {
+      "src": "images/safira_logo.png",
+      "sizes": "1920x761",
+      "type": "image/png"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FF41FB",
+  "background_color": "#000000"
+}

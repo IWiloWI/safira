@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Safira Lounge - Network Setup</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: white; 
+            text-align: center; 
+            padding: 20px;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #2a2a2a; 
+            padding: 30px; 
+            border-radius: 15px;
+        }
+        .qr-code { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            display: inline-block; 
+            margin: 20px;
+        }
+        .url { 
+            background: #333; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-family: monospace; 
+            font-size: 18px;
+            margin: 10px;
+            word-break: break-all;
+        }
+        .status { 
+            margin: 15px 0; 
+            padding: 10px; 
+            border-radius: 8px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+        button { 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            background: #FF41FB; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Safira Lounge - Tablet Zugriff</h1>
+        
+        <div class="status info">
+            <h3>📱 Automatische Netzwerk-Erkennung</h3>
+            <p>Status: <span id="status">Suche nach verfügbaren URLs...</span></p>
+        </div>
+        
+        <div id="urls-container">
+            <!-- URLs werden hier eingefügt -->
+        </div>
+        
+        <div class="status info">
+            <h3>🔧 Manuelle URLs zum Testen:</h3>
+            <div class="url">http://192.168.179.28:8000</div>
+            <div class="url">http://localhost:8000</div>
+            <div class="url">http://127.0.0.1:8000</div>
+        </div>
+        
+        <button onclick="testAllUrls()">🔍 Alle URLs testen</button>
+        <button onclick="window.location.reload()">🔄 Neu laden</button>
+        
+        <div class="status info">
+            <h3>📋 Problemlösung:</h3>
+            <p><strong>1. Gleiches WLAN:</strong> Mac und Tablet müssen im selben WLAN sein</p>
+            <p><strong>2. Hotspot verwenden:</strong> Handy-Hotspot aktivieren, beide Geräte verbinden</p>
+            <p><strong>3. Mac Hotspot:</strong> Systemeinstellungen > Sharing > Internet Sharing</p>
+        </div>
+    </div>
+    
+    <script>
+        const possibleIPs = [
+            '192.168.179.28',
+            '192.168.1.28',
+            '192.168.0.28',
+            '10.0.0.28',
+            '172.16.0.28',
+            'localhost',
+            '127.0.0.1'
+        ];
+        
+        const ports = ['8000', '5001', '3001'];
+        
+        async function testUrl(ip, port) {
+            const url = `http://${ip}:${port}`;
+            try {
+                const response = await fetch(url, { 
+                    method: 'HEAD', 
+                    mode: 'no-cors',
+                    timeout: 3000 
+                });
+                return { url, status: 'success' };
+            } catch (error) {
+                return { url, status: 'error', error: error.message };
+            }
+        }
+        
+        async function testAllUrls() {
+            const statusEl = document.getElementById('status');
+            const containerEl = document.getElementById('urls-container');
+            
+            statusEl.textContent = 'Teste URLs...';
+            containerEl.innerHTML = '';
+            
+            const results = [];
+            
+            for (const ip of possibleIPs) {
+                for (const port of ports) {
+                    const result = await testUrl(ip, port);
+                    results.push(result);
+                    
+                    const urlDiv = document.createElement('div');
+                    urlDiv.className = `status ${result.status}`;
+                    urlDiv.innerHTML = `
+                        <div class="url">${result.url}</div>
+                        <p>${result.status === 'success' ? '✅ Erreichbar' : '❌ Nicht erreichbar'}</p>
+                        ${result.status === 'success' ? `<button onclick="window.open('${result.url}', '_blank')">🚀 Öffnen</button>` : ''}
+                    `;
+                    containerEl.appendChild(urlDiv);
+                }
+            }
+            
+            const successCount = results.filter(r => r.status === 'success').length;
+            statusEl.textContent = `Fertig! ${successCount} von ${results.length} URLs erreichbar`;
+        }
+        
+        // Automatisch beim Laden testen
+        window.onload = function() {
+            setTimeout(testAllUrls, 1000);
+        };
+    </script>
+</body>
+</html>

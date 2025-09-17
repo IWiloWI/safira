@@ -1,0 +1,1179 @@
+{
+  "categories": [
+    {
+      "id": "safira-menus",
+      "name": {
+        "de": "Safira Menüs",
+        "da": "Safira Menuer",
+        "en": "Safira Menus"
+      },
+      "icon": "🌟",
+      "isMainCategory": true,
+      "items": [
+        {
+          "id": "single-menu",
+          "name": {
+            "de": "Single Menü",
+            "da": "Enkelt Menu",
+            "en": "Single Menu"
+          },
+          "description": {
+            "de": "1x Shisha, 1x Cocktail oder Mocktail",
+            "da": "1x Shisha, 1x Cocktail eller Mocktail",
+            "en": "1x Shisha, 1x Cocktail or Mocktail"
+          },
+          "price": 20,
+          "available": true
+        },
+        {
+          "id": "duo-menu",
+          "name": {
+            "de": "Duo Menü",
+            "da": "Duo Menu",
+            "en": "Duo Menu"
+          },
+          "description": {
+            "de": "2x Shisha, 2x Getränke nach Wahl, Nachos oder Snack Box",
+            "da": "2x Shisha, 2x Valgfri drikkevarer, Nachos eller Snack Box",
+            "en": "2x Shisha, 2x Drinks of choice, Nachos or Snack Box"
+          },
+          "price": 50,
+          "available": true
+        },
+        {
+          "id": "party-menu",
+          "name": {
+            "de": "Party Menü",
+            "da": "Party Menu",
+            "en": "Party Menu"
+          },
+          "description": {
+            "de": "inkl. 2 Flaschen Softdrink oder 6 Dosen Red Bull/Moloko, 2x Shisha, 1x Flasche (Vodka, Jack Daniels, Gin), 1x Nachos oder Snack Box",
+            "da": "inkl. 2 flasker sodavand eller 6 dåser Red Bull/Moloko, 2x Shisha, 1x Flaske (Vodka, Jack Daniels, Gin), 1x Nachos eller Snack Box",
+            "en": "incl. 2 bottles soft drink or 6 cans Red Bull/Moloko, 2x Shisha, 1x Bottle (Vodka, Jack Daniels, Gin), 1x Nachos or Snack Box"
+          },
+          "price": 100,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "shisha-standard",
+      "name": {
+        "de": "Shisha (Standard Tabak)",
+        "da": "Shisha (Standard Tobak)",
+        "en": "Shisha (Standard Tobacco)"
+      },
+      "icon": "💨",
+      "isMainCategory": true,
+      "items": [
+        {
+          "id": "aqua-mentha-african",
+          "name": "Aqua Mentha - African Crush",
+          "description": {
+            "de": "Erfrischende Minze mit fruchtigen Akzenten",
+            "da": "Opfriskende mynte med frugtige accenter",
+            "en": "Refreshing mint with fruity accents"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "aqua-mentha-golden",
+          "name": "Aqua Mentha - Golden Anna",
+          "description": {
+            "de": "Süße Ananas mit kühler Minze",
+            "da": "Sød ananas med kølig mynte",
+            "en": "Sweet pineapple with cool mint"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "mbm-fdm",
+          "name": "MBM - FDM Slang",
+          "description": {
+            "de": "Intensive Melone mit erfrischender Note",
+            "da": "Intens melon med opfriskende note",
+            "en": "Intense melon with refreshing note"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "al-massiva-pink",
+          "name": "Al Massiva - Pink King",
+          "description": {
+            "de": "Süße Erdbeere mit cremiger Textur",
+            "da": "Sød jordbær med cremet tekstur",
+            "en": "Sweet strawberry with creamy texture"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "al-massiva-night",
+          "name": "Al Massiva - Nightkiller",
+          "description": {
+            "de": "Dunkle Beeren mit intensivem Geschmack",
+            "da": "Mørke bær med intens smag",
+            "en": "Dark berries with intense flavor"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "187-hamburg",
+          "name": "187 - Hamburg",
+          "description": {
+            "de": "Klassischer Tabak mit norddeutscher Note",
+            "da": "Klassisk tobak med nordtysk note",
+            "en": "Classic tobacco with North German note"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "aino-kiwi",
+          "name": "AINO - Kiwi Lover",
+          "description": {
+            "de": "Exotische Kiwi mit süß-saurer Note",
+            "da": "Eksotisk kiwi med sød-sur note",
+            "en": "Exotic kiwi with sweet-sour note"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "holster-watermelon",
+          "name": "Holster - Watermelon",
+          "description": {
+            "de": "Saftige Wassermelone, perfekt für den Sommer",
+            "da": "Saftig vandmelon, perfekt til sommeren",
+            "en": "Juicy watermelon, perfect for summer"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "holster-ice-kaktuz",
+          "name": "Holster - Ice Kaktuz",
+          "description": {
+            "de": "Kaktusfeige mit eisiger Frische",
+            "da": "Kaktus figen med iskold friskhed",
+            "en": "Cactus fig with icy freshness"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "true-passion-cinderella",
+          "name": "True Passion - Cinderella",
+          "description": {
+            "de": "Märchenhafte Mischung aus Beeren und Vanille",
+            "da": "Eventyrlig blanding af bær og vanilje",
+            "en": "Fairy-tale mix of berries and vanilla"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "true-passion-le-chill",
+          "name": "True Passion - Le Chill",
+          "description": {
+            "de": "Entspannende Minze mit kühlem Finish",
+            "da": "Afslappende mynte med køligt finish",
+            "en": "Relaxing mint with cool finish"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "true-passion-peami",
+          "name": "True Passion - Peami",
+          "description": {
+            "de": "Pfirsich-Minze Kombination mit frischem Aroma",
+            "da": "Fersken-mynte kombination med frisk aroma",
+            "en": "Peach-mint combination with fresh aroma"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "adalya-love66",
+          "name": "Adalya - Love 66",
+          "description": {
+            "de": "Liebliche Mischung aus roten Früchten",
+            "da": "Dejlig blanding af røde frugter",
+            "en": "Lovely mix of red fruits"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "blue-magic",
+          "name": "Blue Magic",
+          "description": {
+            "de": "Mystische blaue Beeren mit magischem Geschmack",
+            "da": "Mystiske blå bær med magisk smag",
+            "en": "Mystical blue berries with magical taste"
+          },
+          "price": 15,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "shisha-plus",
+      "name": {
+        "de": "Shishakopf Plus",
+        "da": "Shishahoved Plus",
+        "en": "Shisha Head Plus"
+      },
+      "icon": "⭐",
+      "items": [
+        {
+          "id": "phunnel-kaloud",
+          "name": {
+            "de": "Phunnel + Kaloud Lotus",
+            "da": "Phunnel + Kaloud Lotus",
+            "en": "Phunnel + Kaloud Lotus"
+          },
+          "description": {
+            "de": "nur für bestimmte Tabaksorten",
+            "da": "kun til visse tobakstyper",
+            "en": "only for specific tobacco types"
+          },
+          "price": 18,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "shisha-traditionell",
+      "name": {
+        "de": "Traditionell",
+        "da": "Traditionel",
+        "en": "Traditional"
+      },
+      "icon": "🍃",
+      "items": [
+        {
+          "id": "doppel-apfel",
+          "name": {
+            "de": "Doppel Apfel",
+            "da": "Dobbelt Æble",
+            "en": "Double Apple"
+          },
+          "description": {
+            "de": "Klassischer Apfelgeschmack mit traditioneller Note",
+            "da": "Klassisk æblesmag med traditionel note",
+            "en": "Classic apple flavor with traditional note"
+          },
+          "price": 15,
+          "available": true
+        },
+        {
+          "id": "traube-minze",
+          "name": {
+            "de": "Traube Minze",
+            "da": "Drue Mynte",
+            "en": "Grape Mint"
+          },
+          "description": {
+            "de": "Süße Traube mit erfrischender Minze",
+            "da": "Sød drue med opfriskende mynte",
+            "en": "Sweet grape with refreshing mint"
+          },
+          "price": 15,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "softdrinks",
+      "name": {
+        "de": "Softdrinks / Aqua",
+        "da": "Sodavand / Vand",
+        "en": "Soft Drinks / Water"
+      },
+      "icon": "🥤",
+      "isMainCategory": true,
+      "items": [
+        {
+          "id": "coca-cola-02",
+          "name": "Coca Cola (Cola, Cola Zero, Fanta, Sprite, Spezi)",
+          "sizes": [
+            { "size": "0,2l", "price": 3.20 },
+            { "size": "0,4l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "schweppes",
+          "name": "Schweppes (Tonic Water, Bitter Lemon, Ginger Ale)",
+          "sizes": [
+            { "size": "0,2l", "price": 3.20 },
+            { "size": "0,4l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "moloko",
+          "name": "Moloko / Zuckerfrei",
+          "sizes": [
+            { "size": "0,25l", "price": 4.50 }
+          ],
+          "available": true
+        },
+        {
+          "id": "mineralwasser",
+          "name": {
+            "de": "Mineralwasser (still oder sprudel)",
+            "da": "Mineralvand (stille eller brus)",
+            "en": "Mineral Water (still or sparkling)"
+          },
+          "sizes": [
+            { "size": "0,2l", "price": 2.80 },
+            { "size": "0,4l", "price": 3.80 },
+            { "size": "0,7l", "price": 6.50 }
+          ],
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "eistee-energy",
+      "name": {
+        "de": "Eistee & Energy",
+        "da": "Iste & Energy",
+        "en": "Iced Tea & Energy"
+      },
+      "icon": "⚡",
+      "items": [
+        {
+          "id": "eb-pfirsich-zero",
+          "name": {
+            "de": "Elephant Bay - Pfirsich Zero",
+            "da": "Elephant Bay - Fersken Zero",
+            "en": "Elephant Bay - Peach Zero"
+          },
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-cherry",
+          "name": "Elephant Bay - Cherry",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-blue",
+          "name": "Elephant Bay - Blue",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-peach",
+          "name": "Elephant Bay - Peach",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-melon",
+          "name": "Elephant Bay - Melon",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-rasp",
+          "name": "Elephant Bay - Rasp",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-mango",
+          "name": "Elephant Bay - Mango",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "eb-pome",
+          "name": "Elephant Bay - Pome",
+          "price": 4.60,
+          "available": true
+        },
+        {
+          "id": "rb-summer-curuba",
+          "name": "Red Bull Summer Edition - Curuba",
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-summer-holunder",
+          "name": {
+            "de": "Red Bull Summer Edition - Holunderblüte",
+            "da": "Red Bull Summer Edition - Hyldebær",
+            "en": "Red Bull Summer Edition - Elderflower"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-pink",
+          "name": {
+            "de": "Red Bull Pink Edition - Waldbeere (zuckerfrei)",
+            "da": "Red Bull Pink Edition - Skovbær (sukkerfri)",
+            "en": "Red Bull Pink Edition - Forest Berry (sugar-free)"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-juneberry",
+          "name": {
+            "de": "Red Bull Juneberry - Felsenbirne",
+            "da": "Red Bull Juneberry - Bærmispel",
+            "en": "Red Bull Juneberry"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-red",
+          "name": "Red Bull Red Edition",
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-white",
+          "name": {
+            "de": "Red Bull White Edition - Kokosnuss",
+            "da": "Red Bull White Edition - Kokosnød",
+            "en": "Red Bull White Edition - Coconut"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-blue",
+          "name": {
+            "de": "Red Bull Blue Edition - Heidelbeere",
+            "da": "Red Bull Blue Edition - Blåbær",
+            "en": "Red Bull Blue Edition - Blueberry"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-green",
+          "name": {
+            "de": "Red Bull Green Edition - Kaktusfrucht",
+            "da": "Red Bull Green Edition - Kaktusfrugt",
+            "en": "Red Bull Green Edition - Cactus Fruit"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-lila",
+          "name": {
+            "de": "Red Bull Lila Edition - Açaibeere",
+            "da": "Red Bull Lilla Edition - Açaibær",
+            "en": "Red Bull Purple Edition - Açai Berry"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-klassisch",
+          "name": {
+            "de": "Red Bull Klassisch",
+            "da": "Red Bull Klassisk",
+            "en": "Red Bull Classic"
+          },
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "rb-sugarfree",
+          "name": "Red Bull Sugarfree",
+          "price": 4.50,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "tee-kaffee",
+      "name": {
+        "de": "Hot Drinks",
+        "da": "Hot Drinks",
+        "en": "Hot Drinks"
+      },
+      "icon": "☕",
+      "items": [
+        {
+          "id": "tee",
+          "name": {
+            "de": "Tee (Schwarz, Grün, Kamille, Apfel, Pfefferminz, Früchte)",
+            "da": "Te (Sort, Grøn, Kamille, Æble, Pebermynte, Frugt)",
+            "en": "Tea (Black, Green, Chamomile, Apple, Peppermint, Fruit)"
+          },
+          "sizes": [
+            { "size": "0,3l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "heisse-zitrone",
+          "name": {
+            "de": "Heiße Zitrone",
+            "da": "Varm Citron",
+            "en": "Hot Lemon"
+          },
+          "sizes": [
+            { "size": "0,3l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "kaffee",
+          "name": {
+            "de": "Kaffee",
+            "da": "Kaffe",
+            "en": "Coffee"
+          },
+          "sizes": [
+            { "size": "0,2l", "price": 3.40 }
+          ],
+          "available": true
+        },
+        {
+          "id": "espresso",
+          "name": "Espresso",
+          "sizes": [
+            { "size": "normal", "price": 2.50 },
+            { "size": "doppelt", "price": 3.50 }
+          ],
+          "available": true
+        },
+        {
+          "id": "espresso-macchiato",
+          "name": "Espresso Macchiato",
+          "sizes": [
+            { "size": "normal", "price": 2.50 },
+            { "size": "doppelt", "price": 3.50 }
+          ],
+          "available": true
+        },
+        {
+          "id": "eiskaffee",
+          "name": {
+            "de": "Eiskaffee (hausgemacht)",
+            "da": "Iskaffe (hjemmelavet)",
+            "en": "Iced Coffee (homemade)"
+          },
+          "sizes": [
+            { "size": "0,4l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "cappuccino",
+          "name": "Cappuccino",
+          "price": 3.40,
+          "available": true
+        },
+        {
+          "id": "cappuccino-spezial",
+          "name": {
+            "de": "Cappuccino Spezial (mit Schoko)",
+            "da": "Cappuccino Special (med chokolade)",
+            "en": "Cappuccino Special (with chocolate)"
+          },
+          "price": 3.40,
+          "available": true
+        },
+        {
+          "id": "latte-macchiato",
+          "name": "Latte Macchiato",
+          "price": 3.60,
+          "available": true
+        },
+        {
+          "id": "milchkaffee",
+          "name": {
+            "de": "Milchkaffee",
+            "da": "Kaffe med mælk",
+            "en": "Coffee with milk"
+          },
+          "price": 3.40,
+          "available": true
+        },
+        {
+          "id": "heisse-schokolade",
+          "name": {
+            "de": "Heiße Schokolade",
+            "da": "Varm Chokolade",
+            "en": "Hot Chocolate"
+          },
+          "price": 3.40,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "saefte",
+      "name": {
+        "de": "Säfte / Schorlen",
+        "da": "Juice / Schorle",
+        "en": "Juices / Spritzers"
+      },
+      "icon": "🧃",
+      "items": [
+        {
+          "id": "saefte",
+          "name": {
+            "de": "Säfte (Apfel, Ananas, Kirsch, Maracuja, Cranberry, Mango, Orange, Banane)",
+            "da": "Juice (Æble, Ananas, Kirsebær, Passionsfrugt, Tranebær, Mango, Appelsin, Banan)",
+            "en": "Juices (Apple, Pineapple, Cherry, Passion Fruit, Cranberry, Mango, Orange, Banana)"
+          },
+          "sizes": [
+            { "size": "0,2l", "price": 3.40 },
+            { "size": "0,4l", "price": 4.40 }
+          ],
+          "available": true
+        },
+        {
+          "id": "schorlen",
+          "name": {
+            "de": "Schorlen (Apfel, Kirsch, Maracuja, Cranberry)",
+            "da": "Schorle (Æble, Kirsebær, Passionsfrugt, Tranebær)",
+            "en": "Spritzers (Apple, Cherry, Passion Fruit, Cranberry)"
+          },
+          "sizes": [
+            { "size": "0,2l", "price": 3.20 },
+            { "size": "0,4l", "price": 4.20 }
+          ],
+          "available": true
+        },
+        {
+          "id": "kiba",
+          "name": "Kiba",
+          "sizes": [
+            { "size": "0,2l", "price": 3.40 },
+            { "size": "0,4l", "price": 4.40 }
+          ],
+          "available": true
+        },
+        {
+          "id": "holunderschorle",
+          "name": {
+            "de": "Holunderschorle",
+            "da": "Hyldebærschorle",
+            "en": "Elderflower Spritzer"
+          },
+          "sizes": [
+            { "size": "0,2l", "price": 3.00 },
+            { "size": "0,4l", "price": 4.00 }
+          ],
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "mocktails",
+      "name": {
+        "de": "Mocktails (alkoholfrei)",
+        "da": "Mocktails (alkoholfri)",
+        "en": "Mocktails (non-alcoholic)"
+      },
+      "icon": "🍹",
+      "items": [
+        {
+          "id": "exodia",
+          "name": "Exodia",
+          "price": 6.50,
+          "available": true
+        },
+        {
+          "id": "blue-eyes",
+          "name": "Blue Eyes",
+          "price": 6.50,
+          "available": true
+        },
+        {
+          "id": "mango-splash",
+          "name": "Mango Splash",
+          "price": 6.50,
+          "available": true
+        },
+        {
+          "id": "tropical",
+          "name": "Tropical",
+          "price": 7.00,
+          "available": true
+        },
+        {
+          "id": "ipanema",
+          "name": "Ipanema",
+          "price": 7.00,
+          "available": true
+        },
+        {
+          "id": "coconut-kiss",
+          "name": "Coconut Kiss",
+          "price": 7.00,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "cocktails",
+      "name": "Cocktails",
+      "icon": "🍸",
+      "isMainCategory": true,
+      "items": [
+        {
+          "id": "liebes-traum",
+          "name": "Liebes Traum",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "red-kiss",
+          "name": "Red Kiss",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "pink-malibu",
+          "name": "Pink Malibu",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "jack-sour",
+          "name": "Jack Sour",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "blue-lagoon",
+          "name": "Blue Lagoon",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "flying-statch",
+          "name": "Flying Statch",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "sex-on-the-beach",
+          "name": "Sex on the Beach",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "swimming-pool",
+          "name": "Swimming Pool",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "pina-colada",
+          "name": "Pina Colada",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "tequila-sunrise",
+          "name": "Tequila Sunrise",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "mojito",
+          "name": "Mojito",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "mojito-himbeere",
+          "name": {
+            "de": "Mojito Himbeere",
+            "da": "Mojito Hindbær",
+            "en": "Mojito Raspberry"
+          },
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "cuba-libre",
+          "name": "Cuba Libre",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "long-island",
+          "name": "Long Island Iced Tea",
+          "price": 10.50,
+          "available": true,
+          "special": true
+        }
+      ]
+    },
+    {
+      "id": "spirituosen",
+      "name": {
+        "de": "Spirituosen",
+        "da": "Spirituosa",
+        "en": "Spirits"
+      },
+      "icon": "🥃",
+      "items": [
+        {
+          "id": "longdrinks-header",
+          "name": {
+            "de": "── LONGDRINKS ──",
+            "da": "── LONGDRINKS ──",
+            "en": "── LONGDRINKS ──"
+          },
+          "price": null,
+          "available": true,
+          "isHeader": true,
+          "subcategory": "longdrinks",
+          "description": {
+            "de": "Kombinierbar mit: Cola, Fanta, Sprite, Säfte, Ginger Ale, Bitter Lemon, Red Bull (+1€), Moloko (+1€)",
+            "da": "Kan kombineres med: Cola, Fanta, Sprite, Juice, Ginger Ale, Bitter Lemon, Red Bull (+1€), Moloko (+1€)",
+            "en": "Combinable with: Cola, Fanta, Sprite, Juices, Ginger Ale, Bitter Lemon, Red Bull (+1€), Moloko (+1€)"
+          }
+        },
+        {
+          "id": "jack-daniels-long",
+          "name": "Jack Daniels",
+          "price": 8.50,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "bacardi-long",
+          "name": "Bacardi (auch Razz)",
+          "price": 7.00,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "gin-hendricks",
+          "name": "Gin Hendrick's",
+          "price": 9.50,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "gin-bombay",
+          "name": "Gin Bombay",
+          "price": 8.50,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "wodka-smirnoff",
+          "name": "Wodka (Smirnoff oder Absolut)",
+          "price": 7.00,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "captain-morgan",
+          "name": "Captain Morgan",
+          "price": 7.00,
+          "available": true,
+          "subcategory": "longdrinks"
+        },
+        {
+          "id": "kurze-header",
+          "name": {
+            "de": "── KURZE / SHOTS ──",
+            "da": "── SHOTS ──",
+            "en": "── SHOTS ──"
+          },
+          "price": null,
+          "available": true,
+          "isHeader": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "havana-club-3",
+          "name": "Havana Club 3",
+          "price": 7.00,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "havana-club-7",
+          "name": "Havana Club 7",
+          "price": 8.00,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "jaegermeister",
+          "name": "Jägermeister",
+          "price": 6.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "jaegermeister-bomb",
+          "name": "Jägermeister Bomb",
+          "price": 4.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "tequila",
+          "name": "Tequila",
+          "price": 2.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "berliner-luft",
+          "name": "Berliner Luft",
+          "price": 2.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "sambuca",
+          "name": "Sambuca",
+          "price": 2.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "feigling",
+          "name": "Feigling",
+          "price": 2.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "nr3-hausgemacht",
+          "name": {
+            "de": "Nr. 3 Hausgemacht",
+            "da": "Nr. 3 Hjemmelavet",
+            "en": "Nr. 3 Homemade"
+          },
+          "price": 2.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "jack-daniels-eis",
+          "name": {
+            "de": "Jack Daniels auf Eis",
+            "da": "Jack Daniels på is",
+            "en": "Jack Daniels on ice"
+          },
+          "price": 4.50,
+          "available": true,
+          "subcategory": "kurze"
+        },
+        {
+          "id": "flaschen-header",
+          "name": {
+            "de": "── FLASCHEN (0,7l) ──",
+            "da": "── FLASKER (0,7l) ──",
+            "en": "── BOTTLES (0.7l) ──"
+          },
+          "price": null,
+          "available": true,
+          "isHeader": true,
+          "subcategory": "flaschen",
+          "description": {
+            "de": "inkl. Softdrinks / Red Bull / Moloko je nach Auswahl",
+            "da": "inkl. Sodavand / Red Bull / Moloko efter valg",
+            "en": "incl. Soft drinks / Red Bull / Moloko depending on selection"
+          }
+        },
+        {
+          "id": "jack-daniels-flasche",
+          "name": "Jack Daniels",
+          "price": 85,
+          "available": true,
+          "subcategory": "flaschen"
+        },
+        {
+          "id": "smirnoff-absolut",
+          "name": "Smirnoff / Absolut",
+          "price": 75,
+          "available": true,
+          "subcategory": "flaschen"
+        },
+        {
+          "id": "gin-bombay-sapphire",
+          "name": "Gin (Bombay, Sapphire)",
+          "price": 85,
+          "available": true,
+          "subcategory": "flaschen"
+        },
+        {
+          "id": "belvedere",
+          "name": "Belvedere",
+          "price": 140,
+          "available": true,
+          "subcategory": "flaschen"
+        },
+        {
+          "id": "nr3-hausgemacht-flasche",
+          "name": {
+            "de": "Nr. 3 Hausgemacht",
+            "da": "Nr. 3 Hjemmelavet",
+            "en": "Nr. 3 Homemade"
+          },
+          "price": 25,
+          "available": true,
+          "subcategory": "flaschen"
+        }
+      ]
+    },
+    {
+      "id": "wein-sekt",
+      "name": {
+        "de": "Wein & Sekt",
+        "da": "Vin & Mousserende",
+        "en": "Wine & Sparkling"
+      },
+      "icon": "🍷",
+      "items": [
+        {
+          "id": "aperol-spritz",
+          "name": "Aperol Spritz",
+          "price": 8.50,
+          "available": true
+        },
+        {
+          "id": "lillet-wild-berry",
+          "name": "Lillet Wild Berry",
+          "price": 7.50,
+          "available": true
+        },
+        {
+          "id": "hugo",
+          "name": "Hugo",
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "weissburgunder",
+          "name": {
+            "de": "Weißburgunder",
+            "da": "Pinot Blanc",
+            "en": "Pinot Blanc"
+          },
+          "price": 5.50,
+          "available": true
+        },
+        {
+          "id": "chardonnay",
+          "name": "Chardonnay",
+          "price": 5.50,
+          "available": true
+        },
+        {
+          "id": "grauburgunder",
+          "name": {
+            "de": "Grauburgunder",
+            "da": "Pinot Gris",
+            "en": "Pinot Gris"
+          },
+          "price": 5.50,
+          "available": true
+        },
+        {
+          "id": "weissweinschorle",
+          "name": {
+            "de": "Weißweinschorle",
+            "da": "Hvidvinschorle",
+            "en": "White Wine Spritzer"
+          },
+          "price": 5.50,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "flaschenbier",
+      "name": {
+        "de": "Flaschenbier",
+        "da": "Flaskeøl",
+        "en": "Bottled Beer"
+      },
+      "icon": "🍺",
+      "items": [
+        {
+          "id": "flensburger-pils",
+          "name": "Flensburger Pils",
+          "price": 3.20,
+          "available": true
+        },
+        {
+          "id": "flensburger-radler",
+          "name": "Flensburger Radler",
+          "price": 3.20,
+          "available": true
+        },
+        {
+          "id": "corona-extra",
+          "name": "Corona Extra",
+          "price": 4.50,
+          "available": true
+        },
+        {
+          "id": "desperados",
+          "name": "Desperados",
+          "price": 4.50,
+          "available": true
+        }
+      ]
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "icon": "🍿",
+      "isMainCategory": true,
+      "items": [
+        {
+          "id": "snack-box",
+          "name": {
+            "de": "Snack-Box (Haribo, NicNacs, Pringles, M&M's etc.)",
+            "da": "Snack-Box (Haribo, NicNacs, Pringles, M&M's osv.)",
+            "en": "Snack Box (Haribo, NicNacs, Pringles, M&M's etc.)"
+          },
+          "price": 5.50,
+          "available": true
+        },
+        {
+          "id": "snack-einzeln",
+          "name": {
+            "de": "Snack einzeln",
+            "da": "Snack enkelt",
+            "en": "Single Snack"
+          },
+          "price": 2.50,
+          "available": true
+        },
+        {
+          "id": "nachos",
+          "name": "Nachos",
+          "price": 8.50,
+          "available": true
+        }
+      ]
+    }
+  ]
+}
