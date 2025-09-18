@@ -550,12 +550,14 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
       
       {/* Bottom Navigation Bar */}
       <BottomNavigation
-        categories={categories.map(cat => ({
-          id: cat.id,
-          name: cat.name
-        }))}
-        currentCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
+        categories={categories
+          .filter(cat => cat.isMainCategory === true)
+          .map(cat => ({
+            id: cat.id,
+            name: cat.name
+          }))}
+        currentCategory={selectedMainCategory || undefined}
+        onCategoryChange={handleMainCategoryChange}
         onLanguageChange={setLanguage}
       />
       

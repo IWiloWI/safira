@@ -94,20 +94,20 @@ router.post('/:categoryId/items',
       }
 
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+      const categoryIndex = products.categories.findIndex((cat: Category) => cat.id === categoryId);
 
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
 
-      const category = products.categories[categoryIndex];
-      if (!category.items) {
-        category.items = [];
+      const category: Category = products.categories[categoryIndex];
+      if (!(category as Category).items) {
+        (category as Category).items = [];
       }
 
       newItem.id = Date.now().toString();
-      category.items.push(newItem);
+      (category as Category).items.push(newItem);
 
       await writeJSONFile(PRODUCTS_FILE, products);
 
@@ -154,7 +154,7 @@ router.put('/:categoryId/items/:itemId',
       const updatedItem = req.body;
 
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
-      const category = products.categories.find((cat) => cat.id === categoryId);
+      const category: Category | undefined = products.categories.find((cat: Category) => cat.id === categoryId);
 
       if (!category) {
         console.log('❌ Category not found:', categoryId);
@@ -162,36 +162,36 @@ router.put('/:categoryId/items/:itemId',
         return;
       }
 
-      if (!category.items) {
-        category.items = [];
+      if (!(category as Category).items) {
+        (category as Category).items = [];
       }
 
-      const itemIndex = category.items.findIndex((item) => item.id === itemId);
+      const itemIndex = (category as Category).items.findIndex((item: Product) => item.id === itemId);
       if (itemIndex === -1) {
         console.log('❌ Product not found:', itemId, 'in category:', categoryId);
-        console.log('Available products:', category.items.map((item) => item.id));
+        console.log('Available products:', (category as Category).items.map((item: Product) => item.id));
         sendNotFound(res, 'Product');
         return;
       }
 
-      category.items[itemIndex] = { ...category.items[itemIndex], ...updatedItem };
+      (category as Category).items[itemIndex] = { ...(category as Category).items[itemIndex], ...updatedItem };
 
       await writeJSONFile(PRODUCTS_FILE, products);
-      console.log('✅ Product updated successfully:', category.items[itemIndex]);
+      console.log('✅ Product updated successfully:', (category as Category).items[itemIndex]);
 
       // Track activity
       await trackActivity(req, 'product_updated', {
         productId: itemId,
-        productName: typeof category.items[itemIndex].name === 'string' ?
-          category.items[itemIndex].name :
-          category.items[itemIndex].name.de || 'Unknown',
+        productName: typeof (category as Category).items[itemIndex].name === 'string' ?
+          (category as Category).items[itemIndex].name :
+          ((category as Category).items[itemIndex].name as any).de || 'Unknown',
         categoryId: categoryId,
-        description: `Product "${typeof category.items[itemIndex].name === 'string' ?
-          category.items[itemIndex].name :
-          category.items[itemIndex].name.de || 'Unknown'}" updated`
+        description: `Product "${typeof (category as Category).items[itemIndex].name === 'string' ?
+          (category as Category).items[itemIndex].name :
+          ((category as Category).items[itemIndex].name as any).de || 'Unknown'}" updated`
       });
 
-      sendSuccess(res, { product: category.items[itemIndex] }, 'Product updated successfully');
+      sendSuccess(res, { product: (category as Category).items[itemIndex] }, 'Product updated successfully');
     } catch (error) {
       console.error('❌ Error updating product:', error);
       sendError(res, 'Failed to update product');
@@ -209,24 +209,24 @@ router.delete('/:categoryId/items/:itemId',
       const { categoryId, itemId } = req.params;
 
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
-      const category = products.categories.find((cat) => cat.id === categoryId);
+      const category: Category | undefined = products.categories.find((cat: Category) => cat.id === categoryId);
 
       if (!category) {
         sendNotFound(res, 'Category');
         return;
       }
 
-      if (!category.items) {
-        category.items = [];
+      if (!(category as Category).items) {
+        (category as Category).items = [];
       }
 
-      const itemIndex = category.items.findIndex((item) => item.id === itemId);
+      const itemIndex = (category as Category).items.findIndex((item: Product) => item.id === itemId);
       if (itemIndex === -1) {
         sendNotFound(res, 'Product');
         return;
       }
 
-      const deletedItem = category.items.splice(itemIndex, 1)[0];
+      const deletedItem = (category as Category).items.splice(itemIndex, 1)[0];
 
       await writeJSONFile(PRODUCTS_FILE, products);
 
@@ -263,35 +263,35 @@ router.put('/move/:itemId',
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
 
       // Check if both categories exist
-      const fromCategoryIndex = products.categories.findIndex((cat) => cat.id === fromCategoryId);
-      const toCategoryIndex = products.categories.findIndex((cat) => cat.id === toCategoryId);
+      const fromCategoryIndex = products.categories.findIndex((cat: Category) => cat.id === fromCategoryId);
+      const toCategoryIndex = products.categories.findIndex((cat: Category) => cat.id === toCategoryId);
 
       if (fromCategoryIndex === -1 || toCategoryIndex === -1) {
         sendNotFound(res, 'One or both categories');
         return;
       }
 
-      const sourceCategory = products.categories[fromCategoryIndex];
-      const targetCategory = products.categories[toCategoryIndex];
+      const sourceCategory: Category = products.categories[fromCategoryIndex];
+      const targetCategory: Category = products.categories[toCategoryIndex];
 
-      if (!sourceCategory.items) {
-        sourceCategory.items = [];
+      if (!(sourceCategory as Category).items) {
+        (sourceCategory as Category).items = [];
       }
 
-      if (!targetCategory.items) {
-        targetCategory.items = [];
+      if (!(targetCategory as Category).items) {
+        (targetCategory as Category).items = [];
       }
 
       // Find product in source category
-      const productIndex = sourceCategory.items.findIndex((item) => item.id === itemId);
+      const productIndex = (sourceCategory as Category).items.findIndex((item: Product) => item.id === itemId);
       if (productIndex === -1) {
         sendNotFound(res, 'Product in source category');
         return;
       }
 
       // Move product
-      const [product] = sourceCategory.items.splice(productIndex, 1);
-      targetCategory.items.push(product);
+      const [product] = (sourceCategory as Category).items.splice(productIndex, 1);
+      (targetCategory as Category).items.push(product);
 
       // Save changes
       await writeJSONFile(PRODUCTS_FILE, products);
@@ -332,19 +332,19 @@ router.put('/:categoryId/items/:itemId/translate',
       const { field, translations } = req.body;
 
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+      const categoryIndex = products.categories.findIndex((cat: Category) => cat.id === categoryId);
 
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
 
-      const category = products.categories[categoryIndex];
-      if (!category.items) {
-        category.items = [];
+      const category: Category = products.categories[categoryIndex];
+      if (!(category as Category).items) {
+        (category as Category).items = [];
       }
 
-      const productIndex = category.items.findIndex((item) => item.id === itemId);
+      const productIndex = (category as Category).items.findIndex((item: Product) => item.id === itemId);
       if (productIndex === -1) {
         sendNotFound(res, 'Product');
         return;
@@ -358,7 +358,7 @@ router.put('/:categoryId/items/:itemId/translate',
         en: translations.en
       };
 
-      (category.items[productIndex] as any)[fieldKey] = translatedField;
+      ((category as Category).items[productIndex] as any)[fieldKey] = translatedField;
 
       await writeJSONFile(PRODUCTS_FILE, products);
 
@@ -370,7 +370,7 @@ router.put('/:categoryId/items/:itemId/translate',
         description: `Product field "${field}" translated`
       });
 
-      sendSuccess(res, { product: category.items[productIndex] });
+      sendSuccess(res, { product: (category as Category).items[productIndex] });
     } catch (error) {
       console.error('Error updating translations:', error);
       sendError(res, 'Failed to update translations');
@@ -389,20 +389,20 @@ router.put('/:categoryId/bulk-price',
       const { newPrice } = req.body;
 
       const products = await readJSONFile<ProductsData>(PRODUCTS_FILE, { categories: [] });
-      const categoryIndex = products.categories.findIndex((cat) => cat.id === categoryId);
+      const categoryIndex = products.categories.findIndex((cat: Category) => cat.id === categoryId);
 
       if (categoryIndex === -1) {
         sendNotFound(res, 'Category');
         return;
       }
 
-      const category = products.categories[categoryIndex];
-      if (!category.items) {
-        category.items = [];
+      const category: Category = products.categories[categoryIndex];
+      if (!(category as Category).items) {
+        (category as Category).items = [];
       }
 
       let updatedCount = 0;
-      category.items.forEach((product) => {
+      (category as Category).items.forEach((product) => {
         if ((product as any).brand) { // Only update products that have a brand (tobacco products)
           product.price = newPrice;
           updatedCount++;

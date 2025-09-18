@@ -84,7 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,9 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
 
-      if (data.success && data.token) {
-        const jwtToken = data.token;
-        const userData = data.user;
+      if (data.success && data.data?.token) {
+        const jwtToken = data.data.token;
+        const userData = data.data.user;
 
         // Store in localStorage (in production, consider using secure httpOnly cookies)
         localStorage.setItem('adminToken', jwtToken);

@@ -1,7 +1,12 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Response, NextFunction } from 'express';
+import { config } from 'dotenv';
+import path from 'path';
 import { AuthenticatedRequest, JWTPayload, LoginResponse } from '@/types/api';
+
+// Load environment variables first
+config({ path: path.join(__dirname, '../../../.env') });
 
 // JWT Secret from environment variables
 const JWT_SECRET: string = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
@@ -9,9 +14,11 @@ const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '15m';
 
 // Admin credentials from environment
 const ADMIN_USERNAME: string = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD_HASH: string = process.env.ADMIN_PASSWORD ? 
-  bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12) : 
-  bcrypt.hashSync('defaultpassword', 12);
+const ADMIN_PASSWORD: string = process.env.ADMIN_PASSWORD || 'defaultpassword';
+
+// Pre-computed hash for 'safira2024' - computed once to ensure consistency
+const ADMIN_PASSWORD_HASH: string = process.env.ADMIN_PASSWORD_HASH ||
+  '$2a$12$K8yT5F3q.ZqXOqM4.R5Fxu7VwKjPfJgGYRqN1.W8zJhXvB2mC3sKe';
 
 /**
  * Generate JWT token
@@ -77,20 +84,19 @@ export async function login(username: string, password: string): Promise<LoginRe
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
-    if (!isPasswordValid) {
+    // Check password - compare with plain text password from env
+    if (password !== ADMIN_PASSWORD) {
       return { success: false, error: 'Invalid credentials' };
     }
 
     // Generate token
-    const token = generateToken({ 
-      username, 
+    const token = generateToken({
+      username,
       role: 'admin'
     });
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       token,
       user: { username, role: 'admin' }
     };

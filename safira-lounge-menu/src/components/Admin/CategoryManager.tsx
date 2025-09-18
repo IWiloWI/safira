@@ -455,21 +455,24 @@ const CategoryManager: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.categories || []);
-        
+        const categories = data.categories || [];
+        setCategories(categories);
+
         // Collect all products from all categories
         const products: any[] = [];
-        data.categories.forEach((cat: any) => {
-          if (cat.items) {
-            cat.items.forEach((item: any) => {
-              products.push({
-                ...item,
-                categoryId: cat.id,
-                categoryName: cat.name
+        if (Array.isArray(categories)) {
+          categories.forEach((cat: any) => {
+            if (cat.items && Array.isArray(cat.items)) {
+              cat.items.forEach((item: any) => {
+                products.push({
+                  ...item,
+                  categoryId: cat.id,
+                  categoryName: cat.name
+                });
               });
-            });
-          }
-        });
+            }
+          });
+        }
         setAllProducts(products);
       }
     } catch (error) {

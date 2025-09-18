@@ -13,7 +13,8 @@ import AdminSidebar from '../components/Admin/AdminSidebar';
 import VideoManager from '../components/Admin/VideoManager';
 import CategoryManager from '../components/Admin/CategoryManager';
 import SubcategoryManager from '../components/Admin/SubcategoryManager';
-import { FaTachometerAlt, FaBoxes, FaLeaf, FaQrcode, FaChartBar, FaBars, FaVideo, FaFolder, FaLayerGroup } from 'react-icons/fa';
+import NavigationSettings from '../components/Admin/NavigationSettings';
+import { FaTachometerAlt, FaBoxes, FaLeaf, FaQrcode, FaChartBar, FaBars, FaVideo, FaFolder, FaLayerGroup, FaCog } from 'react-icons/fa';
 
 const AdminContainer = styled.div`
   min-height: 100vh;
@@ -114,6 +115,7 @@ const AdminPage: React.FC = () => {
     { path: '/admin/tobacco-catalog', label: 'Tabak-Katalog', icon: <FaLeaf /> },
     { path: '/admin/videos', label: 'Video-Manager', icon: <FaVideo /> },
     { path: '/admin/categories', label: 'Kategorien', icon: <FaFolder /> },
+    { path: '/admin/navigation', label: 'Navigation', icon: <FaCog /> },
     { path: '/admin/qr-codes', label: 'QR-Codes', icon: <FaQrcode /> },
     { path: '/admin/analytics', label: 'Analytics', icon: <FaChartBar /> }
   ];
@@ -148,6 +150,7 @@ const AdminPage: React.FC = () => {
             <Route path="/tobacco-catalog" element={<TobaccoCatalog />} />
             <Route path="/videos" element={<VideoManager />} />
             <Route path="/categories" element={<CategoryManager />} />
+            <Route path="/navigation" element={<NavigationSettings />} />
             <Route path="/qr-codes" element={<QRGenerator />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

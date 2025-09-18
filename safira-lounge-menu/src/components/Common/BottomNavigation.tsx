@@ -1,13 +1,15 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import QRCode from 'qrcode';
+import axios from 'axios';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Language } from '../../types/common.types';
-import { 
-  Menu, 
-  Globe2, 
-  Info, 
-  Share2, 
+import {
+  Menu,
+  Globe2,
+  Info,
+  Share2,
   X,
   ChevronRight,
   Wifi,
@@ -269,6 +271,27 @@ const WifiCard = styled.div`
   margin-bottom: 20px;
 `;
 
+const QRCodeContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+
+  canvas {
+    margin: 10px 0;
+  }
+
+  p {
+    color: #333;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+  }
+`;
+
 const WifiInfo = styled.div`
   display: flex;
   justify-content: space-between;
@@ -365,20 +388,26 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
   'home': <Home />
 };
 
-const languages = [
-  { code: 'de' as const, name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'en' as const, name: 'English', flag: '🇬🇧' },
-  { code: 'da' as const, name: 'Dansk', flag: '🇩🇰' },
-  { code: 'tr' as const, name: 'Türkçe', flag: '🇹🇷' },
-  { code: 'it' as const, name: 'Italiano', flag: '🇮🇹' }
-];
+interface DynamicLanguage {
+  code: string;
+  name: string;
+  flag: string;
+  enabled: boolean;
+}
 
-const socialMedia = [
-  { name: 'Instagram', icon: <Instagram />, url: 'https://instagram.com/safiralounge', className: 'instagram' },
-  { name: 'Facebook', icon: <Facebook />, url: 'https://facebook.com/safiralounge', className: 'facebook' },
-  { name: 'Twitter', icon: <Twitter />, url: 'https://twitter.com/safiralounge', className: 'twitter' },
-  { name: 'YouTube', icon: <Youtube />, url: 'https://youtube.com/safiralounge', className: 'youtube' }
-];
+interface DynamicWifi {
+  ssid: string;
+  password: string;
+  enabled: boolean;
+}
+
+interface DynamicSocial {
+  id: string;
+  name: string;
+  url: string;
+  icon: string;
+  enabled: boolean;
+}
 
 // Simple fallback translations
 const fallbackTranslations = {
@@ -401,16 +430,27 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onLanguageChange
 }) => {
   const { language, setLanguage, t } = useLanguage();
-  
+
   // Helper function to get translation with fallback
   const getTranslation = (key: keyof typeof fallbackTranslations) => {
     return fallbackTranslations[key][language] || fallbackTranslations[key]['de'];
   };
+
   const [showCategories, setShowCategories] = useState(false);
   const [showLanguages, setShowLanguages] = useState(false);
   const [showWifi, setShowWifi] = useState(false);
   const [showSocial, setShowSocial] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const qrCodeCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Dynamic settings from API
+  const [dynamicLanguages, setDynamicLanguages] = useState<DynamicLanguage[]>([]);
+  const [dynamicWifi, setDynamicWifi] = useState<DynamicWifi>({
+    ssid: 'Safira Lounge',
+    password: 'Safira123',
+    enabled: true
+  });
+  const [dynamicSocial, setDynamicSocial] = useState<DynamicSocial[]>([]);
 
   const handleCopyToClipboard = useCallback((text: string, field: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -429,6 +469,51 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     onCategoryChange(categoryId);
     setShowCategories(false);
   }, [onCategoryChange]);
+
+  // Load dynamic settings from API
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const [languagesRes, wifiRes, socialRes] = await Promise.all([
+          axios.get('/api/settings/languages'),
+          axios.get('/api/settings/wifi'),
+          axios.get('/api/settings/social')
+        ]);
+
+        if (languagesRes.data.success) {
+          setDynamicLanguages(languagesRes.data.data);
+        }
+        if (wifiRes.data.success) {
+          setDynamicWifi(wifiRes.data.data);
+        }
+        if (socialRes.data.success) {
+          setDynamicSocial(socialRes.data.data);
+        }
+      } catch (error) {
+        console.error('Error loading navigation settings:', error);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  // Generate WiFi QR Code when modal opens
+  useEffect(() => {
+    if (showWifi && qrCodeCanvasRef.current && dynamicWifi.enabled) {
+      const wifiString = `WIFI:T:WPA;S:${dynamicWifi.ssid};P:${dynamicWifi.password};;`;
+
+      QRCode.toCanvas(qrCodeCanvasRef.current, wifiString, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      }, (error) => {
+        if (error) console.error('QR Code generation error:', error);
+      });
+    }
+  }, [showWifi, dynamicWifi]);
 
   // Close modals on escape key
   useEffect(() => {
@@ -594,11 +679,11 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       </ModalHeader>
                       
                       <LanguageGrid>
-                        {languages.map((lang) => (
+                        {dynamicLanguages.map((lang) => (
                           <LanguageButton
                             key={lang.code}
                             $active={language === lang.code}
-                            onClick={() => handleLanguageSelect(lang.code)}
+                            onClick={() => handleLanguageSelect(lang.code as any)}
                           >
                             <span className="flag">{lang.flag}</span>
                             <span>{lang.name}</span>
@@ -648,28 +733,46 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         </CloseButton>
                       </ModalHeader>
                       
-                      <WifiCard>
-                        <WifiInfo>
-                          <WifiLabel>{getTranslation('network')}:</WifiLabel>
-                          <WifiValue>
-                            <span>Safira_Guest</span>
-                            <CopyButton onClick={() => handleCopyToClipboard('Safira_Guest', 'network')}>
-                              {copiedField === 'network' ? <Check /> : <Copy />}
-                            </CopyButton>
-                          </WifiValue>
-                        </WifiInfo>
-                        
-                        <WifiInfo>
-                          <WifiLabel>{getTranslation('password')}:</WifiLabel>
-                          <WifiValue>
-                            <span>Safira2024!</span>
-                            <CopyButton onClick={() => handleCopyToClipboard('Safira2024!', 'password')}>
-                              {copiedField === 'password' ? <Check /> : <Copy />}
-                            </CopyButton>
-                          </WifiValue>
-                        </WifiInfo>
-                      </WifiCard>
-                      
+                      {dynamicWifi.enabled ? (
+                        <>
+                          <WifiCard>
+                            <WifiInfo>
+                              <WifiLabel>{getTranslation('network')}:</WifiLabel>
+                              <WifiValue>
+                                <span>{dynamicWifi.ssid}</span>
+                                <CopyButton onClick={() => handleCopyToClipboard(dynamicWifi.ssid, 'network')}>
+                                  {copiedField === 'network' ? <Check /> : <Copy />}
+                                </CopyButton>
+                              </WifiValue>
+                            </WifiInfo>
+
+                            <WifiInfo>
+                              <WifiLabel>{getTranslation('password')}:</WifiLabel>
+                              <WifiValue>
+                                <span>{dynamicWifi.password}</span>
+                                <CopyButton onClick={() => handleCopyToClipboard(dynamicWifi.password, 'password')}>
+                                  {copiedField === 'password' ? <Check /> : <Copy />}
+                                </CopyButton>
+                              </WifiValue>
+                            </WifiInfo>
+                          </WifiCard>
+
+                          <QRCodeContainer>
+                            <p style={{ color: '#666', fontWeight: 600, marginBottom: '10px' }}>
+                              QR Code scannen zum Verbinden
+                            </p>
+                            <canvas ref={qrCodeCanvasRef} />
+                            <p style={{ color: '#999', fontSize: '12px', marginTop: '5px' }}>
+                              Scannen Sie mit Ihrer Kamera
+                            </p>
+                          </QRCodeContainer>
+                        </>
+                      ) : (
+                        <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
+                          WiFi ist derzeit nicht verfügbar
+                        </div>
+                      )}
+
                       <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', margin: 0 }}>
                         {getTranslation('freeWifiGuests')}
                       </p>
@@ -717,16 +820,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       </ModalHeader>
                       
                       <SocialLinks>
-                        {socialMedia.map((social) => (
+                        {dynamicSocial.map((social) => (
                           <SocialButton
-                            key={social.name}
+                            key={social.id}
                             href={social.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={social.className}
+                            className={social.id}
                             aria-label={social.name}
                           >
-                            {social.icon}
+                            <span style={{ fontSize: '20px' }}>{social.icon}</span>
                           </SocialButton>
                         ))}
                       </SocialLinks>

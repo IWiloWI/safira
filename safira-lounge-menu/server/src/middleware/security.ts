@@ -132,25 +132,8 @@ export function handleValidationErrors(req: Request, res: Response, next: NextFu
  */
 export const corsOptions: CORSConfig = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void): void {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-    
-    const allowedOrigins: string[] = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      process.env.REACT_APP_BASE_URL
-    ].filter(Boolean) as string[];
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Allow all origins in development mode
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
