@@ -52,18 +52,35 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
    * Handle main category navigation
    */
   const handleMainCategoryChange = useCallback((mainCategoryId: string) => {
-    if (mainCategoryId === 'menus') {
-      navigate('/menu/menus');
+    console.log('[handleMainCategoryChange] Called with:', mainCategoryId, 'from current state:', selectedMainCategory, selectedCategory);
+
+    if (mainCategoryId === 'menus' || mainCategoryId === 'safira-menus') {
+      console.log('[handleMainCategoryChange] Navigating to menus');
+      navigate('/menu/safira-menus');
     } else if (mainCategoryId === 'drinks') {
-      setSelectedMainCategory(mainCategoryId);
-      const currentDrinkCategory = selectedCategory && selectedCategory !== 'all' ? selectedCategory : 'softdrinks';
-      navigate(`/menu/${currentDrinkCategory}`);
+      console.log('[handleMainCategoryChange] Drinks category clicked - redirecting to softdrinks');
+      // "drinks" is not a real category - redirect to the first drink subcategory
+      navigate('/menu/softdrinks');
+    } else if (mainCategoryId === 'softdrinks') {
+      console.log('[handleMainCategoryChange] Softdrinks category clicked - navigating directly');
+      // Direct navigation to softdrinks category
+      navigate('/menu/softdrinks');
+    } else if (mainCategoryId === 'shisha' || mainCategoryId === 'shisha-standard') {
+      console.log('[handleMainCategoryChange] Shisha category clicked - navigating directly');
+      navigate('/menu/shisha-standard');
+    } else if (mainCategoryId === 'cocktails') {
+      console.log('[handleMainCategoryChange] Cocktails category clicked - navigating directly');
+      navigate('/menu/cocktails');
+    } else if (mainCategoryId === 'snacks') {
+      console.log('[handleMainCategoryChange] Snacks category clicked - navigating directly');
+      navigate('/menu/snacks');
     } else {
+      console.log('[handleMainCategoryChange] Switching to main category:', mainCategoryId);
       setSelectedMainCategory(mainCategoryId);
       setSelectedCategory('all');
       navigate(`/menu/${mainCategoryId}`);
     }
-  }, [navigate, selectedCategory]);
+  }, [navigate, selectedCategory, selectedMainCategory]);
 
   /**
    * Handle category tab change
@@ -148,45 +165,74 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
   useEffect(() => {
     const drinkCategories = getCategoryIdsForMainCategory('drinks');
     const shishaCategories = getCategoryIdsForMainCategory('shisha');
-    
-    console.log('[URL Effect] category param:', category, 'current selectedCategory:', selectedCategory);
-    
-    // Don't override if we're already on the correct category (prevents loops)
-    if (category === selectedCategory) {
-      console.log('[URL Effect] Already on correct category, skipping');
+
+    console.log('[URL Effect] category param:', category, 'current selectedCategory:', selectedCategory, 'current selectedMainCategory:', selectedMainCategory);
+
+    // Only update if URL category is different from current state
+    if (!category) {
+      // No category in URL - reset to main menu
+      if (selectedMainCategory !== null || selectedCategory !== 'all') {
+        setSelectedMainCategory(null);
+        setSelectedCategory('all');
+      }
       return;
+    }
+
+    // Skip if we're already in the correct state (but allow main category switches)
+    if (category === selectedCategory) {
+      const correctMainCategory =
+        (category === 'drinks' && selectedMainCategory === 'drinks') ||
+        (drinkCategories.includes(category) && selectedMainCategory === 'drinks') ||
+        (shishaCategories.includes(category) && selectedMainCategory === 'shisha') ||
+        (category === 'menus' && selectedMainCategory === 'menus');
+
+      if (correctMainCategory) {
+        console.log('[URL Effect] Already in correct state, skipping');
+        return;
+      }
     }
     
     if (category === 'menus') {
-      // Menus main category
+      // Menus main category - always reset properly
       setSelectedMainCategory('menus');
       setSelectedCategory('all');
       return;
     } else if (category === 'drinks') {
-      // Main drinks category - redirect to softdrinks on first load only
-      if (!selectedCategory || selectedCategory === 'all') {
-        navigate('/menu/softdrinks', { replace: true });
-      } else {
-        setSelectedMainCategory('drinks');
-      }
+      // "drinks" is a virtual category - always redirect to softdrinks
+      console.log('[URL Effect] Virtual drinks category - redirecting to softdrinks');
+      navigate('/menu/softdrinks', { replace: true });
       return;
     } else if (category === 'cocktails' || category === 'mocktails') {
       // Redirect old URLs to combined category
       navigate('/menu/cocktails-mocktails', { replace: true });
       return;
     } else if (category && drinkCategories.includes(category)) {
-      // Drink subcategories
+      // Drink subcategories - always set main category properly
       setSelectedMainCategory('drinks');
       setSelectedCategory(category === 'cocktails-mocktails' ? 'cocktails-mocktails' : category);
     } else if (category && shishaCategories.includes(category)) {
-      // Shisha subcategories
+      // Shisha subcategories - always set main category properly
       setSelectedMainCategory('shisha');
       setSelectedCategory(category);
     } else if (category && mainCategories[category]) {
+      // Direct main category access
       setSelectedMainCategory(category);
       setSelectedCategory('all');
+    } else {
+      // Check if it's a standalone category that should be treated as a main category
+      const categoryExists = categories.find((cat: Category) => cat.id === category);
+      if (categoryExists) {
+        console.log('[URL Effect] Found standalone category:', category, '- treating as main category');
+        setSelectedMainCategory(category);
+        setSelectedCategory('all');
+      } else {
+        // Unknown category - reset to main menu
+        console.warn('[URL Effect] Unknown category:', category, '- resetting to main menu');
+        setSelectedMainCategory(null);
+        setSelectedCategory('all');
+      }
     }
-  }, [category, selectedCategory, navigate, getCategoryIdsForMainCategory, mainCategories]);
+  }, [category, selectedCategory, selectedMainCategory, navigate, getCategoryIdsForMainCategory, mainCategories]);
 
   return {
     selectedMainCategory,

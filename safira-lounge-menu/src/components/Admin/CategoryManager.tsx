@@ -444,37 +444,28 @@ const CategoryManager: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const categories = data.categories || [];
-        setCategories(categories);
+      // Use the API service instead of direct fetch
+      const { getProducts } = await import('../../services/api');
+      const data = await getProducts();
+      const categories = (data.categories || []) as Category[];
+      setCategories(categories);
 
-        // Collect all products from all categories
-        const products: any[] = [];
-        if (Array.isArray(categories)) {
-          categories.forEach((cat: any) => {
-            if (cat.items && Array.isArray(cat.items)) {
-              cat.items.forEach((item: any) => {
-                products.push({
-                  ...item,
-                  categoryId: cat.id,
-                  categoryName: cat.name
-                });
+      // Collect all products from all categories
+      const products: any[] = [];
+      if (Array.isArray(categories)) {
+        categories.forEach((cat: any) => {
+          if (cat.items && Array.isArray(cat.items)) {
+            cat.items.forEach((item: any) => {
+              products.push({
+                ...item,
+                categoryId: cat.id,
+                categoryName: cat.name
               });
-            }
-          });
-        }
-        setAllProducts(products);
+            });
+          }
+        });
       }
+      setAllProducts(products);
     } catch (error) {
       console.error('Error loading categories:', error);
     } finally {

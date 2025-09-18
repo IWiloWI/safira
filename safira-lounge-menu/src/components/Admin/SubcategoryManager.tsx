@@ -666,58 +666,37 @@ const SubcategoryManager: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      
-      // Load subcategories
-      const productsResponse = await fetch('/api/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (productsResponse.ok) {
-        const data = await productsResponse.json();
-        setCategories(data.categories || []);
-      }
+      // Use the API service instead of direct fetch
+      const { getProducts } = await import('../../services/api');
+      const data = await getProducts();
+      const categories = (data.categories || []) as any[];
+      setCategories(categories);
 
-      // Load main categories from CategoryManager using the same endpoint
-      const mainCategoriesResponse = await fetch('/api/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include'
+
+      // Filter only main categories
+      const mainCats = categories.filter((cat: any) => cat.isMainCategory === true);
+      setMainCategoriesData(mainCats);
+
+      // Update the global mainCategories object
+      mainCategories = {};
+      mainCats.forEach((cat: any) => {
+        const categoryName = typeof cat.name === 'string' ? cat.name : cat.name?.de || cat.id;
+        mainCategories[cat.id] = {
+          id: cat.id,
+          name: typeof cat.name === 'string'
+            ? { de: cat.name, da: cat.name, en: cat.name, tr: cat.name, it: cat.name }
+            : cat.name,
+          icon: '📁', // Default icon
+          image: cat.image || '/images/placeholder-category.jpg',
+          categoryIds: [],
+          order: cat.order || 1,
+          enabled: cat.enabled !== false
+        };
       });
-      
-      if (mainCategoriesResponse.ok) {
-        const data = await mainCategoriesResponse.json();
-        const mainCategoriesData = data.categories || [];
-        
-        // Filter only main categories
-        const mainCats = mainCategoriesData.filter((cat: any) => cat.isMainCategory === true);
-        setMainCategoriesData(mainCats);
-        
-        // Update the global mainCategories object
-        mainCategories = {};
-        mainCats.forEach((cat: any) => {
-          const categoryName = typeof cat.name === 'string' ? cat.name : cat.name?.de || cat.id;
-          mainCategories[cat.id] = {
-            id: cat.id,
-            name: typeof cat.name === 'string' 
-              ? { de: cat.name, da: cat.name, en: cat.name, tr: cat.name, it: cat.name }
-              : cat.name,
-            icon: '📁', // Default icon
-            image: cat.image || '/images/placeholder-category.jpg',
-            categoryIds: [],
-            order: cat.order || 1,
-            enabled: cat.enabled !== false
-          };
-        });
-        
-        // Set first main category as selected if none selected
-        if (!selectedMainCategory && mainCats.length > 0) {
-          setSelectedMainCategory(mainCats[0].id);
-        }
+
+      // Set first main category as selected if none selected
+      if (!selectedMainCategory && mainCats.length > 0) {
+        setSelectedMainCategory(mainCats[0].id);
       }
     } catch (error) {
       console.error('Error loading categories:', error);
