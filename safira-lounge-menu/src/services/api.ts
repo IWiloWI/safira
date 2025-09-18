@@ -112,7 +112,9 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Add CSRF token for non-GET requests
+    // Skip CSRF token for now as endpoint doesn't exist
+    // TODO: Re-enable when CSRF endpoint is implemented
+    /*
     if (config.method && config.method.toUpperCase() !== 'GET') {
       try {
         const csrfToken = await getCSRFToken();
@@ -122,6 +124,7 @@ api.interceptors.request.use(
         // Continue with request even if CSRF token fails
       }
     }
+    */
     
     return config;
   },

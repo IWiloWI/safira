@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
-import axios from 'axios';
+import api from '../../services/api';
 import {
   Globe2, Wifi, Share2, Plus, X, Save, Eye, EyeOff,
   Instagram, Facebook, Twitter, Youtube, Linkedin, Github,
@@ -422,7 +422,7 @@ export const NavigationSettings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const response = await axios.get('/api/settings/navigation');
+      const response = await api.get('/settings/navigation');
       if (response.data.success) {
         setSettings(response.data.data);
       }
@@ -434,7 +434,7 @@ export const NavigationSettings: React.FC = () => {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      const response = await axios.put('/api/settings/navigation', settings);
+      const response = await api.put('/settings/navigation', settings);
       if (response.data.success) {
         setAlert({ type: 'success', message: 'Einstellungen erfolgreich gespeichert!' });
         setTimeout(() => setAlert(null), 3000);
@@ -457,7 +457,7 @@ export const NavigationSettings: React.FC = () => {
     if (language?.enabled && !settings.languages.find(l => l.code === code)?.enabled) {
       setTranslating(true);
       try {
-        await axios.post('/api/translate/all', { targetLanguage: code });
+        await api.post('/settings/translate/all', { targetLanguage: code });
         setAlert({ type: 'success', message: `Alle Inhalte wurden nach ${language.name} übersetzt!` });
       } catch (error) {
         setAlert({ type: 'error', message: 'Fehler bei der Übersetzung!' });

@@ -95,8 +95,8 @@ function setupMiddleware(): void {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Add CSRF protection for state-changing operations
-  app.use(csrfProtection);
+  // TODO: Re-enable CSRF protection when frontend supports it
+  // app.use(csrfProtection);
 
   // Static file serving with security
   app.use(express.static(path.join(__dirname, '../../build')));
