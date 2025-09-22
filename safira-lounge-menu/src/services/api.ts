@@ -62,7 +62,7 @@ import type {
   ProductBadges,
 } from '../types/common.types';
 
-const API_BASE_URL = 'http://test.safira-lounge.de/api-fixed.php';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
 
 // Create axios instance
 const api = axios.create({
@@ -194,8 +194,8 @@ export type { TobaccoItem };
 
 // Authentication
 export const login = async (username: string, password: string): Promise<AuthResponse> => {
-  const response = await api.post<any>('/auth/login', { username, password });
-  // PHP API returns user data directly
+  const response = await api.post<any>('?action=login', { username, password });
+  // Handle PHP API response format
   const userData = response.data;
   return {
     success: true,

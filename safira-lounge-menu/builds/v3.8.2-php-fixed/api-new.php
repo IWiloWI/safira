@@ -1,5 +1,5 @@
 <?php
-// Fixed API without display_order dependency
+// Fixed API with Login Support
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: http://test.safira-lounge.de');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -27,28 +27,63 @@ try {
 
 $action = $_GET['action'] ?? 'test';
 
+// Handle frontend's /auth/login path
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+if (strpos($requestUri, '/auth/login') !== false) {
+    $action = 'login';
+}
+
 switch ($action) {
     case 'test':
         echo json_encode([
             'status' => 'success',
-            'message' => 'API working in /safira',
+            'message' => 'API working with login support',
             'timestamp' => date('c')
         ]);
         break;
 
-    case 'test-connection':
+    case 'login':
+        // Handle admin login
         try {
-            $stmt = $dbh->query("SELECT 1 as test");
-            $result = $stmt->fetch();
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Database connection successful',
-                'database' => $database,
-                'host' => $host_name,
-                'timestamp' => date('c')
-            ]);
+            $input = json_decode(file_get_contents('php://input'), true);
+            $username = $input['username'] ?? '';
+            $password = $input['password'] ?? '';
+
+            // Simple admin credentials
+            if ($username === 'admin' && $password === 'admin123') {
+                $token = 'admin_token_' . time() . '_' . rand(1000, 9999);
+
+                echo json_encode([
+                    'success' => true,
+                    'user' => [
+                        'id' => 'admin',
+                        'username' => 'admin',
+                        'email' => 'admin@safira-lounge.de',
+                        'role' => 'admin',
+                        'isActive' => true,
+                        'isVerified' => true,
+                        'createdAt' => date('c'),
+                        'updatedAt' => date('c')
+                    ],
+                    'token' => $token,
+                    'expiresAt' => date('c', time() + 24 * 60 * 60), // 24 hours
+                    'permissions' => ['products.view', 'products.create', 'products.update', 'products.delete'],
+                    'sessionId' => $token
+                ]);
+            } else {
+                http_response_code(401);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Invalid credentials',
+                    'message' => 'Username or password incorrect'
+                ]);
+            }
         } catch (Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Login failed: ' . $e->getMessage()
+            ]);
         }
         break;
 
@@ -65,11 +100,10 @@ switch ($action) {
             $data = ['categories' => []];
 
             foreach ($categories as $cat) {
-                // Handle JSON fields safely
+                // Handle JSON fields safely with fallbacks
                 $name = $cat['name'] ?? '{}';
                 $description = $cat['description'] ?? '{}';
 
-                // If not valid JSON, treat as string, with fallback names
                 $nameDecoded = json_decode($name, true);
                 if (json_last_error() !== JSON_ERROR_NONE || empty($nameDecoded)) {
                     $fallbackNames = [
@@ -100,19 +134,18 @@ switch ($action) {
 
                 foreach ($products as $product) {
                     if ($product['category_id'] == $cat['id']) {
-                        // Handle product JSON fields safely
                         $prodName = $product['name'] ?? '{}';
                         $prodDesc = $product['description'] ?? '{}';
                         $prodBadges = $product['badges'] ?? '{}';
 
                         $prodNameDecoded = json_decode($prodName, true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            $prodNameDecoded = ['de' => $prodName];
+                        if (json_last_error() !== JSON_ERROR_NONE || empty($prodNameDecoded)) {
+                            $prodNameDecoded = ['de' => $prodName ?: 'Produkt'];
                         }
 
                         $prodDescDecoded = json_decode($prodDesc, true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            $prodDescDecoded = ['de' => $prodDesc];
+                        if (json_last_error() !== JSON_ERROR_NONE || empty($prodDescDecoded)) {
+                            $prodDescDecoded = ['de' => $prodDesc ?: ''];
                         }
 
                         $prodBadgesDecoded = json_decode($prodBadges, true);
@@ -138,27 +171,6 @@ switch ($action) {
             echo json_encode($data);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-        break;
-
-    case 'categories':
-        try {
-            $catStmt = $dbh->query("SELECT * FROM categories ORDER BY id");
-            $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $result = [];
-            foreach ($categories as $cat) {
-                $result[] = [
-                    'id' => $cat['id'],
-                    'name' => json_decode($cat['name'] ?? '{}'),
-                    'icon' => $cat['icon'] ?? '',
-                    'description' => json_decode($cat['description'] ?? '{}')
-                ];
-            }
-
-            echo json_encode($result);
-        } catch (Exception $e) {
             echo json_encode(['error' => $e->getMessage()]);
         }
         break;
@@ -198,69 +210,6 @@ switch ($action) {
             'timestamp' => date('c'),
             'version' => '1.0.0'
         ]);
-        break;
-
-    case 'login':
-        // Handle admin login
-        try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $username = $input['username'] ?? '';
-            $password = $input['password'] ?? '';
-
-            // Simple admin credentials (in production, use database with hashed passwords)
-            if ($username === 'admin' && $password === 'admin123') {
-                $token = 'admin_token_' . time() . '_' . rand(1000, 9999);
-
-                echo json_encode([
-                    'success' => true,
-                    'user' => [
-                        'id' => 'admin',
-                        'username' => 'admin',
-                        'email' => 'admin@safira-lounge.de',
-                        'role' => 'admin',
-                        'isActive' => true,
-                        'isVerified' => true,
-                        'createdAt' => date('c'),
-                        'updatedAt' => date('c')
-                    ],
-                    'token' => $token,
-                    'expiresAt' => date('c', time() + 24 * 60 * 60), // 24 hours
-                    'permissions' => ['products.view', 'products.create', 'products.update', 'products.delete'],
-                    'sessionId' => $token
-                ]);
-            } else {
-                http_response_code(401);
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'Invalid credentials'
-                ]);
-            }
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => 'Login failed: ' . $e->getMessage()
-            ]);
-        }
-        break;
-
-    case 'debug-data':
-        try {
-            // Get raw category data
-            $catStmt = $dbh->query("SELECT * FROM categories LIMIT 2");
-            $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Get raw product data
-            $prodStmt = $dbh->query("SELECT * FROM products LIMIT 2");
-            $products = $prodStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'rawCategories' => $categories,
-                'rawProducts' => $products
-            ], JSON_PRETTY_PRINT);
-        } catch (Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
-        }
         break;
 
     default:
