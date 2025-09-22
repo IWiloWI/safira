@@ -1,0 +1,15 @@
+# Simplified .htaccess for API
+# If the other one doesn't work, try this
+
+# Basic headers
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "http://test.safira-lounge.de"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Direct file access for PHP files
+DirectoryIndex index.php
+
+# No rewrite rules - access files directly
+# /api/products.php instead of /api/products

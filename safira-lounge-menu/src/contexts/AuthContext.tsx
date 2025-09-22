@@ -95,9 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
 
-      if (data.success && data.data?.token) {
-        const jwtToken = data.data.token;
-        const userData = data.data.user;
+      if ((data.success && data.data?.token) || (data.token && data.user)) {
+        const jwtToken = data.data?.token || data.token;
+        const userData = data.data?.user || data.user;
 
         // Store in localStorage (in production, consider using secure httpOnly cookies)
         localStorage.setItem('adminToken', jwtToken);

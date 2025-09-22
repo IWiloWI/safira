@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/safira/static/css/main.73148772.css",
+    "main.js": "/safira/static/js/main.fcd852e3.js",
+    "static/js/52.b49e50c4.chunk.js": "/safira/static/js/52.b49e50c4.chunk.js",
+    "static/js/82.a24eefea.chunk.js": "/safira/static/js/82.a24eefea.chunk.js",
+    "static/js/239.87e2fc0c.chunk.js": "/safira/static/js/239.87e2fc0c.chunk.js",
+    "static/js/206.3a213e1a.chunk.js": "/safira/static/js/206.3a213e1a.chunk.js",
+    "index.html": "/safira/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.73148772.css",
+    "static/js/main.fcd852e3.js"
+  ]
+}
