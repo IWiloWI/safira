@@ -775,15 +775,15 @@ const SubcategoryManager: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      
-      // Get CSRF token
-      const csrfResponse = await fetch('/api/csrf');
-      const { token: csrfToken } = await csrfResponse.json();
-      
+
+      // Skip CSRF for PHP API - not implemented yet
+      const csrfToken = 'php-api-no-csrf';
+
       if (productCount > 0) {
         // Erst alle Produkte löschen
         const deletePromises = subcategory?.items?.map(async (product: any) => {
-          const productResponse = await fetch(`/api/products/${subcategoryId}/items/${product.id}`, {
+          const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+          const productResponse = await fetch(`${API_URL}?action=update_product&category_id=${subcategoryId}&id=${product.id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -802,9 +802,10 @@ const SubcategoryManager: React.FC = () => {
         await Promise.all(deletePromises);
         console.log(`${productCount} Produkte erfolgreich gelöscht`);
       }
-      
-      // Dann die Kategorie löschen
-      const response = await fetch(`/api/categories/${subcategoryId}`, {
+
+      // Dann die Kategorie löschen via PHP API
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const response = await fetch(`${API_URL}?action=delete_category&id=${subcategoryId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -851,14 +852,14 @@ const SubcategoryManager: React.FC = () => {
         items: editingSubcategory?.items || []
       };
 
-      const url = editingSubcategory ? `/api/categories/${editingSubcategory.id}` : '/api/categories';
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const action = editingSubcategory ? 'update_subcategory' : 'create_subcategory';
       const method = editingSubcategory ? 'PUT' : 'POST';
 
-      // Get CSRF token
-      const csrfResponse = await fetch('/api/csrf');
-      const { token: csrfToken } = await csrfResponse.json();
+      // Skip CSRF for PHP API - not implemented yet
+      const csrfToken = 'php-api-no-csrf';
 
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}?action=${action}${editingSubcategory ? `&id=${editingSubcategory.id}` : ''}`, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -887,7 +888,12 @@ const SubcategoryManager: React.FC = () => {
     }
   };
 
-  const generateId = (name: string) => {
+  const generateId = (name: string | undefined | null) => {
+    // Handle null, undefined, or empty strings
+    if (!name || typeof name !== 'string') {
+      return '';
+    }
+
     return name.toLowerCase()
       .replace(/ä/g, 'ae')
       .replace(/ö/g, 'oe')
@@ -917,12 +923,12 @@ const SubcategoryManager: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      
-      // Get CSRF token
-      const csrfResponse = await fetch('/api/csrf');
-      const { token: csrfToken } = await csrfResponse.json();
-      
-      const response = await fetch(`/api/products/${subcategoryId}/items/${productId}`, {
+
+      // Skip CSRF for PHP API - not implemented yet
+      const csrfToken = 'php-api-no-csrf';
+
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1014,15 +1020,15 @@ const SubcategoryManager: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      
-      // Get CSRF token
-      const csrfResponse = await fetch('/api/csrf');
-      const { token: csrfToken } = await csrfResponse.json();
-      
+
+      // Skip CSRF for PHP API - not implemented yet
+      const csrfToken = 'php-api-no-csrf';
+
       // Remove products sequentially to avoid overwhelming server
       for (const productId of Array.from(selectedIds)) {
         try {
-          const response = await fetch(`/api/products/${subcategoryId}/items/${productId}`, {
+          const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+          const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,

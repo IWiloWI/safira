@@ -317,8 +317,9 @@ const ProductManagerContainer: React.FC = () => {
       setIsLoadingCategories(true);
       const token = localStorage.getItem('adminToken');
       
-      // Use exact same pattern as SubcategoryManager (line 684)
-      const mainCategoriesResponse = await fetch('/api/products', {
+      // Use the correct PHP API endpoint
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const mainCategoriesResponse = await fetch(`${API_URL}?action=products`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-Requested-With': 'XMLHttpRequest'

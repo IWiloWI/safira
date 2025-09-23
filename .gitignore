@@ -32,3 +32,4 @@ safira-lounge-menu/public/videos/
 # Backups  
 *.tar.gz
 *backup*
+.claude-flow/metrics/system-metrics.json
