@@ -93,19 +93,24 @@ export function useSessionManagement(
   const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   /**
-   * Parse JWT token to get expiration time
+   * Parse token to get expiration time (supports both JWT and simple tokens)
    */
-  const parseTokenExpiration = useCallback((jwtToken: string): Date | null => {
+  const parseTokenExpiration = useCallback((token: string): Date | null => {
     try {
-      const payload = JSON.parse(atob(jwtToken.split('.')[1]));
-      if (payload.exp) {
-        return new Date(payload.exp * 1000);
+      // Check if it's a JWT token (has 3 parts separated by dots)
+      if (token.split('.').length === 3) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp) {
+          return new Date(payload.exp * 1000);
+        }
       }
-      // Fallback: assume 15 minutes from now if no exp claim
+      // For simple tokens (like from PHP API), assume configured expiration time
       return new Date(Date.now() + finalConfig.tokenExpirationMinutes * 60 * 1000);
     } catch (error) {
       console.error('Failed to parse token expiration:', error);
-      return null;
+      console.log('Could not parse token expiration');
+      // Return default expiration time
+      return new Date(Date.now() + finalConfig.tokenExpirationMinutes * 60 * 1000);
     }
   }, [finalConfig.tokenExpirationMinutes]);
 

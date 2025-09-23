@@ -77,30 +77,10 @@ const api = axios.create({
 let csrfTokenCache: string | null = null;
 let csrfTokenPromise: Promise<string> | null = null;
 
-// Function to fetch CSRF token
+// Function to fetch CSRF token - DISABLED for PHP API compatibility
 const getCSRFToken = async (): Promise<string> => {
-  if (csrfTokenCache) {
-    return csrfTokenCache;
-  }
-  
-  if (csrfTokenPromise) {
-    return csrfTokenPromise;
-  }
-  
-  csrfTokenPromise = fetch(`${API_BASE_URL}/csrf`)
-    .then(response => response.json())
-    .then(data => {
-      csrfTokenCache = data.token;
-      csrfTokenPromise = null;
-      return data.token;
-    })
-    .catch(error => {
-      console.error('Failed to get CSRF token:', error);
-      csrfTokenPromise = null;
-      throw error;
-    });
-  
-  return csrfTokenPromise;
+  console.warn('CSRF token disabled for PHP API compatibility');
+  return 'disabled';
 };
 
 // Request interceptor to add auth token and CSRF token

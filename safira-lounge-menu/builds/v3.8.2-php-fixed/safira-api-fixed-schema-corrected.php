@@ -125,8 +125,6 @@ switch ($action) {
                     'image' => $cat['image_url'] ?? '',
                     'sortOrder' => $cat['sort_order'] ?? 0,
                     'isActive' => (bool)$cat['is_active'],
-                    'isMainCategory' => true, // Set all categories as main categories for now
-                    'parentPage' => '',
                     'items' => []
                 ];
 
@@ -280,9 +278,7 @@ switch ($action) {
                     ],
                     'image' => $image_url,
                     'sortOrder' => $sort_order,
-                    'isActive' => (bool)$is_active,
-                    'isMainCategory' => true,
-                    'parentPage' => ''
+                    'isActive' => (bool)$is_active
                 ]
             ]);
         } catch (Exception $e) {
@@ -371,9 +367,7 @@ switch ($action) {
                         ],
                         'image' => $image_url,
                         'sortOrder' => $sort_order,
-                        'isActive' => (bool)$is_active,
-                        'isMainCategory' => true,
-                        'parentPage' => ''
+                        'isActive' => (bool)$is_active
                     ]
                 ]);
             } else {

@@ -402,6 +402,12 @@ interface Category {
     da: string;
     en: string;
   };
+  description?: {
+    de: string;
+    da: string;
+    en: string;
+  };
+  icon?: string;
   image?: string;
   parentPage?: string;
   isMainCategory?: boolean;
@@ -413,7 +419,11 @@ interface CategoryFormData {
   name_de: string;
   name_da: string;
   name_en: string;
+  description_de: string;
+  description_da: string;
+  description_en: string;
   image: string;
+  icon: string;
   parentPage: string;
   isMainCategory: boolean;
 }
@@ -432,7 +442,11 @@ const CategoryManager: React.FC = () => {
     name_de: '',
     name_da: '',
     name_en: '',
+    description_de: '',
+    description_da: '',
+    description_en: '',
     image: '',
+    icon: 'fa-utensils',
     parentPage: '',
     isMainCategory: false
   });
@@ -480,7 +494,11 @@ const CategoryManager: React.FC = () => {
       name_de: '',
       name_da: '',
       name_en: '',
+      description_de: '',
+      description_da: '',
+      description_en: '',
       image: '',
+      icon: 'fa-utensils',
       parentPage: '',
       isMainCategory: false
     });
@@ -495,7 +513,11 @@ const CategoryManager: React.FC = () => {
       name_de: category.name.de,
       name_da: category.name.da,
       name_en: category.name.en,
+      description_de: category.description?.de || '',
+      description_da: category.description?.da || '',
+      description_en: category.description?.en || '',
       image: category.image || '',
+      icon: category.icon || 'fa-utensils',
       parentPage: category.parentPage || '',
       isMainCategory: category.isMainCategory || false
     });
@@ -510,42 +532,30 @@ const CategoryManager: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      
-      // Get CSRF token first
-      const csrfResponse = await fetch('/api/csrf', {
-        method: 'GET',
-        credentials: 'include',
+
+      if (!token) {
+        alert('Nicht angemeldet. Bitte anmelden.');
+        return;
+      }
+
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const response = await fetch(`${API_URL}?action=delete_category&id=${categoryId}`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
         }
       });
-      
-      if (!csrfResponse.ok) {
-        throw new Error('Failed to get CSRF token');
-      }
-      
-      const csrfData = await csrfResponse.json();
-      
-      const response = await fetch(`/api/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-CSRF-Token': csrfData.token,
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include'
-      });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         await loadCategories();
-        alert('Kategorie erfolgreich gelöscht');
+        alert('Kategorie erfolgreich gelöscht!');
       } else {
-        const errorData = await response.json();
-        if (response.status === 400 && errorData.error?.includes('products')) {
+        if (response.status === 400 && result.error?.includes('products')) {
           alert('⚠️ Diese Kategorie kann nicht gelöscht werden, da sie noch Produkte enthält.\n\nBitte löschen oder verschieben Sie zuerst alle Produkte aus dieser Kategorie.');
         } else {
-          alert(`Fehler beim Löschen der Kategorie: ${errorData.error || 'Unbekannter Fehler'}`);
+          alert(`Fehler beim Löschen der Kategorie: ${result.error || 'Unbekannter Fehler'}`);
         }
       }
     } catch (error) {
@@ -570,79 +580,47 @@ const CategoryManager: React.FC = () => {
   const handleSaveCategory = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      
+
       if (!token) {
         alert('Nicht angemeldet. Bitte anmelden.');
         return;
       }
 
-      // Get CSRF token from correct endpoint
-      let csrfToken = '';
-      try {
-        const csrfResponse = await fetch('/api/csrf', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (csrfResponse.ok) {
-          const csrfData = await csrfResponse.json();
-          csrfToken = csrfData.token;
-        }
-      } catch (csrfError) {
-        console.warn('Could not fetch CSRF token:', csrfError);
-        // Continue without CSRF token as the server might handle this differently
-      }
-
       const categoryData = {
-        id: formData.id,
         name: {
           de: formData.name_de,
           da: formData.name_da,
           en: formData.name_en
         },
-        image: formData.image || '/images/placeholder-category.jpg',
-        parentPage: formData.isMainCategory ? undefined : formData.parentPage,
-        isMainCategory: formData.isMainCategory,
-        items: editingCategory?.items || []
+        description: {
+          de: formData.description_de || '',
+          da: formData.description_da || '',
+          en: formData.description_en || ''
+        },
+        icon: formData.icon || 'fa-utensils'
       };
 
-      const url = editingCategory ? `/api/categories/${editingCategory.id}` : '/api/categories';
-      const method = editingCategory ? 'PUT' : 'POST';
-
-      const headers: any = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-Requested-With': 'XMLHttpRequest'
-      };
-
-      // Add CSRF token if available
-      if (csrfToken) {
-        headers['X-CSRF-Token'] = csrfToken;
-      }
-
-      console.log('Sending request:', { url, method, headers: Object.keys(headers), categoryData });
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const action = editingCategory ? 'update_category' : 'create_category';
+      const url = editingCategory ? `${API_URL}?action=${action}&id=${editingCategory.id}` : `${API_URL}?action=${action}`;
 
       const response = await fetch(url, {
-        method,
-        headers,
-        credentials: 'include',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(categoryData)
       });
 
-      console.log('Response status:', response.status);
+      const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
         setShowModal(false);
         await loadCategories();
-        alert('Kategorie erfolgreich gespeichert!');
+        alert(editingCategory ? 'Kategorie erfolgreich aktualisiert!' : 'Kategorie erfolgreich erstellt!');
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Save error:', response.status, errorData);
-        alert(`Fehler beim Speichern der Kategorie: ${errorData.error || `HTTP ${response.status}`}`);
+        alert(`Fehler beim Speichern der Kategorie: ${result.error || 'Unbekannter Fehler'}`);
       }
     } catch (error) {
       console.error('Error saving category:', error);
