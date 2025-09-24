@@ -265,7 +265,7 @@ const ProductList: React.FC<ProductListProps> = memo(({
     );
   }
 
-  console.log('ProductList - Received categories prop:', categories);
+  // Debug logging removed for performance
   
   return (
     <ListContainer>

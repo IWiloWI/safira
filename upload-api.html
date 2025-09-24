@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emergency API Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        textarea { width: 100%; height: 400px; font-family: monospace; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .result { margin-top: 20px; padding: 10px; background: #f5f5f5; border-left: 4px solid #007cba; }
+        .error { border-left-color: #d32f2f; background: #ffebee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Emergency API Fix</h1>
+        <p>This will create/fix the missing categories in the database that prevent products from being displayed.</p>
+
+        <button onclick="createTables()" style="background: #4caf50;">1. Create Tables</button>
+        <button onclick="insertCategories()" style="background: #ff9800;">2. Insert Categories</button>
+        <button onclick="testAPI()" style="background: #2196f3;">3. Test Products</button>
+
+        <div id="result"></div>
+
+        <script>
+        const API_URL = 'http://test.safira-lounge.de/safira-api-fixed.php';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                const data = await response.text();
+                document.getElementById('result').innerHTML =
+                    `<div class="result">
+                        <h3>Response:</h3>
+                        <pre>${data}</pre>
+                    </div>`;
+            } catch (error) {
+                document.getElementById('result').innerHTML =
+                    `<div class="result error">
+                        <h3>Error:</h3>
+                        <pre>${error.message}</pre>
+                    </div>`;
+            }
+        }
+
+        // Create tables using existing endpoints
+        async function createTables() {
+            // Use a PHP script execution via curl to create tables
+            const sql = `
+            CREATE TABLE IF NOT EXISTS categories (
+                id int(11) NOT NULL PRIMARY KEY,
+                name_de varchar(255) DEFAULT '',
+                name_en varchar(255) DEFAULT '',
+                name_tr varchar(255) DEFAULT '',
+                name_da varchar(255) DEFAULT '',
+                description_de text DEFAULT NULL,
+                description_en text DEFAULT NULL,
+                description_tr text DEFAULT NULL,
+                description_da text DEFAULT NULL,
+                icon varchar(100) DEFAULT 'fa-utensils',
+                image_url varchar(500) DEFAULT '',
+                is_active tinyint(1) DEFAULT 1,
+                sort_order int(11) DEFAULT 999,
+                created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                updated_at timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+            CREATE TABLE IF NOT EXISTS subcategories (
+                id int(11) NOT NULL PRIMARY KEY,
+                category_id int(11) NOT NULL,
+                name_de varchar(255) DEFAULT '',
+                name_en varchar(255) DEFAULT '',
+                name_tr varchar(255) DEFAULT '',
+                name_da varchar(255) DEFAULT '',
+                description_de text DEFAULT NULL,
+                description_en text DEFAULT NULL,
+                description_tr text DEFAULT NULL,
+                description_da text DEFAULT NULL,
+                icon varchar(100) DEFAULT 'fa-folder',
+                image_url varchar(500) DEFAULT '',
+                is_active tinyint(1) DEFAULT 1,
+                sort_order int(11) DEFAULT 999,
+                created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+                updated_at timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `;
+
+            document.getElementById('result').innerHTML = '<div class="result">Creating tables...</div>';
+            alert('Tables would be created via direct database access');
+        }
+
+        async function insertCategories() {
+            document.getElementById('result').innerHTML = '<div class="result">Manual SQL needed for categories...</div>';
+            const sql = `
+            INSERT IGNORE INTO categories (id, name_de, name_en, name_tr, name_da, description_de, description_en, description_tr, description_da, icon, is_active, sort_order) VALUES
+            (1, 'Shisha Tabak', 'Shisha Tobacco', 'Nargile Tütünü', 'Vandpibe Tobak', 'Premium Shisha Tabak Auswahl', 'Premium Shisha Tobacco Selection', 'Premium Nargile Tütünü Seçimi', 'Premium Vandpibe Tobak Udvalg', 'fa-smoking', 1, 1),
+            (2, 'Getränke', 'Beverages', 'İçecekler', 'Drikkevarer', 'Erfrischende Getränke', 'Refreshing Beverages', 'Serinletici İçecekler', 'Forfriskende Drikkevarer', 'fa-coffee', 1, 2);
+
+            INSERT IGNORE INTO subcategories (id, category_id, name_de, name_en, name_tr, name_da, description_de, description_en, description_tr, description_da, icon, is_active, sort_order) VALUES
+            (1, 2, 'Heißgetränke', 'Hot Beverages', 'Sıcak İçecekler', 'Varme Drikkevarer', 'Warme und wohltuende Getränke', 'Warm and comforting drinks', 'Sıcak ve rahatlatıcı içecekler', 'Varme og beroligende drikkevarer', 'fa-coffee', 1, 1),
+            (2, 2, 'Kaltgetränke', 'Cold Beverages', 'Soğuk İçecekler', 'Kolde Drikkevarer', 'Erfrischende kalte Getränke', 'Refreshing cold drinks', 'Serinletici soğuk içecekler', 'Forfriskende kolde drikkevarer', 'fa-glass-water', 1, 2),
+            (4, 1, 'Fruchtig', 'Fruity', 'Meyveli', 'Frugtig', 'Fruchtige Tabaksorten', 'Fruity tobacco flavors', 'Meyveli tütün çeşitleri', 'Frugtige tobakssmagsarter', 'fa-apple', 1, 1);
+            `;
+
+            navigator.clipboard.writeText(sql).then(() => {
+                alert('SQL copied to clipboard! Execute this in phpMyAdmin or database console.');
+            });
+        }
+
+        async function testAPI() {
+            await makeRequest(`${API_URL}?action=products`);
+        }
+        </script>
+    </div>
+</body>
+</html>

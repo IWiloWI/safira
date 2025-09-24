@@ -164,8 +164,12 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
   const removeProduct = useCallback(async (categoryId: string, productId: string) => {
     try {
       setIsLoading(true);
+      console.log(`🗑️ Attempting to delete product ID: ${productId} from category: ${categoryId}`);
+
+      // Call the API delete endpoint
       await deleteProduct(categoryId, productId);
-      
+      console.log(`✅ Product ${productId} successfully deleted from API`);
+
       // Track the activity
       try {
         await trackEvent('product_deleted', {

@@ -117,13 +117,18 @@ class DatabaseService {
       // Transform database data to match frontend format
       return (categories as DatabaseCategory[]).map(cat => {
         const categoryProducts = (products as DatabaseProduct[]).filter(p => p.category_id === cat.id);
-        return {
+        const result: Category = {
           id: cat.id,
           name: this.parseJsonField(cat.name),
           icon: cat.icon,
-          description: cat.description ? this.parseJsonField(cat.description) : undefined,
           items: categoryProducts.map(p => this.transformDatabaseProduct(p))
         };
+
+        if (cat.description) {
+          result.description = this.parseJsonField(cat.description);
+        }
+
+        return result;
       });
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -383,14 +388,22 @@ class DatabaseService {
    * Transform database product to application format
    */
   private transformDatabaseProduct(dbProduct: DatabaseProduct): Product {
-    return {
+    const result: Product = {
       id: dbProduct.id,
       name: this.parseJsonField(dbProduct.name),
-      description: dbProduct.description ? this.parseJsonField(dbProduct.description) : undefined,
       price: parseFloat(dbProduct.price.toString()),
-      imageUrl: dbProduct.image_url || undefined,
       available: Boolean(dbProduct.available)
     };
+
+    if (dbProduct.description) {
+      result.description = this.parseJsonField(dbProduct.description);
+    }
+
+    if (dbProduct.image_url) {
+      result.imageUrl = dbProduct.image_url;
+    }
+
+    return result;
   }
 
   /**

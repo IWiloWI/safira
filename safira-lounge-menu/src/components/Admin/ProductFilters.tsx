@@ -300,8 +300,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = memo(({
           <option value="unassigned">Nicht zugeordnet</option>
           {(() => {
             const filteredCats = categories.filter(cat => !cat.isMainCategory);
-            console.log('ProductFilters - Rendering categories:', categories);
-            console.log('ProductFilters - Filtered subcategories:', filteredCats);
+            // Debug logging removed for performance
             return filteredCats.map(cat => (
               <option key={cat.id} value={cat.id}>
                 {getCategoryName(cat)}

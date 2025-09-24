@@ -331,14 +331,14 @@ const ProductManagerContainer: React.FC = () => {
         const data = await mainCategoriesResponse.json();
         const allCategories = data.categories || [];
         
-        console.log('ProductManagerContainer - API Response:', allCategories);
+        // Debug logging removed for performance
         
         // Filter only subcategories (not main categories) - same as SubcategoryManager
         const subCats = allCategories.filter((cat: any) => cat.isMainCategory !== true);
-        console.log('ProductManagerContainer - Filtered subcategories:', subCats);
+        // Debug logging removed for performance
         
         setSubcategories(subCats);
-        console.log('ProductManagerContainer - Final subcategories state:', subCats);
+        // Debug logging removed for performance
         showNotification('Kategorien geladen', 'success');
       } else {
         console.error('Failed to load categories:', mainCategoriesResponse.status);
@@ -375,9 +375,11 @@ const ProductManagerContainer: React.FC = () => {
 
   const confirmDeleteProduct = async () => {
     if (!productToDelete) return;
-    
+
     try {
       await removeProduct(productToDelete.categoryId!, productToDelete.id);
+      // Force reload products to update UI after deletion
+      await loadProducts();
       showNotification('Product successfully deleted!', 'success');
     } catch (error) {
       showNotification('Failed to delete product. Please try again.', 'error');

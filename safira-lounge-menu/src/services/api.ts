@@ -208,16 +208,46 @@ export const updateProducts = async (products: ProductData): Promise<ProductData
 };
 
 export const addProduct = async (
-  categoryId: string, 
-  product: ProductCreateData, 
+  categoryId: string,
+  product: ProductCreateData,
   translationOptions?: { translateName: boolean; translateDescription: boolean }
 ): Promise<Product> => {
+  // Handle subcategory ID format (subcat_X -> category_id + subcategory_id)
+  let actualCategoryId = categoryId;
+  let actualSubcategoryId = null;
+
+  if (categoryId.startsWith('subcat_')) {
+    // Map subcategory IDs to their parent categories
+    const subcatNumber = categoryId.replace('subcat_', '');
+    const subcategoryMap: Record<string, {categoryId: string, subcategoryId: string}> = {
+      '1': { categoryId: '2', subcategoryId: '1' }, // Heiße Getränke -> Getränke
+      '2': { categoryId: '2', subcategoryId: '2' }, // Kalte Getränke -> Getränke
+      '3': { categoryId: '2', subcategoryId: '3' }, // Softdrinks -> Getränke
+      '4': { categoryId: '1', subcategoryId: '4' }, // Fruchtig -> Shisha Tabak
+      '5': { categoryId: '1', subcategoryId: '5' }, // Minzig -> Shisha Tabak
+    };
+
+    const mapping = subcategoryMap[subcatNumber];
+    if (mapping) {
+      actualCategoryId = mapping.categoryId;
+      actualSubcategoryId = mapping.subcategoryId;
+    }
+  }
+
   const requestData = {
     ...product,
+    category_id: actualCategoryId,
+    subcategory_id: actualSubcategoryId,
     ...(translationOptions && { translationOptions })
   };
-  const response = await api.post<CreateProductResponse>(`/products/${categoryId}/items`, requestData);
-  return response.data.data!.product;
+
+  console.log(`🆕 API: Creating product in category ${categoryId}`);
+  console.log(`🔗 URL: ${API_BASE_URL}?action=create_product`);
+
+  // PHP API uses query parameters for create action
+  const response = await api.post<any>(`?action=create_product`, requestData);
+  const data = response.data.data || response.data;
+  return data.product || data;
 };
 
 export const updateProduct = async (categoryId: string, itemId: string, product: ProductUpdateData): Promise<Product> => {
@@ -228,8 +258,22 @@ export const updateProduct = async (categoryId: string, itemId: string, product:
 };
 
 export const deleteProduct = async (categoryId: string, itemId: string): Promise<void> => {
-  // PHP API uses direct product ID in URL, not categoryId/itemId
-  await api.delete<DeleteProductResponse>(`/products/${itemId}`);
+  try {
+    console.log(`🔥 API: Sending DELETE request for product ${itemId}`);
+    console.log(`🔗 URL: ${API_BASE_URL}?action=delete_product&id=${itemId}`);
+
+    // PHP API uses query parameters for delete action
+    const response = await api.delete<DeleteProductResponse>(`?action=delete_product&id=${itemId}`);
+    console.log(`✅ API: DELETE response received:`, response);
+
+    // Check if response indicates success
+    if (response.status && response.status >= 400) {
+      throw new Error(`API returned error status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`❌ API: Failed to delete product ${itemId}:`, error);
+    throw error;
+  }
 };
 
 export const moveProduct = async (fromCategoryId: string, itemId: string, toCategoryId: string): Promise<Product> => {
