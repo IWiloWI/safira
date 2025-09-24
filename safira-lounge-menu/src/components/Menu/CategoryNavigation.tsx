@@ -127,8 +127,44 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
    */
   const currentSubcategories = useMemo(() => {
     if (!selectedMainCategory) return [];
-    
+
+    // First, try to find the main category and use its subcategories array
+    const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
+
+    if (mainCategory && mainCategory.subcategories && mainCategory.subcategories.length > 0) {
+      // Use the subcategories array from the main category
+      console.log('[CategoryNavigation] Found subcategories in main category:', mainCategory.subcategories);
+      const subcategories = mainCategory.subcategories.map(subcat => ({
+        ...subcat,
+        // Ensure we have proper structure for SubcategoryTabs
+        id: `subcat_${subcat.id}`, // Map to subcat_4, subcat_5 format that SubcategoryTabs expects
+        isMainCategory: false,
+        parentPage: selectedMainCategory,
+        items: subcat.items || []
+      }));
+
+      // Add "Alle" option at the beginning
+      return [
+        {
+          id: 'all',
+          name: {
+            de: 'Alle',
+            da: 'Alle',
+            en: 'All',
+            tr: 'Hepsi',
+            it: 'Tutti'
+          },
+          isMainCategory: false,
+          parentPage: selectedMainCategory,
+          items: []
+        },
+        ...subcategories
+      ];
+    }
+
+    // Fallback: use the old method for backwards compatibility
     const subcategoryIds = getCategoryIdsForMainCategory(selectedMainCategory);
+    console.log('[CategoryNavigation] Fallback: using subcategory IDs:', subcategoryIds);
     return categories.filter(cat => subcategoryIds.includes(cat.id));
   }, [selectedMainCategory, categories, getCategoryIdsForMainCategory]);
 
@@ -181,6 +217,7 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
         language={language}
         scrollable
         mainCategoryId={selectedMainCategory}
+        filterMode={true}
       />
     );
   };

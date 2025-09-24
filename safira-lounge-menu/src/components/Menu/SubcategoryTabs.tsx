@@ -185,6 +185,8 @@ interface SubcategoryTabsProps {
   language: string;
   scrollable?: boolean;
   mainCategoryId?: string;
+  /** Whether this is used for filtering instead of navigation */
+  filterMode?: boolean;
 }
 
 const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
@@ -193,7 +195,8 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
   onCategoryChange,
   language,
   scrollable = true,
-  mainCategoryId = ''
+  mainCategoryId = '',
+  filterMode = false
 }) => {
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
   const activeTabRef = useRef<HTMLButtonElement>(null);
@@ -206,6 +209,17 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
   };
 
   const getMainCategoryTitle = () => {
+    // Map category IDs to display names
+    const categoryIdMapping: Record<string, string> = {
+      '1': 'shisha',    // Category ID 1 = Shisha Tabak
+      '2': 'drinks',    // Category ID 2 = Getränke
+      '3': 'snacks',    // Category ID 3 = Snacks
+      'menus': 'menus', // Keep menus as is
+      'shisha': 'shisha',
+      'drinks': 'drinks',
+      'snacks': 'snacks'
+    };
+
     const titles: Record<string, Record<string, string>> = {
       drinks: {
         de: 'Getränke-Kategorien',
@@ -216,7 +230,7 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       },
       shisha: {
         de: 'Shisha-Kategorien',
-        da: 'Shisha-kategorier', 
+        da: 'Shisha-kategorier',
         en: 'Shisha Categories',
         tr: 'Shisha Kategorileri',
         it: 'Categorie Shisha'
@@ -237,7 +251,9 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       }
     };
 
-    const categoryTitles = titles[mainCategoryId] || titles.drinks;
+    // Map the category ID to the correct key
+    const mappedCategoryId = categoryIdMapping[mainCategoryId] || 'drinks';
+    const categoryTitles = titles[mappedCategoryId] || titles.drinks;
     return categoryTitles[language] || categoryTitles.de;
   };
 
@@ -298,9 +314,11 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
       <TabsHeader>
         <TabsTitle>{getMainCategoryTitle()}</TabsTitle>
         <TabsSubtitle>
-          {hasScrollableContent 
-            ? "Tabs scrollen: hier wischen • Kategorie wechseln: außerhalb der Tabs wischen" 
-            : "Kategorie wechseln: links/rechts wischen oder Tab antippen"}
+          {filterMode
+            ? "Wähle eine Kategorie zum Filtern der Produkte"
+            : hasScrollableContent
+              ? "Tabs scrollen: hier wischen • Kategorie wechseln: außerhalb der Tabs wischen"
+              : "Kategorie wechseln: links/rechts wischen oder Tab antippen"}
         </TabsSubtitle>
       </TabsHeader>
       

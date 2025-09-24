@@ -3,7 +3,7 @@
  * Main orchestration component that coordinates all menu functionality
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -139,6 +139,9 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     searchQuery: ''
   });
 
+  // Subcategory filter state (separate from navigation)
+  const [activeSubcategoryFilter, setActiveSubcategoryFilter] = useState<string>('all');
+
   /**
    * Initialize menu data
    */
@@ -247,6 +250,11 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     getCategoryIdsForMainCategory
   });
 
+  // Reset subcategory filter when main category changes
+  useEffect(() => {
+    setActiveSubcategoryFilter('all');
+  }, [selectedMainCategory]);
+
   /**
    * Initialize search and filtering
    */
@@ -276,6 +284,15 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [setSearchQuery]);
 
   /**
+   * Handle subcategory filter change (not navigation)
+   */
+  const handleSubcategoryFilterChange = useCallback((subcategoryId: string) => {
+    console.log('[MenuPageContainer] Subcategory filter changed to:', subcategoryId);
+    setActiveSubcategoryFilter(subcategoryId);
+    // Don't navigate - this is just filtering
+  }, []);
+
+  /**
    * Handle product click
    */
   const handleProductClick = useCallback((product: Product) => {
@@ -298,17 +315,66 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [selectedMainCategory, selectedCategory]);
 
   /**
+   * Get all products from current main category including subcategories
+   */
+  const allMainCategoryProducts = useMemo(() => {
+    if (!selectedMainCategory) return [];
+
+    // Find the main category
+    const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
+    if (!mainCategory) return [];
+
+    // Collect all products from main category and its subcategories
+    let allProducts: Product[] = [...(mainCategory.items || [])];
+
+    if (mainCategory.subcategories) {
+      mainCategory.subcategories.forEach(subcat => {
+        if (subcat.items) {
+          // Add subcategory ID to products for filtering
+          const subcatProducts = subcat.items.map(product => ({
+            ...product,
+            subcategoryId: subcat.id,
+            subcategoryName: subcat.name
+          }));
+          allProducts = allProducts.concat(subcatProducts);
+        }
+      });
+    }
+
+    return allProducts;
+  }, [selectedMainCategory, categories]);
+
+  /**
+   * Filter products by active subcategory filter
+   */
+  const subcategoryFilteredProducts = useMemo(() => {
+    if (!selectedMainCategory || activeSubcategoryFilter === 'all') {
+      return allMainCategoryProducts;
+    }
+
+    // Extract the actual subcategory ID (remove subcat_ prefix if present)
+    const subcategoryId = activeSubcategoryFilter.replace('subcat_', '');
+    console.log('[MenuPageContainer] Filtering by subcategory ID:', subcategoryId);
+
+    return allMainCategoryProducts.filter(product => {
+      const hasSubcategoryId = (product as any).subcategoryId === subcategoryId;
+      console.log(`Product ${product.name} has subcategoryId: ${(product as any).subcategoryId}, matches: ${hasSubcategoryId}`);
+      return hasSubcategoryId;
+    });
+  }, [allMainCategoryProducts, selectedMainCategory, activeSubcategoryFilter]);
+
+  /**
    * Get available brands for filtering
    */
   const availableBrands = useMemo(() => {
     const brands = new Set<string>();
-    filteredProducts.forEach(product => {
+    subcategoryFilteredProducts.forEach(product => {
       if (product.brand) {
         brands.add(product.brand);
       }
     });
     return Array.from(brands).sort();
-  }, [filteredProducts]);
+  }, [subcategoryFilteredProducts]);
 
   /**
    * Get current categories for filtering
@@ -462,18 +528,18 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           mainCategories={enhancedMainCategories}
           categories={categories}
           selectedMainCategory={selectedMainCategory}
-          selectedCategory={selectedCategory}
+          selectedCategory={activeSubcategoryFilter}
           onMainCategoryChange={handleMainCategoryChange}
-          onCategoryChange={handleCategoryChange}
+          onCategoryChange={handleSubcategoryFilterChange}
           language={language}
           getCategoryIdsForMainCategory={getCategoryIdsForMainCategory}
           showMainCategories={false}
           showSubcategories
         />
-        
+
         {/* Product Grid */}
         <ProductGrid
-          products={filteredProducts}
+          products={subcategoryFilteredProducts}
           language={language}
           isLoading={isLoading}
           error={error}

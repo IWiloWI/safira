@@ -123,12 +123,16 @@ export interface Category extends BaseEntity {
   image?: string;
   /** Products in this category */
   items: Product[];
+  /** Subcategories nested within this category */
+  subcategories?: Category[];
   /** Parent category ID for subcategories */
   parentPage?: string;
   /** Whether this is a main category (shows on home page) */
   isMainCategory?: boolean;
   /** Display order for sorting */
   order?: number;
+  /** Display order within parent category */
+  sortOrder?: number;
   /** Whether category is visible to customers */
   visible?: boolean;
   /** Category color theme */
