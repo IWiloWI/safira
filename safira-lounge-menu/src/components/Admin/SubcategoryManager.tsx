@@ -603,6 +603,8 @@ interface Category {
   icon: string;
   parentPage?: string;
   items?: any[];
+  isMainCategory?: boolean;
+  subcategories?: Category[];
 }
 
 interface MainCategory {
@@ -706,12 +708,23 @@ const SubcategoryManager: React.FC = () => {
   };
 
   const filteredSubcategories = useMemo(() => {
+    // Find the selected main category
+    const selectedMainCat = categories.find(cat =>
+      cat.id === selectedMainCategory && cat.isMainCategory === true
+    );
+
+    // Return subcategories from the main category if available
+    if (selectedMainCat && selectedMainCat.subcategories) {
+      return selectedMainCat.subcategories;
+    }
+
+    // Fallback: filter categories with parentPage matching selectedMainCategory
     return categories.filter(cat => {
       if (cat.parentPage) {
         return cat.parentPage === selectedMainCategory;
       }
-      
-      // Fallback for existing categories without parentPage
+
+      // Legacy fallback for existing categories without parentPage
       const defaultMappings: { [key: string]: string[] } = {
         'drinks': ['softdrinks', 'eistee-energy', 'tee-kaffee', 'saefte', 'cocktails-mocktails', 'spirituosen', 'wein-sekt', 'flaschenbier'],
         'shisha': ['shisha-standard', 'shisha-plus', 'shisha-traditionell'],
