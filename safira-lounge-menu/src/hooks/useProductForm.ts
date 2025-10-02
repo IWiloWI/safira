@@ -159,13 +159,11 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
     function parseMenuItems(menuContents?: string): MenuPackageItem[] {
       if (!menuContents) return [];
       const lines = menuContents.split('\n').filter(line => line.trim());
-      return lines.map(line => {
-        const match = line.match(/^(\d+)x?\s*(.+)$/);
-        if (match) {
-          return { quantity: match[1], name: match[2].trim() };
-        }
-        return { quantity: '1', name: line.trim() };
-      });
+      // Only store the name/description, no quantity needed
+      return lines.map(line => ({
+        quantity: '1', // Keep quantity field for backward compatibility, but don't use it
+        name: line.trim()
+      }));
     }
 
     setFormData(loadedData);
@@ -177,48 +175,93 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Validate form data
    */
   const validateForm = useCallback(() => {
+    console.log('🔍 ========== VALIDATION START ==========');
+    console.log('📋 Form Data:', JSON.stringify(formData, null, 2));
+
     const errors: Record<string, string> = {};
 
     // Required field validation
+    console.log('✅ Checking name:', formData.name);
     if (!formData.name.trim()) {
       errors.name = 'Product name is required';
+      console.error('❌ VALIDATION FAILED: Name is empty');
+    } else {
+      console.log('✅ Name is valid:', formData.name);
     }
 
+    console.log('✅ Checking category:', formData.category);
     if (!formData.category) {
       errors.category = 'Category is required';
+      console.error('❌ VALIDATION FAILED: Category is empty');
+    } else {
+      console.log('✅ Category is valid:', formData.category);
     }
 
     // Price validation
     if (formData.price) {
+      console.log('✅ Checking price:', formData.price);
       const price = parseFloat(formData.price);
       if (isNaN(price) || price < 0) {
         errors.price = 'Price must be a valid positive number';
+        console.error('❌ VALIDATION FAILED: Price is invalid:', price);
+      } else {
+        console.log('✅ Price is valid:', price);
       }
     }
 
     // Brand validation for tobacco products
-    if (formData.isTobacco && !formData.brand) {
-      errors.brand = 'Brand is required for tobacco products';
+    if (formData.isTobacco) {
+      console.log('🚬 Tobacco product detected, checking brand:', formData.brand);
+      if (!formData.brand) {
+        errors.brand = 'Brand is required for tobacco products';
+        console.error('❌ VALIDATION FAILED: Brand is required for tobacco products');
+      } else {
+        console.log('✅ Brand is valid:', formData.brand);
+      }
     }
 
     // Menu contents validation for menu packages
-    if (formData.isMenuPackage && (!formData.menuContents || formData.menuContents.trim().length === 0)) {
-      errors.menuContents = 'Menu contents are required for menu packages';
+    if (formData.isMenuPackage) {
+      console.log('📋 Menu Package detected');
+      console.log('📋 Menu Items Array:', formData.menuItems);
+      console.log('📋 Menu Items Count:', formData.menuItems.length);
+      console.log('📋 Menu Contents String:', formData.menuContents);
+
+      const validMenuItems = formData.menuItems.filter(item => item.name.trim().length > 0);
+      console.log('📋 Valid Menu Items (non-empty):', validMenuItems);
+      console.log('📋 Valid Menu Items Count:', validMenuItems.length);
+
+      if (validMenuItems.length === 0) {
+        errors.menuContents = 'Menu contents are required for menu packages';
+        console.error('❌ VALIDATION FAILED: No valid menu items found');
+        console.error('❌ menuItems array:', formData.menuItems);
+        console.error('❌ menuContents string:', formData.menuContents);
+      } else {
+        console.log('✅ Menu contents are valid:', validMenuItems);
+      }
     }
 
     // Name length validation
     if (formData.name.length > 100) {
       errors.name = 'Product name cannot exceed 100 characters';
+      console.error('❌ VALIDATION FAILED: Name too long:', formData.name.length);
     }
 
     // Description length validation
     if (formData.description.length > 500) {
       errors.description = 'Description cannot exceed 500 characters';
+      console.error('❌ VALIDATION FAILED: Description too long:', formData.description.length);
     }
 
     const isValid = Object.keys(errors).length === 0;
+
+    console.log('🔍 ========== VALIDATION RESULT ==========');
+    console.log('✅ Is Valid:', isValid);
+    console.log('❌ Errors:', errors);
+    console.log('🔍 ========================================');
+
     setValidation({ isValid, errors });
-    
+
     return isValid;
   }, [formData]);
 
@@ -226,10 +269,10 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Get form data as product create/update object
    */
   const getFormData = useCallback((): ProductCreateData | ProductUpdateData => {
-    // Convert menuItems array to formatted string
+    // Convert menuItems array to formatted string (only descriptions, no quantity)
     const packageItemsString = formData.menuItems
       .filter(item => item.name.trim())
-      .map(item => `${item.quantity}x ${item.name}`)
+      .map(item => item.name)
       .join('\n');
 
     const data: any = {
@@ -341,39 +384,88 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Add a new menu item
    */
   const addMenuItem = useCallback(() => {
+    console.log('➕ ADD MENU ITEM - Creating new empty item');
+
     const newItem: MenuPackageItem = {
       name: '',
       quantity: '1'
     };
 
-    setFormData(prev => ({
-      ...prev,
-      menuItems: [...prev.menuItems, newItem]
-    }));
+    setFormData(prev => {
+      const newItems = [...prev.menuItems, newItem];
+      console.log('📋 After adding - Total items:', newItems.length);
+      console.log('📋 All items:', newItems);
+
+      const menuContentsString = newItems
+        .filter(item => item.name.trim())
+        .map(item => item.name)
+        .join('\n');
+
+      console.log('📋 Generated menuContents:', menuContentsString);
+
+      return {
+        ...prev,
+        menuItems: newItems,
+        menuContents: menuContentsString
+      };
+    });
   }, []);
 
   /**
    * Remove a menu item by index
    */
   const removeMenuItem = useCallback((index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      menuItems: prev.menuItems.filter((_, i) => i !== index)
-    }));
+    console.log(`🗑️ REMOVE MENU ITEM - Index: ${index}`);
+
+    setFormData(prev => {
+      console.log('📋 Before removal - Items:', prev.menuItems);
+
+      const newItems = prev.menuItems.filter((_, i) => i !== index);
+      console.log('📋 After removal - Remaining items:', newItems);
+
+      const menuContentsString = newItems
+        .filter(item => item.name.trim())
+        .map(item => item.name)
+        .join('\n');
+
+      console.log('📋 Generated menuContents:', menuContentsString);
+
+      return {
+        ...prev,
+        menuItems: newItems,
+        menuContents: menuContentsString
+      };
+    });
   }, []);
 
   /**
    * Update a specific menu item field
    */
   const updateMenuItem = useCallback((index: number, field: keyof MenuPackageItem, value: any) => {
+    console.log(`🔄 UPDATE MENU ITEM - Index: ${index}, Field: ${field}, Value:`, value);
+
     setFormData(prev => {
       const newItems = [...prev.menuItems];
+      console.log('📋 Before update - Items:', newItems);
+
       if (newItems[index]) {
         newItems[index] = { ...newItems[index], [field]: value };
+        console.log('📋 After update - Updated item:', newItems[index]);
       }
+
+      // Auto-update menuContents from menuItems
+      const menuContentsString = newItems
+        .filter(item => item.name.trim())
+        .map(item => item.name)
+        .join('\n');
+
+      console.log('📋 Generated menuContents:', menuContentsString);
+      console.log('📋 All items after update:', newItems);
+
       return {
         ...prev,
-        menuItems: newItems
+        menuItems: newItems,
+        menuContents: menuContentsString
       };
     });
   }, []);

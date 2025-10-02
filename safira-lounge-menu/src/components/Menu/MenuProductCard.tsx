@@ -42,7 +42,7 @@ const ProductName = styled.h3`
   font-family: 'Aldrich', sans-serif;
   color: white;
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: normal;
   white-space: nowrap;
   overflow: hidden;
@@ -52,13 +52,13 @@ const ProductName = styled.h3`
 const ProductPrice = styled.div`
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-left: 20px;
 `;
 
 const ProductDescription = styled.div`
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
+  font-size: 1rem;
   margin-top: 5px;
   font-family: 'Aldrich', sans-serif;
 `;
@@ -202,20 +202,22 @@ const VariantItem = styled.div`
   justify-content: space-between;
   align-items: center;
   font-family: 'Aldrich', sans-serif;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
-  padding: 6px 0;
+  padding: 4px 0;
 `;
 
 const VariantSize = styled.span`
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
+  font-size: 1rem;
 `;
 
 const VariantPrice = styled.span`
   color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 1rem;
 `;
 
 const PriceRange = styled.span`
@@ -223,6 +225,29 @@ const PriceRange = styled.span`
   font-weight: 600;
   text-shadow: 0 0 8px rgba(255, 65, 251, 0.3);
   font-size: 0.9rem;
+`;
+
+const MenuItemsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+`;
+
+const MenuItem = styled.div`
+  display: flex;
+  align-items: center;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 2px 0;
+
+  &::before {
+    content: '▸';
+    color: #FF41FB;
+    margin-right: 8px;
+    font-size: 0.9rem;
+  }
 `;
 
 // Component interfaces
@@ -367,6 +392,47 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
   };
 
   /**
+   * Get menu package items
+   */
+  const getMenuItems = (): string[] => {
+    if (!product.isMenuPackage || !product.menuContents) {
+      return [];
+    }
+
+    console.log('🔍 DEBUG - Menu Contents:', product.menuContents);
+    console.log('🔍 DEBUG - Type of menuContents:', typeof product.menuContents);
+
+    // Handle if menuContents is a JSON string
+    if (typeof product.menuContents === 'string') {
+      try {
+        // Try to parse as JSON first (in case it's an array of objects)
+        const parsed = JSON.parse(product.menuContents);
+        console.log('🔍 DEBUG - Parsed as JSON:', parsed);
+
+        if (Array.isArray(parsed)) {
+          // Extract descriptions from array of objects
+          return parsed.map(item => {
+            if (typeof item === 'object' && item !== null) {
+              // Try different possible field names
+              return item.description_de || item.name || item.description || item.id || JSON.stringify(item);
+            }
+            return String(item);
+          }).filter(item => item && item.length > 0);
+        }
+      } catch (e) {
+        console.log('🔍 DEBUG - Not JSON, treating as plain text');
+        // Not JSON, treat as plain text with newlines
+        return product.menuContents
+          .split('\n')
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
+      }
+    }
+
+    return [];
+  };
+
+  /**
    * Handle click
    */
   const handleClick = () => {
@@ -374,6 +440,8 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
       onClick(product);
     }
   };
+
+  const menuItems = getMenuItems();
 
   return (
     <ProductListItem
@@ -432,6 +500,17 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
             </VariantItem>
           ))}
         </VariantsContainer>
+      )}
+
+      {/* Show menu package items if available */}
+      {menuItems.length > 0 && (
+        <MenuItemsContainer>
+          {menuItems.map((item, index) => (
+            <MenuItem key={index}>
+              {item}
+            </MenuItem>
+          ))}
+        </MenuItemsContainer>
       )}
     </ProductListItem>
   );

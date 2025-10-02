@@ -98,7 +98,11 @@ function getAllProducts($dbh) {
                         'description' => json_decode($product['description'] ?? '{}'),
                         'price' => (float)$product['price'],
                         'imageUrl' => $product['image_url'],
-                        'available' => (bool)$product['available']
+                        'available' => (bool)$product['available'],
+                        'isTobacco' => (bool)($product['is_tobacco'] ?? false),
+                        'brand' => $product['brand'] ?? null,
+                        'isMenuPackage' => (bool)($product['is_menu_package'] ?? false),
+                        'menuContents' => $product['package_items'] ?? null
                     ];
                 }, array_values($categoryProducts))
             ];
@@ -133,7 +137,11 @@ function getProduct($dbh, $productId) {
             'price' => (float)$product['price'],
             'imageUrl' => $product['image_url'],
             'available' => (bool)$product['available'],
-            'categoryId' => $product['category_id']
+            'categoryId' => $product['category_id'],
+            'isTobacco' => (bool)($product['is_tobacco'] ?? false),
+            'brand' => $product['brand'] ?? null,
+            'isMenuPackage' => (bool)($product['is_menu_package'] ?? false),
+            'menuContents' => $product['package_items'] ?? null
         ];
 
         sendJson($result);
@@ -155,20 +163,35 @@ function addProduct($dbh, $categoryId) {
     }
 
     // Validate required fields
-    if (!isset($input['name']) || !isset($input['price'])) {
-        sendError('Name and price are required', 400);
+    if (!isset($input['name'])) {
+        sendError('Name is required', 400);
+    }
+
+    // Price is required unless it's a menu package with package items
+    $isMenuPackage = isset($input['is_menu_package']) && $input['is_menu_package'];
+    if (!$isMenuPackage && !isset($input['price'])) {
+        sendError('Price is required', 400);
+    }
+
+    // Package items are required for menu packages
+    if ($isMenuPackage && empty($input['package_items'])) {
+        sendError('Package items are required for menu packages', 400);
     }
 
     try {
-        $query = "INSERT INTO products (id, category_id, name, description, price, image_url, available)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO products (id, category_id, name, description, price, image_url, available, is_tobacco, brand, is_menu_package, package_items)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $productId = uniqid();
         $name = json_encode($input['name']);
         $description = json_encode($input['description'] ?? []);
-        $price = (float)$input['price'];
+        $price = isset($input['price']) ? (float)$input['price'] : null;
         $imageUrl = $input['imageUrl'] ?? null;
         $available = $input['available'] ?? true;
+        $isTobacco = isset($input['is_tobacco']) ? (int)$input['is_tobacco'] : 0;
+        $brand = $input['brand'] ?? null;
+        $isMenuPackage = isset($input['is_menu_package']) ? (int)$input['is_menu_package'] : 0;
+        $packageItems = $input['package_items'] ?? null;
 
         $stmt = $dbh->prepare($query);
         $stmt->execute([
@@ -178,7 +201,11 @@ function addProduct($dbh, $categoryId) {
             $description,
             $price,
             $imageUrl,
-            $available ? 1 : 0
+            $available ? 1 : 0,
+            $isTobacco,
+            $brand,
+            $isMenuPackage,
+            $packageItems
         ]);
 
         sendJson(['message' => 'Product added successfully', 'id' => $productId], 201);
@@ -215,7 +242,11 @@ function updateProduct($dbh, $productId) {
                   description = COALESCE(?, description),
                   price = COALESCE(?, price),
                   image_url = COALESCE(?, image_url),
-                  available = COALESCE(?, available)
+                  available = COALESCE(?, available),
+                  is_tobacco = COALESCE(?, is_tobacco),
+                  brand = COALESCE(?, brand),
+                  is_menu_package = COALESCE(?, is_menu_package),
+                  package_items = COALESCE(?, package_items)
                   WHERE id = ?";
 
         $name = isset($input['name']) ? json_encode($input['name']) : null;
@@ -223,6 +254,10 @@ function updateProduct($dbh, $productId) {
         $price = isset($input['price']) ? (float)$input['price'] : null;
         $imageUrl = $input['imageUrl'] ?? null;
         $available = isset($input['available']) ? ($input['available'] ? 1 : 0) : null;
+        $isTobacco = isset($input['is_tobacco']) ? (int)$input['is_tobacco'] : null;
+        $brand = $input['brand'] ?? null;
+        $isMenuPackage = isset($input['is_menu_package']) ? (int)$input['is_menu_package'] : null;
+        $packageItems = $input['package_items'] ?? null;
 
         $stmt = $dbh->prepare($query);
         $stmt->execute([
@@ -231,6 +266,10 @@ function updateProduct($dbh, $productId) {
             $price,
             $imageUrl,
             $available,
+            $isTobacco,
+            $brand,
+            $isMenuPackage,
+            $packageItems,
             $productId
         ]);
 

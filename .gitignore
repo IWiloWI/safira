@@ -37,3 +37,4 @@ safira-lounge-menu/public/videos/
 .claude-flow/metrics/system-metrics.json
 safira-lounge-menu/safira-api-fixed.php
 safira-lounge-menu/public/.htaccess
+safira-lounge-menu/.env.example.php

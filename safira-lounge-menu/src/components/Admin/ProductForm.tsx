@@ -519,12 +519,24 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('🚀 ========== FORM SUBMIT START ==========');
+    console.log('📋 Form State:', formData);
+    console.log('📋 Product Type:', productType);
+    console.log('📋 Is Menu Package:', formData.isMenuPackage);
+    console.log('📋 Menu Items:', formData.menuItems);
+    console.log('📋 Menu Contents:', formData.menuContents);
+
+    console.log('🔍 Starting validation...');
     if (!validateForm()) {
+      console.error('❌ VALIDATION FAILED - Form submit cancelled');
       return;
     }
+    console.log('✅ Validation passed');
 
     try {
+      console.log('🔄 Getting form data...');
       let productData = getFormData();
+      console.log('📦 Product Data to submit:', productData);
 
       // Auto-translate selected fields before saving
       if (shouldTranslate.name && formData.name) {
@@ -571,9 +583,16 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
         }
       }
 
+      console.log('📤 Submitting product data to API...');
+      console.log('📤 Final product data:', JSON.stringify(productData, null, 2));
+
       await onSubmit(productData, formData.category === 'shisha-standard' ? selectedBrand : undefined);
+
+      console.log('✅ ========== FORM SUBMIT SUCCESS ==========');
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('❌ ========== FORM SUBMIT ERROR ==========');
+      console.error('❌ Error:', error);
+      console.error('❌ Error Stack:', error instanceof Error ? error.stack : 'No stack trace');
     }
   };
 
@@ -873,16 +892,8 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
               {formData.menuItems.map((item, index) => (
                 <VariantItem key={index}>
                   <VariantInput
-                    type="number"
-                    min="1"
-                    placeholder="Anzahl"
-                    value={item.quantity}
-                    onChange={(e) => updateMenuItem(index, 'quantity', e.target.value)}
-                    style={{ width: '100px' }}
-                  />
-                  <VariantInput
                     type="text"
-                    placeholder="Produkt (z.B. Burger, Pommes, Getränk)"
+                    placeholder="Beschreibung (z.B. Burger, Pommes, Getränk)"
                     value={item.name}
                     onChange={(e) => updateMenuItem(index, 'name', e.target.value)}
                     style={{ flex: 1 }}
