@@ -3,15 +3,16 @@
  * Handles product data input with validation and submission
  */
 
-import React, { memo, useEffect, useCallback } from 'react';
+import React, { memo, useEffect, useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaSave, FaTimes } from 'react-icons/fa';
+import { FaSave, FaTimes, FaLanguage } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { Product } from '../../types/product.types';
 import { Category } from '../../types/product.types';
 import { useProductForm } from '../../hooks/useProductForm';
 import { TobaccoCatalog } from '../../types/product.types';
+import { translateText } from '../../services/api';
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface ProductFormProps {
   tobaccoCatalog: TobaccoCatalog;
   selectedBrand: string;
   newBrand: string;
+  productType?: 'regular' | 'tobacco' | 'menu-package'; // NEW: Product type selection
   onClose: () => void;
   onSubmit: (formData: any, brand?: string) => Promise<void>;
   onBrandSelect: (brand: string) => void;
@@ -206,6 +208,91 @@ const CheckboxLabel = styled.label`
   }
 `;
 
+const VariantsSection = styled.div`
+  border: 2px solid rgba(255, 65, 251, 0.2);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 10px;
+  background: rgba(255, 65, 251, 0.05);
+`;
+
+const VariantsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+`;
+
+const VariantsToggle = styled.button`
+  background: none;
+  border: none;
+  color: #FF41FB;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: #ff21f5;
+  }
+`;
+
+const VariantItem = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+`;
+
+const VariantInput = styled.input`
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 65, 251, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.9rem;
+
+  &:focus {
+    outline: none;
+    border-color: #FF41FB;
+  }
+`;
+
+const RemoveVariantButton = styled.button`
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  border-radius: 6px;
+  color: #f44336;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.8rem;
+
+  &:hover {
+    background: rgba(244, 67, 54, 0.3);
+  }
+`;
+
+const AddVariantButton = styled.button`
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.5);
+  border-radius: 6px;
+  color: #4CAF50;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.8rem;
+
+  &:hover {
+    background: rgba(76, 175, 80, 0.3);
+  }
+`;
+
 const ModalActions = styled.div`
   display: flex;
   gap: 15px;
@@ -241,6 +328,86 @@ const Button = styled(motion.button)<{ variant?: 'secondary' }>`
   }
 `;
 
+const TranslationButton = styled(motion.button)`
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #45a049, #4CAF50);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #666;
+  }
+`;
+
+const FieldContainer = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TranslationOptions = styled.div`
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const TranslationHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Aldrich', sans-serif;
+  color: #4CAF50;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+`;
+
+const TranslationCheckbox = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Aldrich', sans-serif;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  input {
+    accent-color: #4CAF50;
+    cursor: pointer;
+  }
+
+  &:hover {
+    color: #4CAF50;
+  }
+`;
+
+const TranslateAllButton = styled(TranslationButton)`
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+`;
+
 const ProductForm: React.FC<ProductFormProps> = memo(({
   isOpen,
   editingProduct,
@@ -248,6 +415,7 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
   tobaccoCatalog,
   selectedBrand,
   newBrand,
+  productType = 'regular', // Default to regular if not specified
   onClose,
   onSubmit,
   onBrandSelect,
@@ -256,7 +424,15 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
   isSubmitting
 }) => {
   const { t, language } = useLanguage();
-  
+  const [translating, setTranslating] = useState<{ name: boolean; description: boolean }>({
+    name: false,
+    description: false
+  });
+  const [shouldTranslate, setShouldTranslate] = useState<{ name: boolean; description: boolean }>({
+    name: false,
+    description: true  // Description enabled by default
+  });
+
   // Memoize the callback functions to prevent infinite re-renders
   const getProductName = useCallback((name: any) => 
     typeof name === 'string' ? name : name[language] || name['de'] || '', 
@@ -276,21 +452,62 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
     resetForm,
     loadProduct,
     validateForm,
-    getFormData
+    getFormData,
+    // Variant actions
+    addVariant,
+    removeVariant,
+    updateVariant,
+    toggleVariants,
+    // Menu package actions
+    addMenuItem,
+    removeMenuItem,
+    updateMenuItem
   } = useProductForm(
     categories,
     getProductName,
     getProductDescription
   );
 
-  // Load product data when editing
+  // Helper to get category display name
+  const getCategoryName = useCallback((category: Category) => {
+    return typeof category.name === 'string' ? category.name : category.name[language] || category.name['de'] || category.id;
+  }, [language]);
+
+  // Check if current category is Shisha/Tobacco (brand names should not be translated)
+  const isShishaCategory = useCallback(() => {
+    const categoryId = formData.category?.toLowerCase() || '';
+    return categoryId.includes('shisha') ||
+           categoryId.includes('tobacco') ||
+           categoryId.includes('tabak');
+  }, [formData.category]);
+
+  // Update translation checkboxes when category changes
+  useEffect(() => {
+    if (isShishaCategory()) {
+      // For Shisha: Only description should be translated by default
+      setShouldTranslate({ name: false, description: true });
+    } else {
+      // For other categories: Both can be translated
+      setShouldTranslate({ name: true, description: true });
+    }
+  }, [formData.category, isShishaCategory]);
+
+  // Translation handler for all selected fields
+
+  // Load product data when editing or set initial tobacco flag based on product type
   useEffect(() => {
     if (editingProduct) {
       loadProduct(editingProduct);
     } else {
       resetForm();
+      // Auto-set flags based on product type selection
+      if (productType === 'tobacco') {
+        updateField('isTobacco', true);
+      } else if (productType === 'menu-package') {
+        updateField('isMenuPackage', true);
+      }
     }
-  }, [editingProduct, loadProduct, resetForm]);
+  }, [editingProduct, loadProduct, resetForm, productType, updateField]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -301,23 +518,65 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
-      const productData = getFormData();
+      let productData = getFormData();
+
+      // Auto-translate selected fields before saving
+      if (shouldTranslate.name && formData.name) {
+        console.log('Auto-translating product name...');
+        setTranslating(prev => ({ ...prev, name: true }));
+        try {
+          const nameTranslations = await translateText(formData.name);
+          productData = {
+            ...productData,
+            name: {
+              de: nameTranslations.de || formData.name,
+              en: nameTranslations.en || formData.name,
+              da: nameTranslations.da || formData.name,
+              tr: nameTranslations.tr || formData.name
+            }
+          };
+          console.log('Name translated:', nameTranslations);
+        } catch (error) {
+          console.error('Name translation failed:', error);
+        } finally {
+          setTranslating(prev => ({ ...prev, name: false }));
+        }
+      }
+
+      if (shouldTranslate.description && formData.description) {
+        console.log('Auto-translating product description...');
+        setTranslating(prev => ({ ...prev, description: true }));
+        try {
+          const descTranslations = await translateText(formData.description);
+          productData = {
+            ...productData,
+            description: {
+              de: descTranslations.de || formData.description,
+              en: descTranslations.en || formData.description,
+              da: descTranslations.da || formData.description,
+              tr: descTranslations.tr || formData.description
+            }
+          };
+          console.log('Description translated:', descTranslations);
+        } catch (error) {
+          console.error('Description translation failed:', error);
+        } finally {
+          setTranslating(prev => ({ ...prev, description: false }));
+        }
+      }
+
       await onSubmit(productData, formData.category === 'shisha-standard' ? selectedBrand : undefined);
     } catch (error) {
       console.error('Form submission error:', error);
     }
   };
 
-  const getCategoryName = (cat: Category) => {
-    if (typeof cat.name === 'string') return cat.name;
-    return cat.name[language] || cat.name['de'] || cat.name;
-  };
 
   if (!isOpen) return null;
 
@@ -339,7 +598,14 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
       >
         <ModalHeader>
           <ModalTitle>
-            {editingProduct ? t('admin.editProduct') : t('admin.addProduct')}
+            {editingProduct
+              ? t('admin.editProduct')
+              : productType === 'tobacco'
+                ? '🚬 Tabak-Produkt Hinzufügen'
+                : productType === 'menu-package'
+                  ? '📋 Menü-Paket Hinzufügen'
+                  : t('admin.addProduct')
+            }
           </ModalTitle>
           <CloseButton onClick={onClose}>
             <FaTimes />
@@ -349,13 +615,15 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
         <form onSubmit={handleSubmit}>
           <FormGroup>
             <Label>{t('admin.productName')}</Label>
-            <Input
-              type="text"
-              value={formData.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              placeholder="Product name..."
-              required
-            />
+            <FieldContainer>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                placeholder="Product name..."
+                required
+              />
+            </FieldContainer>
             {validation.errors.name && (
               <ErrorMessage>{validation.errors.name}</ErrorMessage>
             )}
@@ -363,29 +631,132 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
 
           <FormGroup>
             <Label>{t('admin.productDescription')}</Label>
-            <TextArea
-              value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Product description..."
-            />
+            <FieldContainer>
+              <TextArea
+                value={formData.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder="Product description..."
+              />
+            </FieldContainer>
             {validation.errors.description && (
               <ErrorMessage>{validation.errors.description}</ErrorMessage>
             )}
           </FormGroup>
 
+          {/* Translation Options */}
+          {(formData.name || formData.description) && (
+            <FormGroup>
+              <TranslationOptions>
+                <TranslationHeader>
+                  <FaLanguage />
+                  ChatGPT Auto-Übersetzung (DE → EN/DA)
+                </TranslationHeader>
+
+                <div>
+                  <TranslationCheckbox>
+                    <input
+                      type="checkbox"
+                      checked={shouldTranslate.name}
+                      onChange={(e) => setShouldTranslate(prev => ({ ...prev, name: e.target.checked }))}
+                      disabled={isShishaCategory()}
+                    />
+                    Produktname übersetzen
+                    {isShishaCategory() && <span style={{ color: '#ff9800', marginLeft: '8px' }}>(Markennamen bleiben unverändert)</span>}
+                  </TranslationCheckbox>
+
+                  <TranslationCheckbox>
+                    <input
+                      type="checkbox"
+                      checked={shouldTranslate.description}
+                      onChange={(e) => setShouldTranslate(prev => ({ ...prev, description: e.target.checked }))}
+                    />
+                    Beschreibung übersetzen
+                  </TranslationCheckbox>
+                </div>
+
+              </TranslationOptions>
+            </FormGroup>
+          )}
+
           <FormGroup>
-            <Label>{t('admin.productPrice')}</Label>
+            <Label>
+              {t('admin.productPrice')}
+              {formData.hasVariants && (
+                <span style={{ color: '#FF6B35', fontSize: '0.8rem', marginLeft: '8px' }}>
+                  (wird bei aktivierten Varianten ignoriert)
+                </span>
+              )}
+            </Label>
             <Input
               type="number"
               step="0.01"
               value={formData.price}
               onChange={(e) => updateField('price', e.target.value)}
               placeholder="0.00"
+              disabled={formData.hasVariants}
+              style={{
+                opacity: formData.hasVariants ? 0.5 : 1,
+                cursor: formData.hasVariants ? 'not-allowed' : 'text'
+              }}
             />
             {validation.errors.price && (
               <ErrorMessage>{validation.errors.price}</ErrorMessage>
             )}
           </FormGroup>
+
+          {/* Product Variants Section - Right after price */}
+          <VariantsSection>
+            <VariantsHeader>
+              <Label>Produktvarianten (z.B. verschiedene Größen)</Label>
+              <VariantsToggle
+                type="button"
+                onClick={toggleVariants}
+              >
+                {formData.hasVariants ? 'Varianten deaktivieren' : 'Varianten aktivieren'}
+              </VariantsToggle>
+            </VariantsHeader>
+
+            {formData.hasVariants && (
+              <>
+                {formData.sizes.map((variant, index) => (
+                  <VariantItem key={index}>
+                    <VariantInput
+                      type="text"
+                      placeholder="Größe (z.B. 0,3L, Klein, etc.)"
+                      value={variant.size}
+                      onChange={(e) => updateVariant(index, 'size', e.target.value)}
+                    />
+                    <VariantInput
+                      type="number"
+                      step="0.01"
+                      placeholder="Preis"
+                      value={variant.price}
+                      onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
+                    />
+                    <RemoveVariantButton
+                      type="button"
+                      onClick={() => removeVariant(index)}
+                    >
+                      Entfernen
+                    </RemoveVariantButton>
+                  </VariantItem>
+                ))}
+
+                <AddVariantButton
+                  type="button"
+                  onClick={addVariant}
+                >
+                  + Variante hinzufügen
+                </AddVariantButton>
+
+                {formData.sizes.length === 0 && (
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', textAlign: 'center', margin: '10px 0' }}>
+                    Keine Varianten hinzugefügt. Klicke auf "Variante hinzufügen" um zu beginnen.
+                  </p>
+                )}
+              </>
+            )}
+          </VariantsSection>
 
           <FormGroup>
             <Label>{t('admin.productCategory')}</Label>
@@ -410,21 +781,54 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
             )}
           </FormGroup>
 
-          {/* Brand Selection for Shisha Products */}
-          {formData.category === 'shisha-standard' && (
+          {/* Tobacco Product Checkbox - Only show for regular products or when editing */}
+          {(productType === 'regular' || editingProduct) && (
             <FormGroup>
-              <Label>Tobacco Brand</Label>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={formData.isTobacco}
+                  onChange={(e) => updateField('isTobacco', e.target.checked)}
+                />
+                🚬 Ist Tabak-Produkt
+              </CheckboxLabel>
+            </FormGroup>
+          )}
+
+          {/* Tobacco Brand Selection - Show for tobacco products or when tobacco checkbox is checked */}
+          {(productType === 'tobacco' || formData.isTobacco) && (
+            <FormGroup>
+              <Label>
+                🚬 Tabak-Marke
+                {(productType === 'tobacco' || formData.isTobacco) && <span style={{ color: '#ff6b35', marginLeft: '8px' }}>(Erforderlich)</span>}
+              </Label>
               <Select
-                value={selectedBrand}
-                onChange={(e) => onBrandSelect(e.target.value)}
-                required={formData.category === 'shisha-standard'}
+                value={selectedBrand || formData.brand || ''}
+                onChange={(e) => {
+                  const brandValue = e.target.value;
+                  onBrandSelect(brandValue);
+                  updateField('brand', brandValue);
+                }}
+                required={productType === 'tobacco' || formData.isTobacco}
               >
                 <option value="">Select brand...</option>
                 {tobaccoCatalog?.brands?.map(brand => (
                   <option key={brand} value={brand}>{brand}</option>
                 )) || []}
               </Select>
-              
+
+              {/* Show selected brand confirmation */}
+              {(selectedBrand || formData.brand) && (
+                <div style={{
+                  color: '#4CAF50',
+                  fontSize: '0.85rem',
+                  marginTop: '5px',
+                  fontFamily: 'Aldrich, sans-serif'
+                }}>
+                  ✓ Ausgewählte Marke: <strong>{selectedBrand || formData.brand}</strong>
+                </div>
+              )}
+
               <BrandSection>
                 <Input
                   value={newBrand}
@@ -440,11 +844,75 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
                   Add
                 </AddBrandButton>
               </BrandSection>
-              
+
               {validation.errors.brand && (
                 <ErrorMessage>{validation.errors.brand}</ErrorMessage>
               )}
             </FormGroup>
+          )}
+
+          {/* Menu Package Contents - Show only for menu-package type */}
+          {(productType === 'menu-package' || formData.isMenuPackage) && (
+            <VariantsSection>
+              <VariantsHeader>
+                <Label>
+                  📋 Menü-Inhalte
+                  <span style={{ color: '#ff6b35', marginLeft: '8px' }}>(Erforderlich)</span>
+                </Label>
+              </VariantsHeader>
+
+              <div style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: '0.85rem',
+                marginBottom: '15px',
+                fontFamily: 'Aldrich, sans-serif'
+              }}>
+                Geben Sie die einzelnen Bestandteile des Menüs ein.
+              </div>
+
+              {formData.menuItems.map((item, index) => (
+                <VariantItem key={index}>
+                  <VariantInput
+                    type="number"
+                    min="1"
+                    placeholder="Anzahl"
+                    value={item.quantity}
+                    onChange={(e) => updateMenuItem(index, 'quantity', e.target.value)}
+                    style={{ width: '100px' }}
+                  />
+                  <VariantInput
+                    type="text"
+                    placeholder="Produkt (z.B. Burger, Pommes, Getränk)"
+                    value={item.name}
+                    onChange={(e) => updateMenuItem(index, 'name', e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <RemoveVariantButton
+                    type="button"
+                    onClick={() => removeMenuItem(index)}
+                  >
+                    Entfernen
+                  </RemoveVariantButton>
+                </VariantItem>
+              ))}
+
+              <AddVariantButton
+                type="button"
+                onClick={addMenuItem}
+              >
+                + Menü-Artikel hinzufügen
+              </AddVariantButton>
+
+              {formData.menuItems.length === 0 && (
+                <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', textAlign: 'center', margin: '10px 0' }}>
+                  Klicken Sie auf "+ Menü-Artikel hinzufügen", um Inhalte zu definieren.
+                </p>
+              )}
+
+              {validation.errors.menuContents && (
+                <ErrorMessage>{validation.errors.menuContents}</ErrorMessage>
+              )}
+            </VariantsSection>
           )}
 
           <FormGroup>
@@ -477,6 +945,7 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
             </CheckboxGroup>
           </FormGroup>
 
+
           <FormGroup>
             <CheckboxLabel>
               <input
@@ -502,7 +971,7 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
               disabled={isSubmitting || !validation.isValid}
             >
               <FaSave />
-              {isSubmitting ? 'Saving...' : t('admin.saveChanges')}
+{editingProduct ? (isSubmitting ? 'Speichere...' : 'Änderungen speichern') : (isSubmitting || translating.name || translating.description ? 'Erstelle Produkt...' : 'Produkt erstellen')}
             </Button>
           </ModalActions>
         </form>

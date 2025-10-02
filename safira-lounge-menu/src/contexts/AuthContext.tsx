@@ -19,6 +19,8 @@ interface AuthContextType {
     minutesRemaining: number | null;
     isWarningShown: boolean;
   };
+  pauseSessionMonitoring: () => void;
+  resumeSessionMonitoring: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -137,12 +139,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      user, 
-      login, 
-      logout: performLogout, 
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      user,
+      login,
+      logout: performLogout,
       token,
+      pauseSessionMonitoring: sessionManagement.pauseMonitoring,
+      resumeSessionMonitoring: sessionManagement.resumeMonitoring,
       sessionState: {
         isActive: sessionManagement.isActive,
         expiresAt: sessionManagement.expiresAt,

@@ -2,7 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
-import api from '../../services/api';
+import api, { autoTranslateMissingContent } from '../../services/api';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveFormGroup,
+  ResponsiveLabel,
+  ResponsiveInput
+} from '../../styles/AdminLayout';
 import {
   Globe2, Wifi, Share2, Plus, X, Save, Eye, EyeOff,
   Instagram, Facebook, Twitter, Youtube, Linkedin, Github,
@@ -39,11 +48,7 @@ interface NavigationSettingsData {
   socialMedia: SocialMedia[];
 }
 
-const Container = styled.div`
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
+// Remove Container - using ResponsiveMainContent instead
 
 const Header = styled.div`
   display: flex;
@@ -54,22 +59,9 @@ const Header = styled.div`
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 `;
 
-const Title = styled.h2`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
+// Using ResponsivePageTitle from AdminLayout
 
-const Section = styled.div`
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
+const Section = styled(ResponsiveCard)`
   margin-bottom: 20px;
 `;
 
@@ -143,7 +135,7 @@ const CardText = styled.div`
 `;
 
 const Toggle = styled.button<{ $active: boolean }>`
-  background: ${props => props.$active ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'};
+  background: ${props => props.$active ? '#FF41FB' : 'rgba(255, 255, 255, 0.1)'};
   border: none;
   border-radius: 20px;
   width: 50px;
@@ -159,9 +151,13 @@ const Toggle = styled.button<{ $active: boolean }>`
     left: ${props => props.$active ? '25px' : '3px'};
     width: 22px;
     height: 22px;
-    background: white;
+    background: ${props => props.$active ? 'white' : 'rgba(255, 255, 255, 0.7)'};
     border-radius: 50%;
     transition: all 0.3s ease;
+  }
+
+  &:hover {
+    background: ${props => props.$active ? '#FF41FB' : 'rgba(255, 65, 251, 0.2)'};
   }
 `;
 
@@ -422,9 +418,21 @@ export const NavigationSettings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const response = await api.get('/settings/navigation');
+      const response = await api.get('?action=navigation_settings');
       if (response.data.success) {
-        setSettings(response.data.data);
+        const apiData = response.data.data;
+
+        // Safely merge the API data with current settings
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...apiData,
+          languages: Array.isArray(apiData.languages) ? apiData.languages.map((lang: any) => ({
+            code: lang.code || '',
+            name: lang.name || '',
+            flag: lang.flag || '',
+            enabled: Boolean(lang.enabled)
+          })) : prevSettings.languages
+        }));
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -434,7 +442,7 @@ export const NavigationSettings: React.FC = () => {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      const response = await api.put('/settings/navigation', settings);
+      const response = await api.put('?action=navigation_settings', settings);
       if (response.data.success) {
         setAlert({ type: 'success', message: 'Einstellungen erfolgreich gespeichert!' });
         setTimeout(() => setAlert(null), 3000);
@@ -453,14 +461,22 @@ export const NavigationSettings: React.FC = () => {
 
     const language = updatedLanguages.find(l => l.code === code);
 
-    // If enabling a new language, translate all content
+    // If enabling a new language, automatically translate missing content
     if (language?.enabled && !settings.languages.find(l => l.code === code)?.enabled) {
       setTranslating(true);
       try {
-        await api.post('/settings/translate/all', { targetLanguage: code });
-        setAlert({ type: 'success', message: `Alle Inhalte wurden nach ${language.name} übersetzt!` });
+        const result = await autoTranslateMissingContent(code);
+        if (result.success) {
+          setAlert({
+            type: 'success',
+            message: `${result.translated_count} Inhalte wurden automatisch nach ${language.name} übersetzt!`
+          });
+        } else {
+          setAlert({ type: 'warning', message: 'Übersetzung wurde gestartet, aber es gab Probleme.' });
+        }
       } catch (error) {
-        setAlert({ type: 'error', message: 'Fehler bei der Übersetzung!' });
+        console.error('Translation error:', error);
+        setAlert({ type: 'error', message: 'Fehler bei der automatischen Übersetzung!' });
       } finally {
         setTranslating(false);
       }
@@ -535,12 +551,20 @@ export const NavigationSettings: React.FC = () => {
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>
-          <Settings />
-          Navigation Einstellungen
-        </Title>
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ marginBottom: '30px', textAlign: 'center' }}>
+        Navigation Einstellungen
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '40px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Verwalten Sie Ihre Menü-Navigation und Einstellungen
+      </p>
+      <Header style={{ display: 'none' }}>
         <Button onClick={saveSettings} disabled={loading}>
           {loading ? <Loader /> : <Save />}
           Speichern
@@ -749,7 +773,7 @@ export const NavigationSettings: React.FC = () => {
           </LoadingOverlay>
         )}
       </AnimatePresence>
-    </Container>
+    </ResponsiveMainContent>
   );
 };
 

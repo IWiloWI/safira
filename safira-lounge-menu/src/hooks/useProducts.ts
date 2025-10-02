@@ -105,7 +105,16 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
   const createProduct = useCallback(async (categoryId: string, productData: ProductCreateData) => {
     try {
       setIsLoading(true);
+
+      // 🔍 DEBUG: Log API call details
+      console.log('🔍 API DEBUG - createProduct called:');
+      console.log('📂 Category ID:', categoryId);
+      console.log('📦 Product Data:', productData);
+      console.log('🌐 Making API call to addProduct...');
+
       const newProduct = await addProduct(categoryId, productData);
+
+      console.log('✅ API Response received:', newProduct);
       
       // Track the activity
       try {
@@ -135,8 +144,13 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
   const updateProductData = useCallback(async (categoryId: string, productId: string, updates: ProductUpdateData) => {
     try {
       setIsLoading(true);
+      console.log('🔧 updateProductData called with:', { categoryId, productId, updates });
+      console.log('📡 Calling API updateProduct...');
+
       await updateProduct(categoryId, productId, updates);
-      
+
+      console.log('✅ API updateProduct returned successfully');
+
       // Track the activity
       try {
         await trackEvent('product_updated', {
@@ -147,10 +161,12 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
       } catch (trackingError) {
         console.log('Activity tracking failed:', trackingError);
       }
-      
+
+      console.log('🔄 Reloading products...');
       await loadProducts(); // Reload to get fresh data
+      console.log('✅ Products reloaded');
     } catch (error) {
-      console.error('Failed to update product:', error);
+      console.error('❌ Failed to update product:', error);
       setError('Failed to update product');
       throw error;
     } finally {
@@ -196,11 +212,22 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
    */
   const toggleAvailability = useCallback(async (product: Product) => {
     try {
+      console.log('🔄 toggleAvailability called for product:', product.id);
+      console.log('📋 Product details:', { id: product.id, name: product.name, categoryId: product.categoryId, currentAvailable: product.available });
+
       const newAvailability = !product.available;
+      console.log(`🔀 Toggling availability from ${product.available} to ${newAvailability}`);
+      console.log('📞 Calling updateProductData with:', { categoryId: product.categoryId, productId: product.id, updates: { available: newAvailability } });
+
       await updateProductData(product.categoryId!, product.id, { available: newAvailability });
-      
+
+      console.log('✅ updateProductData completed successfully');
+
       // Track specific availability change
-      const productName = getProductName(product.name);
+      const productName = typeof product.name === 'object' && product.name !== null
+        ? (product.name as any)[language] || (product.name as any)['de'] || (product.name as any)['en'] || ''
+        : String(product.name || '');
+
       try {
         await trackEvent('product_availability_changed', {
           productId: product.id,
@@ -213,10 +240,10 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
         console.log('Activity tracking failed:', trackingError);
       }
     } catch (error) {
-      console.error('Failed to toggle availability:', error);
+      console.error('❌ Failed to toggle availability:', error);
       throw error;
     }
-  }, [updateProductData]);
+  }, [updateProductData, language]);
 
   /**
    * Toggle product badge
@@ -258,8 +285,10 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
    * Utility function to get product name based on language
    */
   const getProductName = useCallback((nameObj: any, lang: string = language) => {
-    if (typeof nameObj === 'string') return nameObj;
-    return nameObj[lang] || nameObj['de'] || nameObj;
+    if (typeof nameObj === 'string') return nameObj || '';
+    if (!nameObj) return '';
+    const result = nameObj[lang] || nameObj['de'] || nameObj;
+    return typeof result === 'string' ? result : '';
   }, [language]);
 
   /**
@@ -267,8 +296,9 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
    */
   const getProductDescription = useCallback((descObj: any, lang: string = language) => {
     if (!descObj) return '';
-    if (typeof descObj === 'string') return descObj;
-    return descObj[lang] || descObj['de'] || '';
+    if (typeof descObj === 'string') return descObj || '';
+    const result = descObj[lang] || descObj['de'] || '';
+    return typeof result === 'string' ? result : '';
   }, [language]);
 
   /**
@@ -355,7 +385,7 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
       filtered = filtered.filter(product => {
         const productName = getProductName(product.name);
         const productDesc = getProductDescription(product.description);
-        const searchText = `${productName} ${productDesc}`.toLowerCase();
+        const searchText = `${String(productName || '')} ${String(productDesc || '')}`.toLowerCase();
         return searchText.includes(query.toLowerCase());
       });
     }
@@ -367,8 +397,8 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
         
         switch (sort.field) {
           case 'name':
-            aValue = getProductName(a.name, sort.language).toLowerCase();
-            bValue = getProductName(b.name, sort.language).toLowerCase();
+            aValue = String(getProductName(a.name, sort.language) || '').toLowerCase();
+            bValue = String(getProductName(b.name, sort.language) || '').toLowerCase();
             break;
           case 'price':
             aValue = a.price || 0;

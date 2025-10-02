@@ -3,7 +3,7 @@
  * Displays category navigation with main categories and subcategory tabs
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import SubcategoryTabs from './SubcategoryTabs';
@@ -118,6 +118,9 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
   className,
   testId = 'category-navigation'
 }) => {
+  // Track the last main category to detect changes
+  const lastMainCategoryRef = useRef<string | null>(null);
+
   // Unused responsive hook - keeping for potential future use
   // const { isBelow } = useResponsive();
   // const isMobile = isBelow('md');
@@ -143,23 +146,8 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
         items: subcat.items || []
       }));
 
-      // Add "Alle" option at the beginning
-      return [
-        {
-          id: 'all',
-          name: {
-            de: 'Alle',
-            da: 'Alle',
-            en: 'All',
-            tr: 'Hepsi',
-            it: 'Tutti'
-          },
-          isMainCategory: false,
-          parentPage: selectedMainCategory,
-          items: []
-        },
-        ...subcategories
-      ];
+      // Return subcategories without "Alle" tab
+      return subcategories;
     }
 
     // Fallback: use the old method for backwards compatibility
@@ -169,14 +157,39 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
   }, [selectedMainCategory, categories, getCategoryIdsForMainCategory]);
 
   /**
+   * Auto-select first subcategory when main category changes (but not on subcategory changes)
+   */
+  useEffect(() => {
+    // Only auto-select if the main category actually changed
+    if (selectedMainCategory && selectedMainCategory !== lastMainCategoryRef.current) {
+      lastMainCategoryRef.current = selectedMainCategory;
+
+      if (currentSubcategories.length > 0) {
+        const firstSubcategory = currentSubcategories[0];
+        if (firstSubcategory) {
+          console.log('[CategoryNavigation] Main category changed, auto-selecting first subcategory:', firstSubcategory.id);
+          onCategoryChange(firstSubcategory.id);
+        }
+      }
+    } else if (!selectedMainCategory) {
+      // Reset the ref when no main category is selected
+      lastMainCategoryRef.current = null;
+    }
+  }, [selectedMainCategory, currentSubcategories, onCategoryChange]);
+
+  /**
    * Render main categories
    */
   const renderMainCategories = () => {
     if (!showMainCategories || selectedMainCategory) return null;
-    
+
+    // Sort main categories by sortOrder before rendering
+    const sortedCategories = Object.entries(mainCategories)
+      .sort(([, a], [, b]) => (a.sortOrder || 999) - (b.sortOrder || 999));
+
     return (
       <MainCategoriesContainer>
-        {Object.entries(mainCategories).map(([key, config], index) => {
+        {sortedCategories.map(([key, config], index) => {
           const categoryName = typeof config.name === 'string' 
             ? config.name 
             : config.name[language] || config.name.de;
@@ -215,7 +228,6 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
         activeCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
         language={language}
-        scrollable
         mainCategoryId={selectedMainCategory}
         filterMode={true}
       />

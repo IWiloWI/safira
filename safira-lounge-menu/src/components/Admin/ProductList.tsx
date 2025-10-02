@@ -111,8 +111,8 @@ const ProductList: React.FC<ProductListProps> = memo(({
     // Apply search filter
     if (searchQuery) {
       result = result.filter(product => {
-        const productName = getProductName(product.name).toLowerCase();
-        const productDesc = getProductDescription(product.description).toLowerCase();
+        const productName = String(getProductName(product.name) || '').toLowerCase();
+        const productDesc = String(getProductDescription(product.description) || '').toLowerCase();
         const searchText = `${productName} ${productDesc} ${product.brand || ''}`.toLowerCase();
         return searchText.includes(searchQuery.toLowerCase());
       });
@@ -176,8 +176,8 @@ const ProductList: React.FC<ProductListProps> = memo(({
       
       switch (sortOptions.field) {
         case 'name':
-          aValue = getProductName(a.name).toLowerCase();
-          bValue = getProductName(b.name).toLowerCase();
+          aValue = String(getProductName(a.name) || '').toLowerCase();
+          bValue = String(getProductName(b.name) || '').toLowerCase();
           break;
         case 'price':
           aValue = a.price || 0;

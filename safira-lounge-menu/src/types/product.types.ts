@@ -45,6 +45,12 @@ export interface Product extends BaseEntity {
   badges?: ProductBadges;
   /** Brand name (mainly for tobacco products) */
   brand?: string;
+  /** Whether this product is a tobacco product (for catalog integration) */
+  isTobacco?: boolean;
+  /** Whether this product is a menu package */
+  isMenuPackage?: boolean;
+  /** Menu package contents description (for menu packages) */
+  menuContents?: string;
   /** Product image URL */
   imageUrl?: string;
   /** Product thumbnail URL */
@@ -387,6 +393,8 @@ export interface MainCategory {
   categoryIds: string[];
   /** Display order */
   order?: number;
+  /** Sort order from database */
+  sortOrder?: number;
   /** Whether category is enabled */
   enabled?: boolean;
 }

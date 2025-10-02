@@ -434,6 +434,22 @@ export function useSessionManagement(
     };
   }, []);
 
+  // Pause/resume monitoring for long-running operations (e.g., video uploads)
+  const pauseMonitoring = useCallback(() => {
+    if (sessionCheckInterval.current) {
+      clearInterval(sessionCheckInterval.current);
+      sessionCheckInterval.current = null;
+      console.log('Session monitoring paused');
+    }
+  }, []);
+
+  const resumeMonitoring = useCallback(() => {
+    if (!sessionCheckInterval.current && sessionState.isActive) {
+      sessionCheckInterval.current = setInterval(monitorSession, 60000);
+      console.log('Session monitoring resumed');
+    }
+  }, [sessionState.isActive, monitorSession]);
+
   return {
     // Session state
     isActive: sessionState.isActive,
@@ -447,6 +463,8 @@ export function useSessionManagement(
     // Actions
     extendSession,
     refreshSession,
+    pauseMonitoring,
+    resumeMonitoring,
     logout: manualLogout,
     updateActivity,
 

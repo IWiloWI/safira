@@ -4,104 +4,30 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaFolder, 
-  FaBoxes, FaCheck, FaArrowRight, FaLayerGroup, FaFilter, 
-  FaCheckSquare, FaSquare, FaTrashAlt 
+import styled from 'styled-components';
+import {
+  FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaFolder,
+  FaBoxes, FaCheck, FaArrowRight, FaLayerGroup, FaFilter,
+  FaCheckSquare, FaSquare, FaTrashAlt
 } from 'react-icons/fa';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveFormGroup,
+  ResponsiveLabel,
+  ResponsiveInput,
+  ResponsiveSelect,
+  ResponsiveLoadingContainer,
+  ResponsiveEmptyState
+} from '../../styles/AdminLayout';
 
-// Styled components
-const SubcategoryManagerContainer = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-`;
 
-const SubcategoryManagerHeader = styled.div`
-  margin-bottom: 40px;
-`;
 
-const SubcategoryManagerTitle = styled.h1`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 65, 251, 0.8);
-`;
 
-const SubcategoryManagerSubtitle = styled.p`
-  font-family: 'Aldrich', sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1rem;
-`;
-
-const ControlsSection = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
-  align-items: center;
-  flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-const MainCategoryFilter = styled.select`
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 8px;
-  color: white;
-  font-family: 'Aldrich', sans-serif;
-  font-size: 0.9rem;
-  cursor: pointer;
-  min-width: 200px;
-  
-  &:focus {
-    outline: none;
-    border-color: #FF41FB;
-    box-shadow: 0 0 10px rgba(255, 65, 251, 0.3);
-  }
-
-  option {
-    background: #1A1A2E;
-    color: white;
-  }
-`;
-
-const AddSubcategoryButton = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  background: linear-gradient(145deg, #FF41FB, #E91E63);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-family: 'Oswald', sans-serif;
-  font-size: 1rem;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(255, 65, 251, 0.4);
-  }
-`;
-
-const MainCategorySection = styled(motion.div)`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 30px;
-  backdrop-filter: blur(10px);
-`;
 
 const MainCategoryHeader = styled.div`
   display: flex;
@@ -143,29 +69,7 @@ const MainCategoryStats = styled.div`
   font-size: 0.9rem;
 `;
 
-const SubcategoriesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
 
-const SubcategoryCard = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: rgba(255, 65, 251, 0.5);
-    box-shadow: 0 5px 20px rgba(255, 65, 251, 0.2);
-    transform: translateY(-2px);
-  }
-`;
 
 const SubcategoryHeader = styled.div`
   display: flex;
@@ -624,12 +528,12 @@ interface MainCategory {
 }
 
 interface SubcategoryFormData {
-  id: string;
+  id?: string; // Optional since it's auto-generated for new subcategories
   name_de: string;
-  name_da: string;
-  name_en: string;
-  name_tr: string;
-  name_it: string;
+  name_en?: string; // Optional for create mode, required for edit mode
+  name_tr?: string; // Optional for create mode, required for edit mode
+  name_da?: string; // Optional for create mode, required for edit mode
+  name_it?: string; // Optional for create mode, required for edit mode
   parentPage: string;
 }
 
@@ -645,20 +549,30 @@ const SubcategoryManager: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<SubcategoryFormData>({
-    id: '',
     name_de: '',
-    name_da: '',
-    name_en: '',
-    name_tr: '',
-    name_it: '',
     parentPage: ''
   });
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [selectedProducts, setSelectedProducts] = useState<Map<string, Set<string>>>(new Map());
+  const [activeLanguages, setActiveLanguages] = useState<{code: string, name: string}[]>([]);
 
   useEffect(() => {
     loadCategories();
+    loadActiveLanguages();
   }, []);
+
+  const loadActiveLanguages = async () => {
+    try {
+      const { getActiveLanguages } = await import('../../services/api');
+      const response = await getActiveLanguages();
+      const languages = response.active_languages || [];
+      setActiveLanguages(languages);
+    } catch (error) {
+      console.error('Failed to load active languages:', error);
+      // Default to German if loading fails
+      setActiveLanguages([{ code: 'de', name: 'Deutsch' }]);
+    }
+  };
 
   useEffect(() => {
     if (showModal && !editingSubcategory) {
@@ -737,26 +651,25 @@ const SubcategoryManager: React.FC = () => {
   const handleAddSubcategory = () => {
     setEditingSubcategory(null);
     setFormData({
-      id: '',
       name_de: '',
-      name_da: '',
-      name_en: '',
-      name_tr: '',
-      name_it: '',
       parentPage: selectedMainCategory
     });
     setShowModal(true);
   };
 
   const handleEditSubcategory = (subcategory: Category) => {
+    // Debug: Log the subcategory data to see what translations we have
+    console.log('Editing subcategory:', subcategory);
+    console.log('Subcategory name translations:', subcategory.name);
+
     setEditingSubcategory(subcategory);
     setFormData({
       id: subcategory.id,
-      name_de: subcategory.name.de,
-      name_da: subcategory.name.da,
-      name_en: subcategory.name.en,
-      name_tr: subcategory.name.tr || subcategory.name.de,
-      name_it: subcategory.name.it || subcategory.name.de,
+      name_de: subcategory.name.de || '',
+      name_en: subcategory.name.en || subcategory.name.de || '',
+      name_tr: subcategory.name.tr || subcategory.name.de || '',
+      name_da: subcategory.name.da || subcategory.name.de || '',
+      name_it: subcategory.name.it || subcategory.name.de || '',
       parentPage: subcategory.parentPage || selectedMainCategory
     });
     setShowModal(true);
@@ -818,9 +731,10 @@ const SubcategoryManager: React.FC = () => {
 
       // Dann die Kategorie löschen via PHP API
       const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
-      const response = await fetch(`${API_URL}?action=delete_category&id=${subcategoryId}`, {
-        method: 'DELETE',
+      const response = await fetch(`${API_URL}?action=delete_subcategory&id=${subcategoryId}`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'x-csrf-token': csrfToken
         }
@@ -853,15 +767,20 @@ const SubcategoryManager: React.FC = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const subcategoryData = {
-        id: formData.id,
-        name: {
+        // ID will be auto-generated by database for new subcategories
+        ...(editingSubcategory && { id: editingSubcategory.id }),
+        name: editingSubcategory ? {
+          // For editing: send all languages
           de: formData.name_de,
-          da: formData.name_da,
-          en: formData.name_en,
-          tr: formData.name_tr,
-          it: formData.name_it
+          en: formData.name_en || formData.name_de,
+          tr: formData.name_tr || formData.name_de,
+          da: formData.name_da || formData.name_de,
+          it: formData.name_it || formData.name_de
+        } : {
+          // For creating: only German (other languages will be auto-translated)
+          de: formData.name_de
         },
-        parentPage: formData.parentPage,
+        category_id: formData.parentPage, // Backend expects category_id instead of parentPage
         items: editingSubcategory?.items || []
       };
 
@@ -872,7 +791,9 @@ const SubcategoryManager: React.FC = () => {
       // Skip CSRF for PHP API - not implemented yet
       const csrfToken = 'php-api-no-csrf';
 
-      const response = await fetch(`${API_URL}?action=${action}${editingSubcategory ? `&id=${editingSubcategory.id}` : ''}`, {
+      // Add category_id to URL for create_subcategory endpoint
+      const categoryIdParam = !editingSubcategory ? `&category_id=${formData.parentPage}` : '';
+      const response = await fetch(`${API_URL}?action=${action}${editingSubcategory ? `&id=${editingSubcategory.id}` : categoryIdParam}`, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -885,12 +806,31 @@ const SubcategoryManager: React.FC = () => {
       if (response.ok) {
         setShowModal(false);
         await loadCategories();
-        
+
+        // Automatically translate the new subcategory to all active languages
+        if (!editingSubcategory) {
+          try {
+            // Get active languages and trigger auto-translation
+            const { getActiveLanguages, autoTranslateMissingContent } = await import('../../services/api');
+            const activeLanguagesResponse = await getActiveLanguages();
+            const activeLanguages = activeLanguagesResponse.active_languages || [];
+
+            for (const lang of activeLanguages) {
+              if (lang.code !== 'de') { // Skip German as it's the source
+                await autoTranslateMissingContent(lang.code);
+              }
+            }
+          } catch (translationError) {
+            console.error('Auto-translation failed:', translationError);
+            // Don't block the main flow, just log the error
+          }
+        }
+
         // Benachrichtige andere Komponenten über Kategorieänderungen
-        window.dispatchEvent(new CustomEvent('categoriesUpdated', { 
-          detail: { action: editingSubcategory ? 'updated' : 'created', category: subcategoryData } 
+        window.dispatchEvent(new CustomEvent('categoriesUpdated', {
+          detail: { action: editingSubcategory ? 'updated' : 'created', category: subcategoryData }
         }));
-        
+
         alert(editingSubcategory ? 'Unterkategorie erfolgreich aktualisiert' : 'Unterkategorie erfolgreich erstellt');
       } else {
         alert('Fehler beim Speichern der Unterkategorie');
@@ -942,7 +882,7 @@ const SubcategoryManager: React.FC = () => {
 
       const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
       const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-csrf-token': csrfToken
@@ -1042,7 +982,7 @@ const SubcategoryManager: React.FC = () => {
         try {
           const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
           const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'x-csrf-token': csrfToken
@@ -1133,59 +1073,60 @@ const SubcategoryManager: React.FC = () => {
   const totalProducts = filteredSubcategories.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
 
   return (
-    <SubcategoryManagerContainer>
-      <SubcategoryManagerHeader>
-        <SubcategoryManagerTitle>Unterkategorie-Manager</SubcategoryManagerTitle>
-        <SubcategoryManagerSubtitle>
-          Verwalten Sie die Unterkategorien innerhalb der Hauptkategorien
-        </SubcategoryManagerSubtitle>
-      </SubcategoryManagerHeader>
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+        Unterkategorie-Manager
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '30px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Verwalten Sie die Unterkategorien innerhalb der Hauptkategorien
+      </p>
 
-      <ControlsSection>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FaFilter style={{ color: '#FF41FB' }} />
-          <MainCategoryFilter
-            value={selectedMainCategory}
-            onChange={(e) => setSelectedMainCategory(e.target.value)}
-          >
-            {mainCategoriesData.map((category) => {
-              const categoryName = typeof category.name === 'string' ? category.name : category.name?.de || category.id;
-              return (
-                <option key={category.id} value={category.id}>
-                  📁 {categoryName}
-                </option>
-              );
-            })}
-          </MainCategoryFilter>
+      <ResponsiveCard style={{ marginBottom: '30px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '15px',
+          alignItems: 'end'
+        }}>
+          <ResponsiveFormGroup style={{ marginBottom: 0 }}>
+            <ResponsiveLabel>
+              <FaFilter style={{ marginRight: '10px', color: '#FF41FB' }} />
+              Hauptkategorie filtern
+            </ResponsiveLabel>
+            <ResponsiveSelect
+              value={selectedMainCategory}
+              onChange={(e) => setSelectedMainCategory(e.target.value)}
+            >
+              {mainCategoriesData.map((category) => {
+                const categoryName = typeof category.name === 'string' ? category.name : category.name?.de || category.id;
+                return (
+                  <option key={category.id} value={category.id}>
+                    📁 {categoryName}
+                  </option>
+                );
+              })}
+            </ResponsiveSelect>
+          </ResponsiveFormGroup>
+
+          <ResponsiveButton onClick={handleAddSubcategory}>
+            <FaPlus />
+            Neue Unterkategorie
+          </ResponsiveButton>
         </div>
-
-        <AddSubcategoryButton
-          onClick={handleAddSubcategory}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FaPlus />
-          Neue Unterkategorie
-        </AddSubcategoryButton>
-      </ControlsSection>
+      </ResponsiveCard>
 
       {isLoading ? (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '300px',
-          color: '#FF41FB',
-          fontSize: '1.2rem',
-          fontFamily: 'Aldrich, sans-serif'
-        }}>
-          Wird geladen...
-        </div>
+        <ResponsiveLoadingContainer>
+          <div className="loading-spinner">Wird geladen...</div>
+        </ResponsiveLoadingContainer>
       ) : (
-        <MainCategorySection
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <ResponsiveCard>
           <MainCategoryHeader>
             <MainCategoryIcon>
               📁
@@ -1203,20 +1144,19 @@ const SubcategoryManager: React.FC = () => {
           </MainCategoryHeader>
 
           {filteredSubcategories.length === 0 ? (
-            <EmptyState>
-              <FaLayerGroup style={{ fontSize: '3rem', marginBottom: '20px', opacity: 0.3 }} />
-              <p>Keine Unterkategorien in dieser Hauptkategorie gefunden.</p>
-              <p>Klicken Sie auf "Neue Unterkategorie", um eine hinzuzufügen.</p>
-            </EmptyState>
+            <ResponsiveEmptyState>
+              <div className="empty-icon">
+                <FaLayerGroup />
+              </div>
+              <div className="empty-title">Keine Unterkategorien gefunden</div>
+              <div className="empty-description">
+                Keine Unterkategorien in dieser Hauptkategorie gefunden. Klicken Sie auf "Neue Unterkategorie", um eine hinzuzufügen.
+              </div>
+            </ResponsiveEmptyState>
           ) : (
-            <SubcategoriesGrid>
+            <ResponsiveCardGrid>
               {filteredSubcategories.map((subcategory, index) => (
-                <SubcategoryCard
-                  key={subcategory.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
+                <ResponsiveCard key={subcategory.id}>
                   <SubcategoryHeader>
                     <SubcategoryInfo>
                       <SubcategoryName>{subcategory.name.de}</SubcategoryName>
@@ -1343,11 +1283,11 @@ const SubcategoryManager: React.FC = () => {
                       ))}
                     </ProductsList>
                   )}
-                </SubcategoryCard>
+                </ResponsiveCard>
               ))}
-            </SubcategoriesGrid>
+            </ResponsiveCardGrid>
           )}
-        </MainCategorySection>
+        </ResponsiveCard>
       )}
 
       {showModal && (
@@ -1372,17 +1312,6 @@ const SubcategoryManager: React.FC = () => {
             </ModalHeader>
 
             <FormGroup>
-              <FormLabel>Unterkategorie ID</FormLabel>
-              <FormInput
-                type="text"
-                placeholder="z.B. neue-unterkategorie"
-                value={formData.id}
-                onChange={(e) => setFormData(prev => ({ ...prev, id: e.target.value }))}
-                disabled={!!editingSubcategory}
-              />
-            </FormGroup>
-
-            <FormGroup>
               <FormLabel>Hauptkategorie zuordnen</FormLabel>
               <FormSelect
                 value={formData.parentPage}
@@ -1405,57 +1334,69 @@ const SubcategoryManager: React.FC = () => {
                 type="text"
                 placeholder="z.B. Neue Unterkategorie"
                 value={formData.name_de}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFormData(prev => ({ 
-                    ...prev, 
-                    name_de: value,
-                    id: prev.id || generateId(value)
-                  }));
-                }}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  name_de: e.target.value
+                }))}
               />
             </FormGroup>
 
-            <FormGroup>
-              <FormLabel>Name (Dänisch)</FormLabel>
-              <FormInput
-                type="text"
-                placeholder="z.B. Ny Underkategori"
-                value={formData.name_da}
-                onChange={(e) => setFormData(prev => ({ ...prev, name_da: e.target.value }))}
-              />
-            </FormGroup>
+            {/* Show additional language fields only when editing and for active languages */}
+            {editingSubcategory && activeLanguages
+              .filter(lang => lang.code !== 'de') // Exclude German as it's already shown
+              .map(language => (
+                <FormGroup key={language.code}>
+                  <FormLabel>Name ({language.name})</FormLabel>
+                  <FormInput
+                    type="text"
+                    placeholder={`z.B. ${formData.name_de}`}
+                    value={formData[`name_${language.code}` as keyof SubcategoryFormData] as string || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      [`name_${language.code}`]: e.target.value
+                    }))}
+                  />
+                </FormGroup>
+              ))}
 
-            <FormGroup>
-              <FormLabel>Name (Englisch)</FormLabel>
-              <FormInput
-                type="text"
-                placeholder="z.B. New Subcategory"
-                value={formData.name_en}
-                onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
-              />
-            </FormGroup>
+            {/* Auto-translate button when editing */}
+            {editingSubcategory && (
+              <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                <ModalButton
+                  $variant="secondary"
+                  onClick={async () => {
+                    if (!formData.name_de) return;
 
-            <FormGroup>
-              <FormLabel>Name (Türkisch)</FormLabel>
-              <FormInput
-                type="text"
-                placeholder="z.B. Yeni Alt Kategori"
-                value={formData.name_tr}
-                onChange={(e) => setFormData(prev => ({ ...prev, name_tr: e.target.value }))}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>Name (Italienisch)</FormLabel>
-              <FormInput
-                type="text"
-                placeholder="z.B. Nuova Sottocategoria"
-                value={formData.name_it}
-                onChange={(e) => setFormData(prev => ({ ...prev, name_it: e.target.value }))}
-              />
-            </FormGroup>
-
+                    try {
+                      // Auto-translate missing fields
+                      for (const language of activeLanguages) {
+                        if (language.code !== 'de') {
+                          // Always translate (force re-translation)
+                          try {
+                            const { translateText } = await import('../../services/api');
+                            const result = await translateText(formData.name_de, [language.code as any]);
+                            if (result[language.code]) {
+                              setFormData(prev => ({
+                                ...prev,
+                                [`name_${language.code}`]: result[language.code]
+                              }));
+                            }
+                          } catch (error) {
+                            console.error(`Translation failed for ${language.code}:`, error);
+                          }
+                        }
+                      }
+                      alert('Übersetzungen wurden generiert!');
+                    } catch (error) {
+                      console.error('Auto-translation failed:', error);
+                      alert('Fehler beim Übersetzen');
+                    }
+                  }}
+                >
+                  🤖 Auto Übersetzen
+                </ModalButton>
+              </div>
+            )}
 
             <ModalActions>
               <ModalButton
@@ -1472,7 +1413,7 @@ const SubcategoryManager: React.FC = () => {
           </ModalContent>
         </Modal>
       )}
-    </SubcategoryManagerContainer>
+    </ResponsiveMainContent>
   );
 };
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Safira Error Log Viewer</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .log-entry { margin: 5px 0; padding: 5px; border-left: 3px solid #ff1493; }
+        .error { border-left-color: #ff4444; }
+        .debug { border-left-color: #44ff44; }
+        .warning { border-left-color: #ffaa44; }
+        button { padding: 10px; margin: 10px 0; background: #ff1493; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🔍 Safira API Error Log Viewer</h2>
+    <button onclick="loadLogs()">Refresh Logs</button>
+    <div id="logs">Loading...</div>
+
+    <script>
+        async function loadLogs() {
+            try {
+                const response = await fetch('/safira_error.log');
+                if (response.ok) {
+                    const text = await response.text();
+                    const lines = text.split('\n').filter(line => line.trim());
+                    const recentLines = lines.slice(-50); // Last 50 lines
+
+                    document.getElementById('logs').innerHTML = recentLines.map(line => {
+                        let className = 'log-entry';
+                        if (line.includes('❌') || line.includes('ERROR')) className += ' error';
+                        else if (line.includes('🔄') || line.includes('DEBUG')) className += ' debug';
+                        else if (line.includes('⚠️') || line.includes('WARNING')) className += ' warning';
+
+                        return `<div class="${className}">${line}</div>`;
+                    }).join('');
+                } else {
+                    document.getElementById('logs').innerHTML = 'Error log file not accessible or empty.';
+                }
+            } catch (error) {
+                document.getElementById('logs').innerHTML = 'Error loading logs: ' + error.message;
+            }
+        }
+
+        // Load logs on page load
+        loadLogs();
+
+        // Auto-refresh every 5 seconds
+        setInterval(loadLogs, 5000);
+    </script>
+</body>
+</html>

@@ -33,3 +33,7 @@ safira-lounge-menu/public/videos/
 *.tar.gz
 *backup*
 .claude-flow/metrics/system-metrics.json
+.DS_Store
+.claude-flow/metrics/system-metrics.json
+safira-lounge-menu/safira-api-fixed.php
+safira-lounge-menu/public/.htaccess

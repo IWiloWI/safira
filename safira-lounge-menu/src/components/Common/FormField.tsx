@@ -24,8 +24,8 @@ const baseInputStyles = css<{
     'rgba(255, 65, 251, 0.3)'
   };
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #333;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
   font-family: inherit;
   line-height: 1.5;
@@ -52,11 +52,11 @@ const baseInputStyles = css<{
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.2);
   }
 
   &::placeholder {
-    color: rgba(51, 51, 51, 0.7);
+    color: rgba(255, 255, 255, 0.5);
   }
   
   /* High contrast mode support */
@@ -85,7 +85,7 @@ const FieldContainer = styled.div`
 
 const FieldLabel = styled.label<{ required?: boolean }>`
   font-weight: 600;
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   display: flex;
   align-items: center;
@@ -139,17 +139,17 @@ const StyledSelect = styled.select<{
   cursor: pointer;
 
   option {
-    background: #fff;
-    color: #333;
+    background: rgba(26, 26, 46, 0.95);
+    color: rgba(255, 255, 255, 0.9);
     padding: 8px 12px;
     
     &:hover {
-      background: #f0f0f0;
+      background: rgba(255, 65, 251, 0.1);
     }
-    
+
     &:disabled {
-      color: #999;
-      background: #f5f5f5;
+      color: rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.2);
     }
   }
 `;
@@ -164,7 +164,7 @@ const ValidationIcon = styled.div<{ type: 'error' | 'success' | 'loading' }>`
       case 'error': return '#FF6B6B';
       case 'success': return '#4ECDC4';
       case 'loading': return '#FF41FB';
-      default: return '#333';
+      default: return 'rgba(255, 255, 255, 0.6)';
     }
   }};
   font-size: 1rem;
@@ -188,15 +188,15 @@ const FieldMessage = styled.div<{ type: 'error' | 'warning' | 'success' | 'help'
       case 'error': return '#FF6B6B';
       case 'warning': return '#FFA500';
       case 'success': return '#4ECDC4';
-      case 'help': return '#666';
-      default: return '#666';
+      case 'help': return 'rgba(255, 255, 255, 0.6)';
+      default: return 'rgba(255, 255, 255, 0.6)';
     }
   }};
 `;
 
 const FieldHelp = styled.div`
   font-size: 0.8rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   font-style: italic;
 `;
 

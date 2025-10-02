@@ -18,7 +18,6 @@ import { ProductGrid } from './ProductGrid';
 import { MenuFilters, FilterOptions } from './MenuFilters';
 import { MenuLoading } from './MenuLoading';
 import { MenuMobileNav } from './MenuMobileNav';
-import { QRCodeModal } from './QRCodeModal';
 import ProductList from './ProductList';
 import SubcategoryTabs from './SubcategoryTabs';
 import { BottomNavigation } from '../Common/BottomNavigation';
@@ -51,37 +50,6 @@ const ContentContainer = styled(motion.div)`
   z-index: 1;
 `;
 
-const QRButton = styled(motion.button)`
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: linear-gradient(145deg, rgba(233, 30, 99, 0.9), rgba(233, 30, 99, 1));
-  border: 2px solid #FF41FB;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  cursor: pointer;
-  box-shadow: 0 0 20px rgba(255, 65, 251, 0.5);
-  transition: all 0.3s ease;
-  z-index: 1000;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 30px rgba(255, 65, 251, 0.7);
-  }
-
-  @media (max-width: 768px) {
-    bottom: 90px; /* Above mobile nav */
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    font-size: 1.5rem;
-  }
-`;
 
 const NotificationContainer = styled(motion.div)`
   position: fixed;
@@ -131,16 +99,14 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   const { language, setLanguage } = languageContext;
   const { isMobile } = useResponsive();
   
-  // QR modal state
-  const [showQRModal, setShowQRModal] = useState(false);
-  
   // Filter state
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: ''
   });
 
   // Subcategory filter state (separate from navigation)
-  const [activeSubcategoryFilter, setActiveSubcategoryFilter] = useState<string>('all');
+  // Empty string means "show all", specific ID means filter by that subcategory
+  const [activeSubcategoryFilter, setActiveSubcategoryFilter] = useState<string>('');
 
   /**
    * Initialize menu data
@@ -163,10 +129,11 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
    */
   const mainCategories: Record<string, MainCategory> = useMemo(() => {
     const mainCats: Record<string, MainCategory> = {};
-    
-    // Filter categories to find main categories
+
+    // Filter and sort categories to find main categories in correct order
     categories
       ?.filter(cat => cat.isMainCategory === true)
+      ?.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999))
       ?.forEach((cat, index) => {
         // Convert FlexibleText to MultilingualText
         const categoryName: MultilingualText = typeof cat.name === 'string' 
@@ -185,6 +152,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           image: cat.image || '/images/placeholder-category.jpg',
           categoryIds: [],
           order: index + 1,
+          sortOrder: cat.sortOrder || 999,
           enabled: true
         };
       });
@@ -197,6 +165,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
         image: '/images/placeholder-category.jpg',
         categoryIds: [],
         order: 1,
+        sortOrder: 1,
         enabled: true
       };
     }
@@ -250,10 +219,25 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     getCategoryIdsForMainCategory
   });
 
-  // Reset subcategory filter when main category changes
+  // Auto-select first subcategory when main category changes
   useEffect(() => {
-    setActiveSubcategoryFilter('all');
-  }, [selectedMainCategory]);
+    if (!selectedMainCategory) {
+      setActiveSubcategoryFilter('');
+      return;
+    }
+
+    // Find the main category and get its first subcategory
+    const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
+    if (mainCategory && mainCategory.subcategories && mainCategory.subcategories.length > 0) {
+      const firstSubcategory = mainCategory.subcategories[0];
+      const subcategoryId = `subcat_${firstSubcategory.id}`;
+      console.log('[MenuPageContainer] Auto-selecting first subcategory:', subcategoryId);
+      setActiveSubcategoryFilter(subcategoryId);
+    } else {
+      // No subcategories, use empty filter
+      setActiveSubcategoryFilter('');
+    }
+  }, [selectedMainCategory, categories]);
 
   /**
    * Initialize search and filtering
@@ -284,13 +268,15 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [setSearchQuery]);
 
   /**
-   * Handle subcategory filter change (not navigation)
+   * Handle subcategory filter change (filter only, no URL navigation)
    */
   const handleSubcategoryFilterChange = useCallback((subcategoryId: string) => {
-    console.log('[MenuPageContainer] Subcategory filter changed to:', subcategoryId);
+    console.log('[MenuPageContainer] 🎬 Tab clicked - Subcategory filter changing from:', activeSubcategoryFilter, 'to:', subcategoryId);
     setActiveSubcategoryFilter(subcategoryId);
-    // Don't navigate - this is just filtering
-  }, []);
+    // Don't change navigation state - this is just filtering
+    // Video background will be handled by updated backgroundCategory logic
+    console.log('[MenuPageContainer] 🎬 Tab change will trigger background video update');
+  }, [activeSubcategoryFilter]);
 
   /**
    * Handle product click
@@ -301,18 +287,46 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, []);
 
   /**
-   * Get current page background category
+   * Get current page background category using database IDs
+   * Priority: Subcategory ID > Main Category ID > fallback
    */
   const backgroundCategory = useMemo(() => {
+    console.log('[MenuPageContainer] backgroundCategory calculation:', {
+      selectedMainCategory,
+      activeSubcategoryFilter,
+      categories: categories.length
+    });
+
     if (selectedMainCategory === 'menus') {
+      console.log('[MenuPageContainer] Using home video for menus');
       return 'home'; // Use home video for menus overview page
     }
-    if (selectedMainCategory === 'drinks') {
-      return selectedCategory;
+
+    // If no main category is selected, use home
+    if (!selectedMainCategory) {
+      console.log('[MenuPageContainer] No main category, using home');
+      return 'home';
     }
-    // For shisha, snacks, and other main categories, use the main category name
-    return selectedMainCategory || 'home'; // Default to home if no category
-  }, [selectedMainCategory, selectedCategory]);
+
+    // PRIORITY 1: Subcategory ID (if active subcategory filter)
+    if (activeSubcategoryFilter && activeSubcategoryFilter !== '') {
+      // Use activeSubcategoryFilter directly (it already has subcat_ prefix)
+      console.log('[MenuPageContainer] 🎬 Using SUBCATEGORY ID for video (direct):', activeSubcategoryFilter);
+      return activeSubcategoryFilter; // Use activeSubcategoryFilter directly (subcat_8, subcat_9, etc.)
+    }
+
+    // PRIORITY 2: Main Category ID (no subcategory active)
+    const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
+
+    if (mainCategory && mainCategory.id) {
+      console.log('[MenuPageContainer] 🎬 Using MAIN CATEGORY ID for video:', mainCategory.id);
+      return mainCategory.id.toString(); // Use actual database main category ID
+    }
+
+    // PRIORITY 3: Fallback to selectedMainCategory
+    console.log('[MenuPageContainer] 🎬 Fallback to selectedMainCategory:', selectedMainCategory);
+    return selectedMainCategory;
+  }, [selectedMainCategory, activeSubcategoryFilter, categories]);
 
   /**
    * Get all products from current main category including subcategories
@@ -320,9 +334,12 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   const allMainCategoryProducts = useMemo(() => {
     if (!selectedMainCategory) return [];
 
-    // Find the main category
+    // Find the main category using selectedMainCategory (now contains actual API ID)
     const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
-    if (!mainCategory) return [];
+    if (!mainCategory) {
+      console.warn('[MenuPageContainer] Could not find main category for ID:', selectedMainCategory);
+      return [];
+    }
 
     // Collect all products from main category and its subcategories
     let allProducts: Product[] = [...(mainCategory.items || [])];
@@ -348,7 +365,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
    * Filter products by active subcategory filter
    */
   const subcategoryFilteredProducts = useMemo(() => {
-    if (!selectedMainCategory || activeSubcategoryFilter === 'all') {
+    if (!selectedMainCategory || activeSubcategoryFilter === '') {
       return allMainCategoryProducts;
     }
 
@@ -566,29 +583,25 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
         language={language}
         onBack={handleBack}
         onSearch={() => {/* Open search modal */}}
-        onQRCode={() => setShowQRModal(true)}
+        onQRCode={undefined}
         enableSwipe
         showFAB
       />
     );
   };
 
+  // Add effect to track backgroundCategory changes
+  useEffect(() => {
+    console.log('[MenuPageContainer] 🎬 Background category changed to:', backgroundCategory);
+  }, [backgroundCategory]);
+
   return (
     <PageContainer className={className} data-testid={testId}>
       {/* Background Video */}
-      <VideoBackground 
+      <VideoBackground
         category={backgroundCategory || undefined}
       />
       
-      {/* QR Code Button */}
-      <QRButton
-        onClick={() => setShowQRModal(true)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        aria-label="Open QR Code"
-      >
-        📶
-      </QRButton>
 
       {/* Main Content */}
       <ContentContainer>
@@ -627,17 +640,6 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
         onLanguageChange={setLanguage}
       />
       
-      {/* QR Code Modal */}
-      <QRCodeModal
-        isOpen={showQRModal}
-        onClose={() => setShowQRModal(false)}
-        language={language}
-        wifiCredentials={{
-          ssid: 'Safira_Guest',
-          password: 'Safira2024',
-          security: 'WPA'
-        }}
-      />
       
       {/* Auto-refresh Notification */}
       <AnimatePresence>

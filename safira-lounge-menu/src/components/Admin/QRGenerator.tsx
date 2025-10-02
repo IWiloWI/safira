@@ -1,53 +1,30 @@
 import React, { useState, useRef, useCallback } from 'react';
-import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
-import { 
-  FaQrcode, 
-  FaDownload, 
-  FaPrint, 
+import {
+  FaQrcode,
+  FaDownload,
+  FaPrint,
   FaPlus,
   FaMinus,
   FaCopy,
   FaCheck
 } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveFormGroup,
+  ResponsiveLabel,
+  ResponsiveInput
+} from '../../styles/AdminLayout';
 
-const QRContainer = styled.div`
-  max-width: 1000px;
-`;
 
-const QRHeader = styled.div`
-  margin-bottom: 40px;
-`;
-
-const QRTitle = styled.h1`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 65, 251, 0.8);
-`;
-
-const QRSubtitle = styled.p`
-  font-family: 'Aldrich', sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1rem;
-`;
-
-const GeneratorSection = styled.div`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 20px;
-  padding: 30px;
-  margin-bottom: 40px;
-`;
-
-const InputGroup = styled.div`
-  margin-bottom: 20px;
-`;
 
 const Label = styled.label`
   display: block;
@@ -353,75 +330,106 @@ const QRGenerator: React.FC = () => {
   };
 
   return (
-    <QRContainer>
-      <QRHeader>
-        <QRTitle>{t('admin.qrGenerator')}</QRTitle>
-        <QRSubtitle>
-          Erstellen Sie QR-Codes für Ihre Tische
-        </QRSubtitle>
-      </QRHeader>
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+        {t('admin.qrGenerator')}
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '30px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Erstellen Sie QR-Codes für Ihre Tische
+      </p>
 
-      <GeneratorSection>
-        <InputGroup>
-          <Label>{t('admin.tableNumber')}</Label>
-          <Input
+      <ResponsiveCard style={{ marginBottom: '40px' }}>
+        <ResponsiveFormGroup>
+          <ResponsiveLabel>{t('admin.tableNumber')}</ResponsiveLabel>
+          <ResponsiveInput
             type="text"
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
             placeholder="z.B. 1, A1, VIP-1"
           />
-        </InputGroup>
+        </ResponsiveFormGroup>
 
-        <ButtonGroup>
-          <Button onClick={handleGenerateSingle}>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '30px' }}>
+          <ResponsiveButton onClick={handleGenerateSingle}>
             <FaQrcode />
             {t('admin.generateQR')}
-          </Button>
-        </ButtonGroup>
+          </ResponsiveButton>
+        </div>
 
-        <BulkSection>
-          <Label>Bulk-Generierung</Label>
-          <BulkControls>
+        <div style={{
+          marginTop: '30px',
+          paddingTop: '30px',
+          borderTop: '2px solid rgba(255, 65, 251, 0.3)'
+        }}>
+          <ResponsiveLabel>Bulk-Generierung</ResponsiveLabel>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px',
+            marginBottom: '20px',
+            flexWrap: 'wrap'
+          }}>
             <span style={{ color: 'white', fontFamily: 'Aldrich, sans-serif' }}>Von:</span>
-            <RangeInput
+            <input
               type="number"
               value={bulkStart}
               onChange={(e) => setBulkStart(parseInt(e.target.value) || 1)}
               min="1"
+              style={{
+                width: '100px',
+                padding: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 65, 251, 0.3)',
+                borderRadius: '5px',
+                color: 'white',
+                fontFamily: 'Aldrich, sans-serif',
+                textAlign: 'center'
+              }}
             />
             <span style={{ color: 'white', fontFamily: 'Aldrich, sans-serif' }}>Bis:</span>
-            <RangeInput
+            <input
               type="number"
               value={bulkEnd}
               onChange={(e) => setBulkEnd(parseInt(e.target.value) || 1)}
               min="1"
+              style={{
+                width: '100px',
+                padding: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 65, 251, 0.3)',
+                borderRadius: '5px',
+                color: 'white',
+                fontFamily: 'Aldrich, sans-serif',
+                textAlign: 'center'
+              }}
             />
-            <Button onClick={handleGenerateBulk}>
+            <ResponsiveButton onClick={handleGenerateBulk}>
               <FaPlus />
               Bulk Generieren
-            </Button>
-          </BulkControls>
-        </BulkSection>
+            </ResponsiveButton>
+          </div>
+        </div>
 
         {qrCodes.length > 0 && (
           <div style={{ marginTop: '20px' }}>
-            <Button onClick={downloadAllAsPDF} variant="secondary">
+            <ResponsiveButton $variant="secondary" onClick={downloadAllAsPDF}>
               <FaDownload />
               Alle als PDF
-            </Button>
+            </ResponsiveButton>
           </div>
         )}
-      </GeneratorSection>
+      </ResponsiveCard>
 
       {qrCodes.length > 0 && (
-        <QRPreview>
+        <ResponsiveCardGrid>
           {qrCodes.map((qrData, index) => (
-            <QRCard
-              key={qrData.table}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-            >
+            <ResponsiveCard key={qrData.table} style={{ textAlign: 'center' }}>
               <QRCodeContainer>
                 <canvas
                   ref={el => {
@@ -441,39 +449,44 @@ const QRGenerator: React.FC = () => {
               
               <QRUrl>{qrData.url}</QRUrl>
               
-              <QRActions>
-                <Button
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <ResponsiveButton
+                  $variant="secondary"
+                  $size="small"
                   onClick={() => copyUrl(qrData.url, qrData.table)}
-                  variant="secondary"
-                  style={{ fontSize: '0.8rem', padding: '8px 15px' }}
                 >
                   {copied === qrData.table ? <FaCheck /> : <FaCopy />}
                   {copied === qrData.table ? 'Kopiert!' : 'URL'}
-                </Button>
-                
-                <Button
+                </ResponsiveButton>
+
+                <ResponsiveButton
+                  $variant="secondary"
+                  $size="small"
                   onClick={() => downloadQR(qrData)}
-                  variant="secondary"
-                  style={{ fontSize: '0.8rem', padding: '8px 15px' }}
                 >
                   <FaDownload />
                   PNG
-                </Button>
-                
-                <Button
+                </ResponsiveButton>
+
+                <ResponsiveButton
+                  $variant="secondary"
+                  $size="small"
                   onClick={() => printQR(qrData)}
-                  variant="secondary"
-                  style={{ fontSize: '0.8rem', padding: '8px 15px' }}
                 >
                   <FaPrint />
                   Print
-                </Button>
-              </QRActions>
-            </QRCard>
+                </ResponsiveButton>
+              </div>
+            </ResponsiveCard>
           ))}
-        </QRPreview>
+        </ResponsiveCardGrid>
       )}
-    </QRContainer>
+    </ResponsiveMainContent>
   );
 };
 

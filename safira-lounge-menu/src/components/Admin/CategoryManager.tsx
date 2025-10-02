@@ -1,75 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaFolder, FaBoxes, FaCheck } from 'react-icons/fa';
+import styled from 'styled-components';
+import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaFolder, FaBoxes, FaCheck, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveFormGroup,
+  ResponsiveLabel,
+  ResponsiveInput,
+  ResponsiveSelect,
+  ResponsiveLoadingContainer,
+  ResponsiveEmptyState
+} from '../../styles/AdminLayout';
 
-const CategoryManagerContainer = styled.div`
-  max-width: 1200px;
+
+
+
+
+const SortButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 10px;
 `;
 
-const CategoryManagerHeader = styled.div`
-  margin-bottom: 40px;
-`;
-
-const CategoryManagerTitle = styled.h1`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 65, 251, 0.8);
-`;
-
-const CategoryManagerSubtitle = styled.p`
-  font-family: 'Aldrich', sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1rem;
-`;
-
-const AddCategoryButton = styled(motion.button)`
+const SortButton = styled.button`
+  background: rgba(255, 65, 251, 0.1);
+  border: 1px solid rgba(255, 65, 251, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 15px 25px;
-  background: linear-gradient(145deg, #FF41FB, #E91E63);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-family: 'Oswald', sans-serif;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-bottom: 30px;
+  justify-content: center;
+  font-size: 0.8rem;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(255, 65, 251, 0.4);
+    background: rgba(255, 65, 251, 0.2);
+    color: #FF41FB;
+    transform: scale(1.1);
   }
-`;
 
-const CategoriesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const CategoryCard = styled(motion.div)`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 15px;
-  padding: 20px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #FF41FB;
-    box-shadow: 0 10px 30px rgba(255, 65, 251, 0.2);
-    transform: translateY(-2px);
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -432,6 +413,7 @@ interface CategoryFormData {
 const CategoryManager: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -539,7 +521,7 @@ const CategoryManager: React.FC = () => {
       }
 
       const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
-      const response = await fetch(`${API_URL}?action=delete_category&id=${categoryId}`, {
+      const response = await fetch(`${API_URL}?action=delete_main_category&id=${categoryId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -578,11 +560,15 @@ const CategoryManager: React.FC = () => {
   };
 
   const handleSaveCategory = async () => {
+    if (isSaving) return; // Prevent double clicks
+
     try {
+      setIsSaving(true);
       const token = localStorage.getItem('adminToken');
 
       if (!token) {
         alert('Nicht angemeldet. Bitte anmelden.');
+        setIsSaving(false);
         return;
       }
 
@@ -597,11 +583,12 @@ const CategoryManager: React.FC = () => {
           da: formData.description_da || '',
           en: formData.description_en || ''
         },
-        icon: formData.icon || 'fa-utensils'
+        icon: formData.icon || 'fa-utensils',
+        image: formData.image || ''
       };
 
       const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
-      const action = editingCategory ? 'update_category' : 'create_category';
+      const action = editingCategory ? 'update_main_category' : 'create_main_category';
       const url = editingCategory ? `${API_URL}?action=${action}&id=${editingCategory.id}` : `${API_URL}?action=${action}`;
 
       const response = await fetch(url, {
@@ -625,6 +612,8 @@ const CategoryManager: React.FC = () => {
     } catch (error) {
       console.error('Error saving category:', error);
       alert('Fehler beim Speichern der Kategorie: Netzwerkfehler');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -701,36 +690,91 @@ const CategoryManager: React.FC = () => {
     }
   };
 
-  return (
-    <CategoryManagerContainer>
-      <CategoryManagerHeader>
-        <CategoryManagerTitle>Kategorie-Manager</CategoryManagerTitle>
-        <CategoryManagerSubtitle>
-          Verwalten Sie alle Kategorien und Tabs für Ihr Menü
-        </CategoryManagerSubtitle>
-      </CategoryManagerHeader>
+  const moveCategoryUp = async (categoryId: string) => {
+    const mainCategories = categories.filter(cat => cat.isMainCategory);
+    const currentIndex = mainCategories.findIndex(cat => cat.id === categoryId);
 
-      <AddCategoryButton
+    if (currentIndex <= 0) return;
+
+    const newCategories = [...mainCategories];
+    [newCategories[currentIndex - 1], newCategories[currentIndex]] =
+    [newCategories[currentIndex], newCategories[currentIndex - 1]];
+
+    await updateCategoryOrder(newCategories);
+  };
+
+  const moveCategoryDown = async (categoryId: string) => {
+    const mainCategories = categories.filter(cat => cat.isMainCategory);
+    const currentIndex = mainCategories.findIndex(cat => cat.id === categoryId);
+
+    if (currentIndex >= mainCategories.length - 1) return;
+
+    const newCategories = [...mainCategories];
+    [newCategories[currentIndex], newCategories[currentIndex + 1]] =
+    [newCategories[currentIndex + 1], newCategories[currentIndex]];
+
+    await updateCategoryOrder(newCategories);
+  };
+
+  const updateCategoryOrder = async (orderedCategories: any[]) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+
+      const response = await fetch(`${API_URL}?action=update_category_order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          categories: orderedCategories.map((item, index) => ({
+            id: item.id,
+            sortOrder: index + 1
+          }))
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        await loadCategories();
+      } else {
+        alert('Fehler beim Speichern der Reihenfolge');
+      }
+    } catch (error) {
+      console.error('Error updating category order:', error);
+      alert('Fehler beim Speichern der Reihenfolge');
+    }
+  };
+
+  return (
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+        Kategorie-Manager
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '30px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Verwalten Sie alle Kategorien und Tabs für Ihr Menü
+      </p>
+
+      <ResponsiveButton
         onClick={handleAddCategory}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        style={{ marginBottom: '30px' }}
       >
         <FaPlus />
         Neue Kategorie hinzufügen
-      </AddCategoryButton>
+      </ResponsiveButton>
 
       {isLoading ? (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '300px',
-          color: '#FF41FB',
-          fontSize: '1.2rem',
-          fontFamily: 'Aldrich, sans-serif'
-        }}>
-          Wird geladen...
-        </div>
+        <ResponsiveLoadingContainer>
+          <div className="loading-spinner">Wird geladen...</div>
+        </ResponsiveLoadingContainer>
       ) : (
         <>
           {(() => {
@@ -779,14 +823,9 @@ const CategoryManager: React.FC = () => {
               );
             }
             return (
-              <CategoriesGrid>
+              <ResponsiveCardGrid>
                 {mainCategories.map((category, index) => (
-            <CategoryCard
-              key={category.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
+            <ResponsiveCard key={category.id}>
               <CategoryHeader>
                 <CategoryIcon>
                   <FaFolder />
@@ -818,31 +857,47 @@ const CategoryManager: React.FC = () => {
               </CategoryStats>
 
               <CategoryActions>
+                <SortButtons>
+                  <SortButton
+                    onClick={() => moveCategoryUp(category.id)}
+                    disabled={index === 0}
+                    title="Nach oben verschieben"
+                  >
+                    <FaArrowUp />
+                  </SortButton>
+                  <SortButton
+                    onClick={() => moveCategoryDown(category.id)}
+                    disabled={index === mainCategories.length - 1}
+                    title="Nach unten verschieben"
+                  >
+                    <FaArrowDown />
+                  </SortButton>
+                </SortButtons>
                 <ActionButton onClick={() => handleEditCategory(category)}>
                   <FaEdit />
                   Bearbeiten
                 </ActionButton>
-                <ActionButton 
+                <ActionButton
                   $variant="products"
                   onClick={() => handleManageProducts(category)}
                 >
                   <FaBoxes />
                   Produkte ({category.items?.length || 0})
                 </ActionButton>
-                <ActionButton 
+                <ActionButton
                   $variant="danger"
                   onClick={() => handleDeleteCategory(category.id)}
-                  title={category.items && category.items.length > 0 ? 
-                    `Diese Kategorie hat ${category.items.length} Produkte` : 
+                  title={category.items && category.items.length > 0 ?
+                    `Diese Kategorie hat ${category.items.length} Produkte` :
                     'Kategorie löschen'}
                 >
                   <FaTrash />
                   Löschen
                 </ActionButton>
               </CategoryActions>
-            </CategoryCard>
+            </ResponsiveCard>
                 ))}
-              </CategoriesGrid>
+              </ResponsiveCardGrid>
             );
           })()}
         </>
@@ -998,9 +1053,9 @@ const CategoryManager: React.FC = () => {
               >
                 Abbrechen
               </ModalButton>
-              <ModalButton onClick={handleSaveCategory}>
+              <ModalButton onClick={handleSaveCategory} disabled={isSaving}>
                 <FaSave />
-                Speichern
+                {isSaving ? 'Speichert...' : 'Speichern'}
               </ModalButton>
             </ModalActions>
           </ModalContent>
@@ -1102,7 +1157,7 @@ const CategoryManager: React.FC = () => {
           </ModalContent>
         </Modal>
       )}
-    </CategoryManagerContainer>
+    </ResponsiveMainContent>
   );
 };
 

@@ -8,6 +8,18 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaLeaf, FaEuroSign, FaTimes, FaSave, FaLanguage, FaSync } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveFormGroup,
+  ResponsiveLabel,
+  ResponsiveInput,
+  ResponsiveLoadingContainer,
+  ResponsiveEmptyState
+} from '../../styles/AdminLayout';
 import { Product, Category, TobaccoCatalog } from '../../types/product.types';
 import { useProducts } from '../../hooks/useProducts';
 // Removed useCategories import - now loading categories directly
@@ -16,7 +28,8 @@ import ProductErrorBoundary from '../Common/ProductErrorBoundary';
 import ProductList from './ProductList';
 import ProductForm from './ProductForm';
 import BulkActions from './BulkActions';
-import { getTobaccoCatalog, addBrandToCatalog, addTobaccoToCatalog, updateProductTranslations, bulkUpdateTobaccoPrice } from '../../services/api';
+import ProductTypeSelector from './ProductTypeSelector';
+import api, { getTobaccoCatalog, addBrandToCatalog, addTobaccoToCatalog, updateProductTranslations, bulkUpdateTobaccoPrice, updateProductSubcategory, translateText } from '../../services/api';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -242,18 +255,21 @@ const NotificationContainer = styled(motion.div)<{ type: 'success' | 'error' }>`
 
 const ProductManagerContainer: React.FC = () => {
   const { t, language } = useLanguage();
-  
+
   // State management
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [showProductTypeSelector, setShowProductTypeSelector] = useState(false); // NEW: Product type selection
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProductType, setSelectedProductType] = useState<'regular' | 'tobacco' | 'menu-package'>('regular'); // NEW: Selected product type
   const [showBulkPriceModal, setShowBulkPriceModal] = useState(false);
   const [showTranslationModal, setShowTranslationModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [bulkPrice, setBulkPrice] = useState('15.00');
   const [translationField, setTranslationField] = useState<'name' | 'description'>('name');
-  const [translations, setTranslations] = useState({ de: '', da: '', en: '', tr: '', it: '' });
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [activeLanguages, setActiveLanguages] = useState<Array<{code: string, name: string, flag: string}>>([]);
   const [tobaccoCatalog, setTobaccoCatalog] = useState<TobaccoCatalog>({ brands: [], tobaccos: [] });
   const [selectedBrand, setSelectedBrand] = useState('');
   const [newBrand, setNewBrand] = useState('');
@@ -262,6 +278,44 @@ const ProductManagerContainer: React.FC = () => {
     message: string;
     type: 'success' | 'error';
   }>({ show: false, message: '', type: 'success' });
+
+  // Load categories directly using SubcategoryManager pattern instead of useCategories hook
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  const getCategoryName = useCallback((nameObj: any) => {
+    if (typeof nameObj === 'string') return nameObj;
+    return nameObj[language] || nameObj['de'] || String(nameObj);
+  }, [language]);
+
+  // OLD HARDCODED FUNCTION - REPLACED WITH MANUAL TOBACCO FLAG
+  // This function is no longer used as tobacco detection is now handled via the manual
+  // tobacco checkbox in the product form (isTobacco flag)
+  /*
+  const isShishaOrTobaccoCategory = useCallback((categoryId: string): boolean => {
+    const tobaccoCategoryIds = [
+      'shisha-standard',
+      'shisha',
+      'tabak',
+      'tobacco',
+      '1', // Shisha Tabak main category
+      'subcat_4', // Fruchtig subcategory
+      'subcat_5', // Minzig subcategory
+    ];
+
+    // Also check by category name/description for flexibility
+    const category = subcategories.find(cat => cat.id === categoryId);
+    if (category) {
+      const categoryName = getCategoryName(category.name).toLowerCase();
+      const tobaccoKeywords = ['shisha', 'tabak', 'tobacco', 'wasserpfeife'];
+      const hasKeyword = tobaccoKeywords.some(keyword => categoryName.includes(keyword));
+
+      return tobaccoCategoryIds.includes(categoryId) || hasKeyword;
+    }
+
+    return tobaccoCategoryIds.includes(categoryId);
+  }, [subcategories, getCategoryName]);
+  */
 
   // Custom hooks
   const {
@@ -281,14 +335,24 @@ const ProductManagerContainer: React.FC = () => {
     renderPrice
   } = useProducts(language);
 
-  // Load categories directly using SubcategoryManager pattern instead of useCategories hook
-  const [subcategories, setSubcategories] = useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  
-  const getCategoryName = useCallback((nameObj: any) => {
-    if (typeof nameObj === 'string') return nameObj;
-    return nameObj[language] || nameObj['de'] || String(nameObj);
-  }, [language]);
+  // Load active languages from navigation settings
+  const loadActiveLanguages = async () => {
+    try {
+      const response = await api.get('?action=get_active_languages');
+      if (response.data.success && response.data.data.active_languages) {
+        setActiveLanguages(response.data.data.active_languages);
+      }
+    } catch (error) {
+      console.error('Failed to load active languages:', error);
+      // Fallback to default languages
+      setActiveLanguages([
+        {code: 'de', name: 'Deutsch', flag: '🇩🇪'},
+        {code: 'en', name: 'English', flag: '🇬🇧'},
+        {code: 'da', name: 'Dansk', flag: '🇩🇰'}
+      ]);
+    }
+  };
+
 
   // Load tobacco catalog
   React.useEffect(() => {
@@ -333,11 +397,37 @@ const ProductManagerContainer: React.FC = () => {
         
         // Debug logging removed for performance
         
-        // Filter only subcategories (not main categories) - same as SubcategoryManager
-        const subCats = allCategories.filter((cat: any) => cat.isMainCategory !== true);
-        // Debug logging removed for performance
-        
-        setSubcategories(subCats);
+        // Extract ALL subcategories from main categories and standalone subcategories
+        const allSubcategories: any[] = [];
+        const seenIds = new Set<string>();
+
+        allCategories.forEach((cat: any) => {
+          if (cat.isMainCategory !== true) {
+            // This is a standalone subcategory (like subcat_4, subcat_5)
+            const subcatId = cat.id.toString();
+            if (!seenIds.has(subcatId)) {
+              seenIds.add(subcatId);
+              allSubcategories.push(cat);
+            }
+          } else if (cat.subcategories && cat.subcategories.length > 0) {
+            // This is a main category with embedded subcategories
+            cat.subcategories.forEach((subcat: any) => {
+              const subcatId = `subcat_${subcat.id}`;
+              if (!seenIds.has(subcatId)) {
+                seenIds.add(subcatId);
+                allSubcategories.push({
+                  ...subcat,
+                  id: subcatId, // Ensure consistent naming
+                  parentCategoryId: cat.id,
+                  parentCategoryName: cat.name
+                });
+              }
+            });
+          }
+        });
+
+        console.log('[ProductManagerContainer] All subcategories loaded (deduplicated):', allSubcategories);
+        setSubcategories(allSubcategories);
         // Debug logging removed for performance
         showNotification('Kategorien geladen', 'success');
       } else {
@@ -355,11 +445,19 @@ const ProductManagerContainer: React.FC = () => {
   // Load categories on component mount
   React.useEffect(() => {
     loadCategories();
+    loadActiveLanguages();
   }, [loadCategories]);
 
   // Product form handlers
   const handleAddProduct = () => {
     setEditingProduct(null);
+    setShowProductTypeSelector(true); // Show type selector first
+  };
+
+  // Handle product type selection
+  const handleProductTypeSelection = (type: 'regular' | 'tobacco' | 'menu-package') => {
+    setSelectedProductType(type);
+    setShowProductTypeSelector(false);
     setShowProductForm(true);
   };
 
@@ -391,24 +489,36 @@ const ProductManagerContainer: React.FC = () => {
 
   const handleProductSubmit = async (formData: any, brand?: string) => {
     try {
+      // 🔍 DEBUG: Log submission data
+      console.log('🔍 CONTAINER DEBUG - handleProductSubmit called:');
+      console.log('📦 Form Data received:', formData);
+      console.log('🏷️ Brand:', brand);
+      console.log('📂 Available subcategories:', subcategories);
+
       if (editingProduct) {
+        console.log('✏️ EDITING existing product:', editingProduct);
         await updateProductData(editingProduct.categoryId!, editingProduct.id, formData);
         showNotification('Product successfully updated!', 'success');
       } else {
-        const category = formData.category || subcategories[0]?.id;
+        // Use category_id from formData (which is what useProductForm sends)
+        const category = formData.category_id || formData.category || subcategories[0]?.id;
+        console.log('🆕 CREATING new product with category:', category);
+        console.log('📋 Full data being sent to createProduct:', { ...formData, brand });
         await createProduct(category, { ...formData, brand });
         
-        // Add to tobacco catalog if it's a shisha product
-        if (category === 'shisha-standard' && brand) {
+        // Add to tobacco catalog if tobacco flag is set
+        if (formData.isTobacco && brand) {
           try {
             await addTobaccoToCatalog({
-              name: formData.name,
-              description: formData.description,
+              name: typeof formData.name === 'string' ? formData.name : formData.name?.de || '',
+              description: typeof formData.description === 'string' ? formData.description : formData.description?.de || '',
               brand,
               price: formData.price || 0
             });
+            console.log('✅ Product automatically added to tobacco catalog (manual flag)');
           } catch (catalogError) {
-            console.error('Failed to add to tobacco catalog:', catalogError);
+            console.error('❌ Failed to add to tobacco catalog:', catalogError);
+            // Don't fail the main product creation if catalog addition fails
           }
         }
         
@@ -426,13 +536,21 @@ const ProductManagerContainer: React.FC = () => {
   // Brand management
   const handleAddBrand = async () => {
     if (!newBrand.trim()) return;
-    
+
     try {
-      const result = await addBrandToCatalog(newBrand.trim());
+      const brandName = newBrand.trim();
+      const result = await addBrandToCatalog(brandName);
+
+      // Update tobacco catalog with new brands list
       setTobaccoCatalog(prev => ({ ...prev, brands: result.brands }));
-      setSelectedBrand(newBrand.trim());
+
+      // Set the newly added brand as selected
+      setSelectedBrand(brandName);
+
+      // Clear the new brand input
       setNewBrand('');
-      showNotification(`Brand \"${newBrand.trim()}\" was added successfully!`);
+
+      showNotification(`Brand "${brandName}" was added successfully!`);
     } catch (error) {
       console.error('Failed to add brand:', error);
       showNotification('Failed to add brand', 'error');
@@ -442,25 +560,18 @@ const ProductManagerContainer: React.FC = () => {
   // Category assignment handler
   const handleAssignCategory = async (product: Product, categoryId: string | null) => {
     try {
-      // Find the current category that this product belongs to
-      const currentCategory = subcategories.find((cat: Category) => 
-        cat.items?.some((item: any) => item.id === product.id)
-      );
-      
-      if (currentCategory) {
-        // Update the product's categoryId
-        await updateProductData(currentCategory.id, product.id, { 
-          categoryId: categoryId || undefined 
-        });
-        showNotification(
-          categoryId 
-            ? `Product assigned to category successfully!`
-            : `Product unassigned from category successfully!`, 
-          'success'
-        );
+      if (categoryId && categoryId !== 'unassigned') {
+        // Use the new updateProductSubcategory API
+        await updateProductSubcategory(product.id, categoryId);
+        showNotification('Product assigned to subcategory successfully!', 'success');
       } else {
-        showNotification('Could not find product category. Please try again.', 'error');
+        // Handle unassigning - set to null subcategory
+        await updateProductSubcategory(product.id, '');
+        showNotification('Product unassigned from subcategory successfully!', 'success');
       }
+
+      // Reload products to reflect changes
+      await loadProducts();
     } catch (error) {
       console.error('Failed to assign category:', error);
       showNotification('Failed to assign category. Please try again.', 'error');
@@ -471,32 +582,26 @@ const ProductManagerContainer: React.FC = () => {
   const handleOpenTranslation = (product: Product, field: 'name' | 'description') => {
     setEditingProduct(product);
     setTranslationField(field);
-    
+
     const currentValue = product[field];
-    if (typeof currentValue === 'object' && currentValue !== null) {
-      setTranslations({
-        de: currentValue.de || '',
-        da: currentValue.da || '',
-        en: currentValue.en || '',
-        tr: currentValue.tr || '',
-        it: currentValue.it || ''
-      });
-    } else {
-      setTranslations({
-        de: typeof currentValue === 'string' ? currentValue : '',
-        da: '',
-        en: '',
-        tr: '',
-        it: ''
-      });
-    }
-    
+    const newTranslations: Record<string, string> = {};
+
+    // Initialize translations for all active languages
+    activeLanguages.forEach(lang => {
+      if (typeof currentValue === 'object' && currentValue !== null) {
+        newTranslations[lang.code] = (currentValue as any)[lang.code] || '';
+      } else {
+        newTranslations[lang.code] = lang.code === 'de' ? (currentValue || '') : '';
+      }
+    });
+
+    setTranslations(newTranslations);
     setShowTranslationModal(true);
   };
 
   const handleSaveTranslations = async () => {
     if (!editingProduct) return;
-    
+
     try {
       await updateProductTranslations(
         editingProduct.categoryId!,
@@ -510,6 +615,43 @@ const ProductManagerContainer: React.FC = () => {
     } catch (error) {
       console.error('Failed to save translations:', error);
       showNotification('Failed to save translations. Please try again.', 'error');
+    }
+  };
+
+  const handleAutoTranslate = async () => {
+    if (!editingProduct) return;
+
+    try {
+      // Get the German text (source text)
+      const sourceText = translations['de'] || '';
+      if (!sourceText.trim()) {
+        showNotification('Please enter German text first to translate from.', 'error');
+        return;
+      }
+
+      setNotification({ show: true, message: 'Generating translations...', type: 'success' });
+
+      // Get all target languages (all except German)
+      const targetLanguages = activeLanguages
+        .filter(lang => lang.code !== 'de')
+        .map(lang => lang.code as any); // Type assertion for compatibility with Language type
+
+      // Call the translation API
+      const translationResult = await translateText(sourceText, targetLanguages);
+
+      // Update the translations state with ChatGPT results
+      const updatedTranslations = { ...translations };
+      Object.entries(translationResult).forEach(([langCode, translation]) => {
+        if (langCode !== 'de') {
+          updatedTranslations[langCode] = translation;
+        }
+      });
+
+      setTranslations(updatedTranslations);
+      showNotification('Automatic translations generated successfully!', 'success');
+    } catch (error) {
+      console.error('Failed to auto-translate:', error);
+      showNotification('Failed to generate translations. Please try again.', 'error');
     }
   };
 
@@ -537,51 +679,60 @@ const ProductManagerContainer: React.FC = () => {
 
   return (
     <ProductErrorBoundary>
-      <Container>
-        <Header>
-          <TitleSection>
-            <Title>{t('admin.productManagement')}</Title>
-            <Subtitle>{filteredCount} of {productCount} products</Subtitle>
-          </TitleSection>
-          
-          <Controls>
-            <ActionButton onClick={handleAddProduct}>
-              <FaPlus />
-              {t('admin.addProduct')}
-            </ActionButton>
-            
-            <ActionButton 
-              variant="primary"
-              onClick={() => {
-                console.log('Force refreshing categories...');
-                loadCategories();
-                // Force reload from server by clearing any cached state
-                window.dispatchEvent(new Event('categoriesUpdated'));
-                showNotification('Kategorien neu geladen', 'success');
-              }}
-              title="Kategorieliste neu laden"
-            >
-              <FaSync />
-              Kategorien
-            </ActionButton>
-            
-            <ActionButton 
-              variant="success"
-              onClick={() => window.location.href = '/admin/tobacco-catalog'}
-            >
-              <FaLeaf />
-              Tobacco Catalog
-            </ActionButton>
-            
-            <ActionButton 
-              variant="warning"
-              onClick={() => setShowBulkPriceModal(true)}
-            >
-              <FaEuroSign />
-              Bulk Price Update
-            </ActionButton>
-          </Controls>
-        </Header>
+      <ResponsiveMainContent>
+        <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+          {t('admin.productManagement')}
+        </ResponsivePageTitle>
+        <p style={{
+          textAlign: 'center',
+          marginBottom: '30px',
+          fontFamily: 'Aldrich, sans-serif',
+          color: 'rgba(255, 255, 255, 0.8)',
+          fontSize: '1.1rem'
+        }}>
+          {filteredCount} von {productCount} Produkten
+        </p>
+
+        <div style={{
+          display: 'flex',
+          gap: '15px',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          marginBottom: '30px'
+        }}>
+          <ResponsiveButton onClick={handleAddProduct}>
+            <FaPlus />
+            {t('admin.addProduct')}
+          </ResponsiveButton>
+
+          <ResponsiveButton
+            onClick={() => {
+              console.log('Force refreshing categories...');
+              loadCategories();
+              // Force reload from server by clearing any cached state
+              window.dispatchEvent(new Event('categoriesUpdated'));
+              showNotification('Kategorien neu geladen', 'success');
+            }}
+            title="Kategorieliste neu laden"
+          >
+            <FaSync />
+            Kategorien
+          </ResponsiveButton>
+
+          <ResponsiveButton
+            onClick={() => window.location.href = '/admin/tobacco-catalog'}
+          >
+            <FaLeaf />
+            Tobacco Catalog
+          </ResponsiveButton>
+
+          <ResponsiveButton
+            onClick={() => setShowBulkPriceModal(true)}
+          >
+            <FaEuroSign />
+            Bulk Price Update
+          </ResponsiveButton>
+        </div>
 
         <ProductList
           products={filteredProducts}
@@ -598,6 +749,17 @@ const ProductManagerContainer: React.FC = () => {
           isLoading={isLoading}
         />
 
+        {/* Product Type Selection Modal */}
+        <AnimatePresence>
+          {showProductTypeSelector && (
+            <ProductTypeSelector
+              isOpen={showProductTypeSelector}
+              onClose={() => setShowProductTypeSelector(false)}
+              onSelectType={handleProductTypeSelection}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Product Form Modal */}
         <AnimatePresence>
           {showProductForm && (
@@ -608,6 +770,7 @@ const ProductManagerContainer: React.FC = () => {
               tobaccoCatalog={tobaccoCatalog}
               selectedBrand={selectedBrand}
               newBrand={newBrand}
+              productType={editingProduct ? undefined : selectedProductType} // Pass product type for new products
               onClose={() => {
                 setShowProductForm(false);
                 setSelectedBrand('');
@@ -642,56 +805,48 @@ const ProductManagerContainer: React.FC = () => {
                   </CloseButton>
                 </ModalHeader>
                 
-                <FormGroup>
-                  <Label>🇩🇪 German</Label>
-                  {translationField === 'description' ? (
-                    <TextArea
-                      value={translations.de}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, de: e.target.value }))}
-                      placeholder="German translation..."
-                    />
-                  ) : (
-                    <Input
-                      value={translations.de}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, de: e.target.value }))}
-                      placeholder="German translation..."
-                    />
-                  )}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>🇩🇰 Danish</Label>
-                  {translationField === 'description' ? (
-                    <TextArea
-                      value={translations.da}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, da: e.target.value }))}
-                      placeholder="Danish translation..."
-                    />
-                  ) : (
-                    <Input
-                      value={translations.da}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, da: e.target.value }))}
-                      placeholder="Danish translation..."
-                    />
-                  )}
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>🇬🇧 English</Label>
-                  {translationField === 'description' ? (
-                    <TextArea
-                      value={translations.en}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, en: e.target.value }))}
-                      placeholder="English translation..."
-                    />
-                  ) : (
-                    <Input
-                      value={translations.en}
-                      onChange={(e) => setTranslations(prev => ({ ...prev, en: e.target.value }))}
-                      placeholder="English translation..."
-                    />
-                  )}
-                </FormGroup>
+                {activeLanguages.map(lang => (
+                  <FormGroup key={lang.code}>
+                    <Label>{lang.flag} {lang.name}</Label>
+                    {translationField === 'description' ? (
+                      <TextArea
+                        value={translations[lang.code] || ''}
+                        onChange={(e) => setTranslations(prev => ({ ...prev, [lang.code]: e.target.value }))}
+                        placeholder={`${lang.name} translation...`}
+                      />
+                    ) : (
+                      <Input
+                        value={translations[lang.code] || ''}
+                        onChange={(e) => setTranslations(prev => ({ ...prev, [lang.code]: e.target.value }))}
+                        placeholder={`${lang.name} translation...`}
+                      />
+                    )}
+                  </FormGroup>
+                ))}
+
+                {/* Auto-translate button */}
+                <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                  <Button
+                    variant="secondary"
+                    onClick={handleAutoTranslate}
+                    disabled={isLoading || !translations['de']?.trim()}
+                    style={{
+                      background: 'linear-gradient(135deg, #4CAF50, #45a049)',
+                      borderColor: '#4CAF50'
+                    }}
+                  >
+                    <FaLanguage />
+                    Auto-Generate Translations
+                  </Button>
+                  <div style={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '0.8rem',
+                    marginTop: '5px',
+                    fontFamily: 'Aldrich, sans-serif'
+                  }}>
+                    Uses ChatGPT to translate German text to other languages
+                  </div>
+                </div>
 
                 <ModalActions>
                   <Button 
@@ -873,7 +1028,7 @@ const ProductManagerContainer: React.FC = () => {
             </NotificationContainer>
           )}
         </AnimatePresence>
-      </Container>
+      </ResponsiveMainContent>
     </ProductErrorBoundary>
   );
 };

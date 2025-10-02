@@ -51,7 +51,7 @@ const defaultOptions: Required<UseImageUploadOptions> = {
   maxFiles: 5,
   maxFileSize: 5 * 1024 * 1024, // 5MB
   acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  uploadEndpoint: '/api/upload'
+  uploadEndpoint: '/safira-api-fixed.php?action=upload'
 };
 
 export const useImageUpload = (options: UseImageUploadOptions = {}): UseImageUploadReturn => {

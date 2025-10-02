@@ -474,14 +474,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+
         const [languagesRes, wifiRes, socialRes] = await Promise.all([
-          axios.get('/api/settings/languages'),
+          axios.get(`${API_URL}?action=get_active_languages`),
           axios.get('/api/settings/wifi'),
           axios.get('/api/settings/social')
         ]);
 
         if (languagesRes.data.success) {
-          setDynamicLanguages(languagesRes.data.data);
+          setDynamicLanguages(languagesRes.data.data.active_languages || []);
         }
         if (wifiRes.data.success) {
           setDynamicWifi(wifiRes.data.data);

@@ -6,7 +6,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import LanguageToggle from '../Common/LanguageToggle';
 import { Language } from '../../types';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -49,21 +48,6 @@ const LogoImg = styled.img`
   }
 `;
 
-const TopBar = styled.div`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  z-index: 101;
-  
-  @media (max-width: 768px) {
-    top: 5px;
-    right: 5px;
-    gap: 10px;
-  }
-`;
 
 const BackButton = styled(motion.button)`
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(255, 240, 255, 0.90));
@@ -170,7 +154,7 @@ export interface MenuHeaderProps {
   onLanguageChange: (language: Language) => void;
   /** Category information to display */
   category?: {
-    name: string;
+    name: string | { de: string; en?: string; da?: string; tr?: string; it?: string };
     icon?: string;
   };
   /** Navigation hint text */
@@ -182,6 +166,22 @@ export interface MenuHeaderProps {
   /** Test ID */
   testId?: string;
 }
+
+/**
+ * Helper function to get the display name from a category name (string or multilingual object)
+ */
+const getCategoryDisplayName = (
+  categoryName: string | { de: string; en?: string; da?: string; tr?: string; it?: string },
+  language: string
+): string => {
+  // If it's already a multilingual object, use it directly
+  if (typeof categoryName === 'object' && categoryName !== null) {
+    return categoryName[language as keyof typeof categoryName] || categoryName.de || '';
+  }
+
+  // If it's a string, return it as-is (assuming it's already translated or will be handled elsewhere)
+  return categoryName;
+};
 
 /**
  * Menu Header Component
@@ -248,10 +248,6 @@ export const MenuHeader: React.FC<MenuHeaderProps> = React.memo(({
       initial="hidden"
       animate="visible"
     >
-      {/* Top bar with language selector */}
-      <TopBar>
-        <LanguageToggle />
-      </TopBar>
 
       {/* Logo section */}
       {showLogo && (
@@ -295,7 +291,7 @@ export const MenuHeader: React.FC<MenuHeaderProps> = React.memo(({
         <CategoryTitle
           variants={itemVariants}
         >
-          {category.name}
+          {getCategoryDisplayName(category.name, language)}
         </CategoryTitle>
       )}
     </HeaderContainer>

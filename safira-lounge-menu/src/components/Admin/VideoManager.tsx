@@ -1,52 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import { FaUpload, FaPlay, FaPause, FaTrash, FaSave, FaEye } from 'react-icons/fa';
+import { getProducts } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveButton,
+  ResponsiveLoadingContainer
+} from '../../styles/AdminLayout';
 
-const VideoManagerContainer = styled.div`
-  max-width: 1200px;
-`;
 
-const VideoManagerHeader = styled.div`
-  margin-bottom: 40px;
-`;
 
-const VideoManagerTitle = styled.h1`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 65, 251, 0.8);
-`;
 
-const VideoManagerSubtitle = styled.p`
-  font-family: 'Aldrich', sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1rem;
-`;
 
-const CategoryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 30px;
-  margin-bottom: 40px;
-`;
 
-const CategoryCard = styled(motion.div)`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 15px;
-  padding: 25px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #FF41FB;
-    box-shadow: 0 10px 30px rgba(255, 65, 251, 0.2);
-    transform: translateY(-5px);
-  }
-`;
 
 const CategoryHeader = styled.div`
   display: flex;
@@ -229,149 +200,367 @@ interface VideoMapping {
   category: string;
   displayName: string;
   currentVideo: string;
+  isMainCategory?: boolean;
+  parentCategory?: string;
 }
 
 const VideoManager: React.FC = () => {
+  const { pauseSessionMonitoring, resumeSessionMonitoring } = useAuth();
+
   const [videoMappings, setVideoMappings] = useState<VideoMapping[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
   const [pendingChanges, setPendingChanges] = useState<{ [key: string]: string }>({});
 
-  // Available videos from public folder
-  const availableVideos = [
-    '/videos/Home_Rosen_Background.mp4',
-    '/videos/shisha-background.mp4',
-    '/videos/Juice-and-NightClub-FHD.mp4',
-    '/videos/closeup-of-glass-of-cola-with-ice-rotating-2025-08-29-14-34-40-utc.mp4',
-    '/videos/cup-of-tea-with-mint-4k-2025-08-29-06-05-12-utc.mp4',
-    '/videos/redbull-background.mp4',
-    '/videos/eistee-background.mp4'
-  ];
+  // Available videos - loaded dynamically from API
+  const [availableVideos, setAvailableVideos] = useState<string[]>([]);
 
-  const categoryDisplayNames: { [key: string]: string } = {
-    'home': 'Startseite',
-    'shisha': 'Shisha',
-    'softdrinks': 'Softdrinks',
-    'eistee-energy': 'Eistee & Energy',
-    'hot-drinks': 'Hot Drinks',
-    'saefte': 'Säfte',
-    'wein-sekt': 'Wein & Sekt',
-    'bier': 'Bier',
-    'cocktails-mocktails': 'Cocktails/Mocktails',
-    'spirituosen': 'Spirituosen',
-    'snacks': 'Snacks'
+  // Cleanup blob URLs on component unmount or when pendingChanges updates
+  useEffect(() => {
+    return () => {
+      // Revoke all blob URLs to prevent memory leaks
+      Object.values(pendingChanges).forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [pendingChanges]);
+
+  // Load available videos from the server
+  const loadAvailableVideos = async () => {
+    try {
+      const response = await fetch('/safira-api-fixed.php?action=list_videos');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success' && data.videos) {
+          const videoPaths = data.videos.map((video: any) => video.path);
+          setAvailableVideos(videoPaths);
+          console.log('VideoManager: Loaded', data.count, 'videos from server');
+        }
+      } else {
+        console.error('Failed to load videos from server');
+        // NO fallback videos - must be loaded from server
+        setAvailableVideos([]);
+      }
+    } catch (error) {
+      console.error('Error loading videos:', error);
+      // NO fallback videos - must be loaded from server
+      setAvailableVideos([]);
+    }
   };
 
-  // Load video configuration with localStorage persistence
+  // Load video mappings from server API
+  const loadVideoMappings = async () => {
+    try {
+      const response = await fetch('/safira-api-fixed.php?action=get_video_mappings');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success') {
+          const serverMappings: { [key: string]: string } = {};
+          data.mappings.forEach((mapping: any) => {
+            serverMappings[mapping.category_id] = mapping.video_path;
+          });
+          console.log('VideoManager: Loaded video mappings from server:', serverMappings);
+          return serverMappings;
+        }
+      }
+    } catch (error) {
+      console.error('VideoManager: Error loading video mappings from server:', error);
+    }
+    return {};
+  };
+
+  // Load video configuration with dynamic categories from API
   useEffect(() => {
-    const loadVideoConfig = () => {
-      // Default video mappings
-      const defaultVideoMapping: { [key: string]: string } = {
-        'home': '/videos/Home_Rosen_Background.mp4',
-        'shisha': '/videos/shisha-background.mp4',
-        'softdrinks': '/videos/closeup-of-glass-of-cola-with-ice-rotating-2025-08-29-14-34-40-utc.mp4',
-        'eistee-energy': '/videos/redbull-background.mp4',
-        'hot-drinks': '/videos/cup-of-tea-with-mint-4k-2025-08-29-06-05-12-utc.mp4',
-        'saefte': '/videos/Juice-and-NightClub-FHD.mp4',
-        'wein-sekt': '/videos/Home_Rosen_Background.mp4',
-        'bier': '/videos/redbull-background.mp4',
-        'cocktails-mocktails': '/videos/Juice-and-NightClub-FHD.mp4',
-        'spirituosen': '/videos/redbull-background.mp4',
-        'snacks': '/videos/Home_Rosen_Background.mp4'
-      };
+    const loadVideoConfig = async () => {
+      try {
+        setIsLoading(true);
 
-      // Load saved changes from localStorage
-      const savedMappings = JSON.parse(localStorage.getItem('videoMappings') || '{}');
-      console.log('VideoManager: Loaded from localStorage:', savedMappings);
+        // Load available videos first
+        await loadAvailableVideos();
 
-      // Merge default with saved mappings
-      const finalMapping = { ...defaultVideoMapping, ...savedMappings };
+        // Load categories from API
+        const apiData = await getProducts();
+        const allCategories: any[] = [];
 
-      const mappings = Object.entries(categoryDisplayNames).map(([category, displayName]) => ({
-        category,
-        displayName,
-        currentVideo: finalMapping[category] || '/videos/Home_Rosen_Background.mp4'
-      }));
-      
-      setVideoMappings(mappings);
-      setIsLoading(false);
+        // Always include home page
+        allCategories.push({
+          id: 'home',
+          name: { de: 'Startseite', en: 'Home' },
+          isMainCategory: true
+        });
+
+        // Add main categories and subcategories from API
+        if (apiData.categories) {
+          // First, create a map of main category IDs to names for lookup
+          const mainCategoryMap = new Map();
+          apiData.categories.forEach((category: any) => {
+            if (category.isMainCategory) {
+              const categoryName = typeof category.name === 'string' ? category.name : category.name?.de || category.id;
+              mainCategoryMap.set(category.id, categoryName);
+            }
+          });
+
+          // Then add all categories
+          apiData.categories.forEach((category: any) => {
+            if (category.isMainCategory) {
+              // Add main categories
+              allCategories.push({
+                id: category.id,
+                name: category.name,
+                isMainCategory: true
+              });
+            } else {
+              // Add subcategories (those with isMainCategory: false)
+              // Check if ID already has subcat_ prefix to avoid double prefixing
+              const parentCategoryName = mainCategoryMap.get(category.parentPage) || 'Unknown';
+              const categoryId = category.id.toString().startsWith('subcat_')
+                ? category.id
+                : `subcat_${category.id}`;
+              allCategories.push({
+                id: categoryId, // Use subcat_ prefix but avoid double prefixing
+                name: category.name,
+                isMainCategory: false,
+                parentCategory: parentCategoryName
+              });
+            }
+          });
+        }
+
+        // If no API data, add common categories for video management
+        if (!apiData.categories || apiData.categories.length === 0) {
+          const fallbackCategories = [
+            { id: 'shisha', name: { de: 'Shisha Tabak', en: 'Shisha Tobacco' } },
+            { id: 'softdrinks', name: { de: 'Softdrinks', en: 'Soft Drinks' } },
+            { id: 'hotdrinks', name: { de: 'Heißgetränke', en: 'Hot Drinks' } },
+            { id: 'energy', name: { de: 'Energy Drinks', en: 'Energy Drinks' } },
+            { id: 'snacks', name: { de: 'Snacks', en: 'Snacks' } },
+            { id: 'desserts', name: { de: 'Desserts', en: 'Desserts' } }
+          ];
+
+          fallbackCategories.forEach(cat => {
+            allCategories.push({
+              id: cat.id,
+              name: cat.name,
+              isMainCategory: true
+            });
+          });
+        }
+
+        // NO hardcoded videos - all videos must be assigned via Video Manager
+        const getDefaultVideoForCategory = (categoryName: string): string => {
+          // Return empty string - no default videos, must be assigned via Video Manager
+          return '';
+        };
+
+        // Load saved mappings from server API
+        const savedMappings = await loadVideoMappings();
+
+        // Create video mappings for active categories
+        const mappings = allCategories.map(category => {
+          const categoryKey = category.id.toString();
+          const displayName = typeof category.name === 'string' ? category.name : category.name.de || category.name.en || categoryKey;
+          const defaultVideo = getDefaultVideoForCategory(displayName);
+
+          return {
+            category: categoryKey,
+            displayName,
+            currentVideo: savedMappings[categoryKey] || defaultVideo,
+            isMainCategory: category.isMainCategory,
+            parentCategory: category.parentCategory
+          };
+        });
+
+        console.log('VideoManager: Loaded dynamic categories:', mappings);
+        setVideoMappings(mappings);
+
+      } catch (error) {
+        console.error('Failed to load categories for video manager:', error);
+        // Fallback to basic home category - NO hardcoded video
+        setVideoMappings([{
+          category: 'home',
+          displayName: 'Startseite',
+          currentVideo: '', // NO hardcoded video - must be assigned via Video Manager
+          isMainCategory: true
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadVideoConfig();
   }, []);
 
+  // File validation helper
+  const validateVideoFile = (file: File): string | null => {
+    const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
+    const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+    const ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.webm', '.avi'];
+
+    // Check file size
+    if (file.size > MAX_SIZE) {
+      return `Datei zu groß (max 100 MB). Ihre Datei: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    // Check file type
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(fileExtension)) {
+      return `Ungültiges Dateiformat: ${file.type || fileExtension}. Erlaubt: MP4, MOV, WebM, AVI`;
+    }
+
+    return null;
+  };
+
   const handleFileChange = async (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Show temporary preview
-      const tempUrl = URL.createObjectURL(file);
-      setPendingChanges(prev => ({ ...prev, [category]: tempUrl }));
-      
-      // Upload to server
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      try {
-        const token = localStorage.getItem('adminToken');
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
+    if (!file) return;
+
+    // Validate file
+    const validationError = validateVideoFile(file);
+    if (validationError) {
+      alert(validationError);
+      event.target.value = ''; // Clear file input
+      return;
+    }
+
+    // Show temporary preview
+    const tempUrl = URL.createObjectURL(file);
+    setPendingChanges(prev => ({ ...prev, [category]: tempUrl }));
+
+    // Pause session monitoring during upload
+    pauseSessionMonitoring();
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      console.log('VideoManager: Uploading video for category:', category, 'File size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+      console.log('VideoManager: Session monitoring paused during upload');
+
+      const response = await fetch('/safira-api-fixed.php?action=upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Revoke the temporary blob URL
+        URL.revokeObjectURL(tempUrl);
+
+        // Replace temp URL with server URL
+        setPendingChanges(prev => ({ ...prev, [category]: data.videoUrl }));
+        console.log('VideoManager: Video uploaded successfully:', data.videoUrl, 'Original filename:', data.originalFilename);
+
+        // Reload available videos to include the newly uploaded video
+        await loadAvailableVideos();
+      } else {
+        // Revoke blob URL on error
+        URL.revokeObjectURL(tempUrl);
+        setPendingChanges(prev => {
+          const { [category]: removed, ...rest } = prev;
+          return rest;
         });
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Replace temp URL with server URL
-          setPendingChanges(prev => ({ ...prev, [category]: data.url }));
-          console.log('Video uploaded successfully:', data.url);
-        } else {
-          alert('Fehler beim Upload des Videos');
-          console.error('Upload failed:', response.statusText);
-        }
-      } catch (error) {
-        alert('Fehler beim Upload des Videos');
-        console.error('Upload error:', error);
+
+        const errorText = await response.text();
+        alert('Fehler beim Upload des Videos: ' + errorText);
+        console.error('VideoManager: Upload failed:', response.statusText, errorText);
       }
+    } catch (error: any) {
+      // Revoke blob URL on error
+      URL.revokeObjectURL(tempUrl);
+      setPendingChanges(prev => {
+        const { [category]: removed, ...rest } = prev;
+        return rest;
+      });
+
+      alert('Fehler beim Upload des Videos: ' + (error.message || 'Netzwerkfehler'));
+      console.error('VideoManager: Upload error:', error);
+    } finally {
+      // Always resume session monitoring after upload
+      resumeSessionMonitoring();
+      console.log('VideoManager: Session monitoring resumed after upload');
     }
   };
 
-  const handleSaveChanges = (category: string) => {
+  const handleSaveChanges = async (category: string) => {
     const newVideo = pendingChanges[category];
     if (!newVideo) return;
 
-    // Update local state
-    setVideoMappings(prev => 
-      prev.map(mapping => 
-        mapping.category === category 
-          ? { ...mapping, currentVideo: newVideo }
-          : mapping
-      )
-    );
-    
-    // Save to localStorage for persistence across page loads
-    const currentMappings = JSON.parse(localStorage.getItem('videoMappings') || '{}');
-    currentMappings[category] = newVideo;
-    localStorage.setItem('videoMappings', JSON.stringify(currentMappings));
-    console.log('VideoManager: Saved to localStorage:', currentMappings);
-    
-    // Remove from pending changes
-    setPendingChanges(prev => {
-      const { [category]: removed, ...rest } = prev;
-      return rest;
-    });
+    // Validate video path (reject blob URLs)
+    if (newVideo.startsWith('blob:')) {
+      alert('Upload noch nicht abgeschlossen. Bitte warten Sie, bis der Upload fertig ist.');
+      return;
+    }
 
-    console.log(`VideoManager: Video updated for category: ${category} to:`, newVideo);
-    
-    // Trigger immediate update for VideoBackground components
-    const event = new CustomEvent('videoConfigChanged', { 
-      detail: { category, videoPath: newVideo } 
-    });
-    console.log('VideoManager: Dispatching event:', event.detail);
-    window.dispatchEvent(event);
+    try {
+      console.log('VideoManager: Saving video mapping:', { category, videoPath: newVideo });
+
+      // Send as JSON instead of FormData
+      const response = await fetch('/safira-api-fixed.php?action=save_video_mapping', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          category_id: category,
+          video_path: newVideo
+        })
+      });
+
+      // Get response text for better error debugging
+      const responseText = await response.text();
+      console.log('VideoManager: Save response:', responseText);
+
+      if (!response.ok) {
+        console.error('VideoManager: HTTP Error:', response.status, response.statusText);
+        console.error('VideoManager: Response body:', responseText);
+        alert(`Server-Fehler (${response.status}): ${responseText.substring(0, 200)}`);
+        return;
+      }
+
+      const data = JSON.parse(responseText);
+
+      if (data.status === 'success') {
+        console.log('VideoManager: Successfully saved video mapping to server:', category, '->', newVideo);
+
+        // Update local state only after successful server save
+        setVideoMappings(prev =>
+          prev.map(mapping =>
+            mapping.category === category
+              ? { ...mapping, currentVideo: newVideo }
+              : mapping
+          )
+        );
+
+        // Remove from pending changes
+        setPendingChanges(prev => {
+          const { [category]: removed, ...rest } = prev;
+          return rest;
+        });
+
+        console.log(`VideoManager: Video updated for category: ${category} to:`, newVideo);
+
+        // Trigger immediate update for VideoBackground components
+        const event = new CustomEvent('videoConfigChanged', {
+          detail: { category, videoPath: newVideo }
+        });
+        console.log('VideoManager: Dispatching event:', event.detail);
+        window.dispatchEvent(event);
+
+        alert('Video-Zuweisung erfolgreich gespeichert!');
+      } else {
+        console.error('VideoManager: Failed to save video mapping:', data);
+        alert('Fehler beim Speichern: ' + (data.message || data.error || 'Unbekannter Fehler'));
+      }
+    } catch (error: any) {
+      console.error('VideoManager: Error saving video mapping:', error);
+      alert('Fehler beim Speichern: ' + (error.message || 'Netzwerkfehler'));
+    }
   };
 
   const handleDiscardChanges = (category: string) => {
@@ -411,41 +600,46 @@ const VideoManager: React.FC = () => {
   };
 
   return (
-    <VideoManagerContainer>
-      <VideoManagerHeader>
-        <VideoManagerTitle>Video-Manager</VideoManagerTitle>
-        <VideoManagerSubtitle>
-          Verwalten Sie Hintergrundvideos für jede Kategorie und Seite
-        </VideoManagerSubtitle>
-      </VideoManagerHeader>
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+        Video-Manager
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '30px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Verwalten Sie Hintergrundvideos für jede Kategorie und Seite
+      </p>
 
       {isLoading ? (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '300px',
-          color: '#FF41FB',
-          fontSize: '1.2rem',
-          fontFamily: 'Aldrich, sans-serif'
-        }}>
-          Wird geladen...
-        </div>
+        <ResponsiveLoadingContainer>
+          <div className="loading-spinner">Wird geladen...</div>
+        </ResponsiveLoadingContainer>
       ) : (
-        <CategoryGrid>
+        <ResponsiveCardGrid>
           {videoMappings.map((mapping, index) => {
             const currentVideo = getCurrentVideo(mapping.category);
             const hasChanges = pendingChanges[mapping.category];
           
           return (
-            <CategoryCard
-              key={mapping.category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
+            <ResponsiveCard key={mapping.category}>
               <CategoryHeader>
-                <CategoryTitle>{mapping.displayName}</CategoryTitle>
+                <div>
+                  <CategoryTitle>{mapping.displayName}</CategoryTitle>
+                  {!mapping.isMainCategory && mapping.parentCategory && (
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: '#41ABFF',
+                      marginTop: '4px',
+                      fontStyle: 'italic'
+                    }}>
+                      Unterkategorie von: {typeof mapping.parentCategory === 'string' ? mapping.parentCategory : (mapping.parentCategory as any)?.de || 'Unknown'}
+                    </div>
+                  )}
+                </div>
                 <PreviewButton onClick={() => openPreview(currentVideo)}>
                   <FaEye />
                   Vollbild
@@ -555,10 +749,10 @@ const VideoManager: React.FC = () => {
                 accept="video/mp4,video/quicktime,video/webm"
                 onChange={(e) => handleFileChange(mapping.category, e)}
               />
-            </CategoryCard>
+            </ResponsiveCard>
           );
           })}
-        </CategoryGrid>
+        </ResponsiveCardGrid>
       )}
 
       {previewVideo && (
@@ -581,7 +775,7 @@ const VideoManager: React.FC = () => {
           />
         </PreviewModal>
       )}
-    </VideoManagerContainer>
+    </ResponsiveMainContent>
   );
 };
 

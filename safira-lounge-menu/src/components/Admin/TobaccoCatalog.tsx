@@ -9,12 +9,14 @@ import {
   FaCheck
 } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { 
-  getTobaccoCatalog, 
+import {
+  getTobaccoCatalog,
   addTobaccoToMenu,
   removeTobaccoFromCatalog,
   TobaccoCatalog as TobaccoCatalogType,
-  TobaccoItem
+  TobaccoItem,
+  debugTobaccoSystem,
+  syncExistingTobacco
 } from '../../services/api';
 
 const CatalogContainer = styled.div`
@@ -351,6 +353,32 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   }
 `;
 
+const DebugButton = styled(motion.button)`
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding: 10px 16px;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: linear-gradient(135deg, #E55A2B, #E8851A);
+    box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const NotificationContainer = styled(motion.div)<{ type: 'success' | 'error' }>`
   position: fixed;
   top: 20px;
@@ -568,6 +596,47 @@ const TobaccoCatalog: React.FC = () => {
               <option key={brand} value={brand}>{brand}</option>
             )) || []}
           </BrandFilter>
+
+          {/* Debug buttons */}
+          <DebugButton
+            onClick={async () => {
+              try {
+                const debugData = await debugTobaccoSystem();
+                console.log('🔍 TOBACCO SYSTEM DEBUG:', debugData);
+                alert(`Debug Info:
+• Tobacco Products: ${debugData.debug_info?.tobacco_products_count || 0}
+• Catalog Entries: ${debugData.debug_info?.catalog_entries_count || 0}
+• Recent Products: ${debugData.debug_info?.recent_tobacco_products?.length || 0}
+
+Check console for detailed output.`);
+              } catch (error) {
+                console.error('Debug failed:', error);
+                alert('Debug failed - check console');
+              }
+            }}
+          >
+            🔍 Debug System
+          </DebugButton>
+
+          <DebugButton
+            onClick={async () => {
+              try {
+                const syncData = await syncExistingTobacco();
+                console.log('🔄 SYNC RESULT:', syncData);
+                alert(`Sync Complete:
+• Added: ${syncData.added || 0} products
+• Total found: ${syncData.total_products || 0} products
+
+Refreshing catalog...`);
+                await loadCatalog();
+              } catch (error) {
+                console.error('Sync failed:', error);
+                alert('Sync failed - check console');
+              }
+            }}
+          >
+            🔄 Sync Products
+          </DebugButton>
         </Controls>
       </Header>
 

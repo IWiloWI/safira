@@ -174,7 +174,9 @@ export type { TobaccoItem };
 
 // Authentication
 export const login = async (username: string, password: string): Promise<AuthResponse> => {
-  const response = await api.post<any>('?action=login', { username, password });
+  const response = await api.post<any>('', { username, password }, {
+    params: { action: 'login' }
+  });
   // Handle PHP API response format
   const userData = response.data;
   return {
@@ -198,7 +200,9 @@ export const login = async (username: string, password: string): Promise<AuthRes
 
 // Products
 export const getProducts = async (): Promise<ProductData> => {
-  const response = await api.get<GetProductsResponse>('?action=products');
+  const response = await api.get<GetProductsResponse>('', {
+    params: { action: 'products' }
+  });
   return response.data.data || (response.data as unknown as ProductData);
 };
 
@@ -212,49 +216,133 @@ export const addProduct = async (
   product: ProductCreateData,
   translationOptions?: { translateName: boolean; translateDescription: boolean }
 ): Promise<Product> => {
-  // Handle subcategory ID format (subcat_X -> category_id + subcategory_id)
-  let actualCategoryId = categoryId;
-  let actualSubcategoryId = null;
-
-  if (categoryId.startsWith('subcat_')) {
-    // Map subcategory IDs to their parent categories
-    const subcatNumber = categoryId.replace('subcat_', '');
-    const subcategoryMap: Record<string, {categoryId: string, subcategoryId: string}> = {
-      '1': { categoryId: '2', subcategoryId: '1' }, // Heiße Getränke -> Getränke
-      '2': { categoryId: '2', subcategoryId: '2' }, // Kalte Getränke -> Getränke
-      '3': { categoryId: '2', subcategoryId: '3' }, // Softdrinks -> Getränke
-      '4': { categoryId: '1', subcategoryId: '4' }, // Fruchtig -> Shisha Tabak
-      '5': { categoryId: '1', subcategoryId: '5' }, // Minzig -> Shisha Tabak
-    };
-
-    const mapping = subcategoryMap[subcatNumber];
-    if (mapping) {
-      actualCategoryId = mapping.categoryId;
-      actualSubcategoryId = mapping.subcategoryId;
-    }
-  }
-
-  const requestData = {
-    ...product,
-    category_id: actualCategoryId,
-    subcategory_id: actualSubcategoryId,
+  // Transform product data to match PHP API format
+  // The PHP API handles the subcategory logic itself
+  let requestData: any = {
+    category_id: categoryId, // Pass the category_id as-is, PHP will handle subcat_ prefix
+    price: product.price,
+    image: product.imageUrl || '',
+    available: product.available,
+    badges: product.badges,
+    brand: product.brand || '', // Add brand field
+    is_tobacco: product.isTobacco || false, // Add tobacco flag
     ...(translationOptions && { translationOptions })
   };
 
+  // 🔍 DEBUG: Check if product has sizes/variants
+  console.log('🎯 API SERVICE DEBUG - Checking for variants in product data:', product);
+
+  // Add sizes/variants if they exist
+  if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+    console.log('🎯 API SERVICE - Adding variants to request:', product.sizes);
+    requestData.sizes = product.sizes;
+  } else {
+    console.log('🎯 API SERVICE - No variants found, using single price');
+  }
+
+  // The PHP API expects name and description as objects for validation
+  // but processes the individual language fields from those objects
+  if (typeof product.name === 'object' && product.name !== null) {
+    requestData.name = product.name; // Send as object for PHP validation
+  } else {
+    requestData.name = product.name as string || ''; // Send as string for PHP validation
+  }
+
+  if (typeof product.description === 'object' && product.description !== null) {
+    requestData.description = product.description; // Send as object for PHP validation
+  } else {
+    requestData.description = product.description as string || ''; // Send as string for PHP validation
+  }
+
   console.log(`🆕 API: Creating product in category ${categoryId}`);
   console.log(`🔗 URL: ${API_BASE_URL}?action=create_product`);
+  console.log(`📝 Final request data with sizes:`, requestData);
 
   // PHP API uses query parameters for create action
-  const response = await api.post<any>(`?action=create_product`, requestData);
+  // Use empty string as path since baseURL already contains the PHP file
+  const response = await api.post<any>(``, requestData, {
+    params: { action: 'create_product' }
+  });
   const data = response.data.data || response.data;
   return data.product || data;
 };
 
 export const updateProduct = async (categoryId: string, itemId: string, product: ProductUpdateData): Promise<Product> => {
-  // PHP API uses direct product ID in URL, not categoryId/itemId
-  const response = await api.put<any>(`/products/${itemId}`, product);
-  const data = response.data.data || response.data;
-  return data.product || data;
+  // 🔍 DEBUG: Log update request
+  console.log('🔄 API SERVICE - updateProduct called for ID:', itemId);
+  console.log('🔄 API SERVICE - categoryId:', categoryId);
+  console.log('🔄 API SERVICE - Update data:', product);
+
+  // Transform update data similar to create - handle variants
+  let requestData: any = {
+    ...product,
+    brand: product.brand || '', // Add brand field
+    is_tobacco: product.isTobacco || false // Add tobacco flag
+  };
+
+  // Add sizes/variants if they exist
+  if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+    console.log('🎯 API SERVICE UPDATE - Adding variants to request:', product.sizes);
+    requestData.sizes = product.sizes;
+  } else {
+    console.log('🎯 API SERVICE UPDATE - No variants found, using single price');
+  }
+
+  console.log('🔄 API SERVICE - Final update request data:', requestData);
+  console.log(`🌐 API SERVICE - Making POST request to: ${API_BASE_URL}?action=update_product&id=${itemId}`);
+
+  try {
+    // Use the PHP API endpoint for updating products
+    const response = await api.post('', requestData, {
+      params: {
+        action: 'update_product',
+        id: itemId
+      }
+    });
+
+    console.log('📥 API SERVICE - Response received:', response.data);
+
+    const data = response.data;
+    if (!data.success) {
+      console.error('🔄 API SERVICE UPDATE - Server returned error:', data);
+      throw new Error(data.error || 'Failed to update product');
+    }
+
+    console.log('✅ API SERVICE - Update successful, returning product data');
+    return data.product || data;
+  } catch (error: any) {
+    // Handle axios errors (like 500 status)
+    console.error('❌ API SERVICE - Update failed with error:', error);
+    if (error.response?.data) {
+      console.error('🔄 API SERVICE UPDATE - Error response data:', error.response.data);
+      if (error.response.data.debug_messages) {
+        console.error('🔄 API SERVICE UPDATE - Debug messages:', error.response.data.debug_messages);
+      }
+      if (error.response.data.debug) {
+        console.error('🔄 API SERVICE UPDATE - Debug info:', error.response.data.debug);
+      }
+    }
+    throw error;
+  }
+};
+
+export const updateProductSubcategory = async (productId: string, subcategoryId: string): Promise<Product> => {
+  // Use the PHP API endpoint for updating product subcategory
+  const response = await api.post('', {
+    subcategory_id: subcategoryId.replace('subcat_', '') // Remove prefix for database
+  }, {
+    params: {
+      action: 'update_product',
+      id: productId
+    }
+  });
+
+  const data = response.data;
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to update product');
+  }
+
+  return data.product;
 };
 
 export const deleteProduct = async (categoryId: string, itemId: string): Promise<void> => {
@@ -263,7 +351,9 @@ export const deleteProduct = async (categoryId: string, itemId: string): Promise
     console.log(`🔗 URL: ${API_BASE_URL}?action=delete_product&id=${itemId}`);
 
     // PHP API uses query parameters for delete action
-    const response = await api.delete<DeleteProductResponse>(`?action=delete_product&id=${itemId}`);
+    const response = await api.delete<DeleteProductResponse>('', {
+      params: { action: 'delete_product', id: itemId }
+    });
     console.log(`✅ API: DELETE response received:`, response);
 
     // Check if response indicates success
@@ -285,7 +375,9 @@ export const moveProduct = async (fromCategoryId: string, itemId: string, toCate
 
 // Helper function to get single product
 const getProduct = async (productId: string): Promise<Product> => {
-  const response = await api.get(`?action=products&id=${productId}`);
+  const response = await api.get('', {
+    params: { action: 'products', id: productId }
+  });
   return response.data.data || response.data;
 };
 
@@ -336,7 +428,9 @@ export const uploadFile = async (file: File): Promise<UploadResult> => {
 
 // Configuration - Use settings endpoint instead
 export const getConfig = async (): Promise<AppConfig> => {
-  const response = await api.get<any>('?action=settings');
+  const response = await api.get<any>('', {
+    params: { action: 'settings' }
+  });
   const settings = response.data.data || response.data;
 
   // Convert PHP settings format to AppConfig format
@@ -380,7 +474,9 @@ export const updateConfig = async (config: AppConfig): Promise<AppConfig> => {
 
 // Health check
 export const healthCheck = async (): Promise<HealthCheckResponse> => {
-  const response = await api.get<any>('?action=health');
+  const response = await api.get<any>('', {
+    params: { action: 'health' }
+  });
   return response.data.data || response.data;
 };
 
@@ -394,9 +490,25 @@ export const isServerHealthy = async (): Promise<boolean> => {
   }
 };
 
-// Translation services - Mock for PHP compatibility
-export const translateText = async (text: string, targetLanguages: Language[] = ['da', 'en']): Promise<Record<string, string>> => {
-  // PHP API doesn't have translation service, return mock translations
+// Translation services - Real ChatGPT translation via PHP API
+export const translateText = async (text: string, targetLanguages: Language[] = ['da', 'en', 'tr']): Promise<Record<string, string>> => {
+  try {
+    // Use PHP API for translation
+    const response = await api.post('', {
+      text,
+      targetLanguages
+    }, {
+      params: { action: 'translation' }
+    });
+
+    if (response.data && response.data.data && response.data.data.translations) {
+      return response.data.data.translations;
+    }
+  } catch (error) {
+    console.log('PHP translation failed, using fallback:', error);
+  }
+
+  // Fallback: Simple translations
   const translations: Record<string, string> = { de: text };
   targetLanguages.forEach(lang => {
     translations[lang] = `[${lang.toUpperCase()}] ${text}`;
@@ -421,44 +533,89 @@ export const updateProductTranslations = async (
   categoryId: string,
   itemId: string,
   field: 'name' | 'description',
-  translations: { de: string; da: string; en: string; tr: string; it: string }
+  translations: Record<string, string>
 ): Promise<Product> => {
   // Use regular product update endpoint
   const updateData = { [field]: translations };
   return await updateProduct(categoryId, itemId, updateData);
 };
 
-// Tobacco Catalog API - Mock for PHP compatibility
+// Tobacco Catalog API - Real implementation using PHP backend
 export const getTobaccoCatalog = async (): Promise<TobaccoCatalog> => {
-  // PHP API doesn't have tobacco catalog, return mock data
-  return {
-    brands: ['Al Fakher', 'Adalya', 'Serbetli', 'Fumari', 'Starbuzz'],
-    tobaccos: []
-  };
+  try {
+    const response = await api.get('', {
+      params: { action: 'tobacco_catalog' }
+    });
+
+    const data = response.data.data || response.data;
+    return {
+      brands: data.brands || [],
+      tobaccos: data.tobaccos || []
+    };
+  } catch (error) {
+    console.error('Failed to load tobacco catalog:', error);
+    // Return fallback data on error
+    return {
+      brands: ['Al Fakher', 'Adalya', 'Serbetli', 'Fumari', 'Starbuzz'],
+      tobaccos: []
+    };
+  }
 };
 
 export const addBrandToCatalog = async (brand: string): Promise<{ brands: string[] }> => {
-  // PHP API doesn't have tobacco catalog, return mock data
-  const mockBrands = ['Al Fakher', 'Adalya', 'Serbetli', 'Fumari', 'Starbuzz', brand];
-  return { brands: mockBrands };
+  try {
+    const response = await api.post('', {
+      brand: brand.trim()
+    }, {
+      params: { action: 'add_tobacco_brand' }
+    });
+
+    const data = response.data.data || response.data;
+    return {
+      brands: data.brands || []
+    };
+  } catch (error) {
+    console.error('Failed to add brand to catalog:', error);
+    throw error;
+  }
 };
 
 export const addTobaccoToCatalog = async (tobacco: TobaccoItemCreateData): Promise<TobaccoItem> => {
-  // PHP API doesn't have tobacco catalog, return mock data
-  return {
-    id: Date.now().toString(),
-    name: tobacco.name,
-    brand: tobacco.brand,
-    description: tobacco.description,
-    price: tobacco.price,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  try {
+    const response = await api.post('', {
+      name: tobacco.name,
+      brand: tobacco.brand,
+      description: tobacco.description || '',
+      price: tobacco.price || 0
+    }, {
+      params: { action: 'add_tobacco_catalog' }
+    });
+
+    const data = response.data.data || response.data;
+    return {
+      id: data.id || Date.now().toString(),
+      name: data.name || tobacco.name,
+      brand: data.brand || tobacco.brand,
+      description: data.description || tobacco.description,
+      price: data.price || tobacco.price,
+      createdAt: data.created_at || new Date().toISOString(),
+      updatedAt: data.updated_at || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Failed to add tobacco to catalog:', error);
+    throw error;
+  }
 };
 
 export const removeTobaccoFromCatalog = async (id: string): Promise<void> => {
-  // PHP API doesn't have tobacco catalog, no-op
-  console.log('Tobacco catalog removal (mock):', id);
+  try {
+    await api.delete('', {
+      params: { action: 'delete_tobacco_catalog', id }
+    });
+  } catch (error) {
+    console.error('Failed to remove tobacco from catalog:', error);
+    throw error;
+  }
 };
 
 export const addTobaccoToMenu = async (
@@ -478,12 +635,21 @@ export const addTobaccoToMenu = async (
 };
 
 export const syncProductsToTobaccoCatalog = async (): Promise<{ message: string; syncedCount: number; totalTobaccos: number }> => {
-  // PHP API doesn't have tobacco catalog sync
-  return {
-    message: 'Tobacco catalog sync not available in PHP API',
-    syncedCount: 0,
-    totalTobaccos: 0
-  };
+  try {
+    const response = await api.post('', {}, {
+      params: { action: 'sync_tobacco_catalog' }
+    });
+
+    const data = response.data.data || response.data;
+    return {
+      message: data.message || 'Sync completed',
+      syncedCount: data.syncedCount || 0,
+      totalTobaccos: data.totalTobaccos || 0
+    };
+  } catch (error) {
+    console.error('Failed to sync tobacco catalog:', error);
+    throw error;
+  }
 };
 
 // Bulk price update for tobacco products
@@ -508,6 +674,81 @@ export const bulkUpdateTobaccoPrice = async (categoryId: string, newPrice: numbe
 
 // Export utilities
 export { clearCSRFTokenCache };
+
+// Auto-translation functions
+export const autoTranslateMissingContent = async (languageCode: string): Promise<{
+  success: boolean;
+  message: string;
+  translated_count: number;
+  errors: string[];
+}> => {
+  try {
+    const response = await api.post('', {
+      languageCode
+    }, {
+      params: { action: 'auto_translate_missing' }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Failed to auto-translate missing content:', error);
+    throw error;
+  }
+};
+
+export const getActiveLanguages = async (): Promise<{
+  active_languages: Array<{code: string, name: string, flag: string}>;
+  language_codes: string[];
+}> => {
+  try {
+    const response = await api.get('', {
+      params: { action: 'get_active_languages' }
+    });
+
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error('Failed to get active languages');
+    }
+  } catch (error) {
+    console.error('Failed to get active languages:', error);
+    // Fallback to default languages
+    return {
+      active_languages: [
+        {code: 'de', name: 'Deutsch', flag: '🇩🇪'},
+        {code: 'en', name: 'English', flag: '🇬🇧'},
+        {code: 'da', name: 'Dansk', flag: '🇩🇰'}
+      ],
+      language_codes: ['de', 'en', 'da']
+    };
+  }
+};
+
+// Debug function for tobacco system
+export const debugTobaccoSystem = async () => {
+  try {
+    console.log('🔍 DEBUG: Calling tobacco system debug...');
+    const response = await api.get('', { params: { action: 'debug_tobacco_system' } });
+    console.log('🔍 DEBUG: Tobacco system response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ DEBUG: Failed to debug tobacco system:', error);
+    throw error;
+  }
+};
+
+// Sync existing tobacco products to catalog
+export const syncExistingTobacco = async () => {
+  try {
+    console.log('🔄 SYNC: Syncing existing tobacco products...');
+    const response = await api.post('', { action: 'sync_existing_tobacco' });
+    console.log('🔄 SYNC: Sync response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SYNC: Failed to sync tobacco products:', error);
+    throw error;
+  }
+};
 
 // Export the axios instance for custom requests
 export default api;

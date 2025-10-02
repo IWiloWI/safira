@@ -4,8 +4,13 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Product, ProductCreateData, ProductUpdateData } from '../types/product.types';
+import { Product, ProductCreateData, ProductUpdateData, ProductSize } from '../types/product.types';
 import { ProductBadges } from '../types/common.types';
+
+interface MenuPackageItem {
+  name: string;
+  quantity: string;
+}
 
 interface ProductFormData {
   name: string;
@@ -15,6 +20,12 @@ interface ProductFormData {
   available: boolean;
   badges: ProductBadges;
   brand?: string;
+  sizes: ProductSize[];
+  hasVariants: boolean;
+  isTobacco: boolean; // NEW: Manual tobacco product flag
+  isMenuPackage: boolean; // NEW: Manual menu package flag
+  menuContents?: string; // NEW: Menu package contents description
+  menuItems: MenuPackageItem[]; // NEW: Array of menu package items
 }
 
 interface ProductFormValidation {
@@ -26,14 +37,25 @@ interface UseProductFormReturn {
   formData: ProductFormData;
   validation: ProductFormValidation;
   isSubmitting: boolean;
-  
+
   // Form actions
   updateField: (field: keyof ProductFormData, value: any) => void;
   updateBadge: (badgeType: keyof ProductBadges, value: boolean) => void;
   resetForm: (category?: string) => void;
   loadProduct: (product: Product) => void;
   validateForm: () => boolean;
-  
+
+  // Variant actions
+  addVariant: () => void;
+  removeVariant: (index: number) => void;
+  updateVariant: (index: number, field: keyof ProductSize, value: any) => void;
+  toggleVariants: () => void;
+
+  // Menu package actions
+  addMenuItem: () => void;
+  removeMenuItem: (index: number) => void;
+  updateMenuItem: (index: number, field: keyof MenuPackageItem, value: any) => void;
+
   // Form utilities
   getFormData: () => ProductCreateData | ProductUpdateData;
   hasChanges: boolean;
@@ -49,7 +71,13 @@ const defaultFormData: ProductFormData = {
     neu: false,
     kurze_zeit: false,
     beliebt: false
-  }
+  },
+  sizes: [],
+  hasVariants: false,
+  isTobacco: false, // NEW: Default tobacco flag to false
+  isMenuPackage: false, // NEW: Default menu package flag to false
+  menuContents: '', // NEW: Default menu contents to empty string
+  menuItems: [] // NEW: Default menu items array
 };
 
 export const useProductForm = (categories: any[] = [], getProductName: (name: any) => string, getProductDescription: (desc: any) => string): UseProductFormReturn => {
@@ -108,7 +136,7 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Load existing product data into form
    */
   const loadProduct = useCallback((product: Product) => {
-    const loadedData = {
+    const loadedData: ProductFormData = {
       name: getProductName(product.name),
       description: getProductDescription(product.description),
       price: product.price?.toString() || '',
@@ -119,9 +147,27 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
         kurze_zeit: false,
         beliebt: false
       },
-      brand: product.brand
+      brand: product.brand,
+      sizes: product.sizes || [],
+      hasVariants: Boolean(product.sizes && product.sizes.length > 0),
+      isTobacco: Boolean(product.isTobacco), // NEW: Load tobacco flag from product
+      isMenuPackage: Boolean(product.isMenuPackage), // NEW: Load menu package flag from product
+      menuContents: product.menuContents || '', // NEW: Load menu contents from product
+      menuItems: parseMenuItems(product.menuContents) // NEW: Parse menu contents into items array
     };
-    
+
+    function parseMenuItems(menuContents?: string): MenuPackageItem[] {
+      if (!menuContents) return [];
+      const lines = menuContents.split('\n').filter(line => line.trim());
+      return lines.map(line => {
+        const match = line.match(/^(\d+)x?\s*(.+)$/);
+        if (match) {
+          return { quantity: match[1], name: match[2].trim() };
+        }
+        return { quantity: '1', name: line.trim() };
+      });
+    }
+
     setFormData(loadedData);
     setInitialData(loadedData);
     setValidation({ isValid: true, errors: {} });
@@ -150,9 +196,14 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
       }
     }
 
-    // Brand validation for shisha products
-    if (formData.category === 'shisha-standard' && !formData.brand) {
+    // Brand validation for tobacco products
+    if (formData.isTobacco && !formData.brand) {
       errors.brand = 'Brand is required for tobacco products';
+    }
+
+    // Menu contents validation for menu packages
+    if (formData.isMenuPackage && (!formData.menuContents || formData.menuContents.trim().length === 0)) {
+      errors.menuContents = 'Menu contents are required for menu packages';
     }
 
     // Name length validation
@@ -175,16 +226,49 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Get form data as product create/update object
    */
   const getFormData = useCallback((): ProductCreateData | ProductUpdateData => {
+    // Convert menuItems array to formatted string
+    const packageItemsString = formData.menuItems
+      .filter(item => item.name.trim())
+      .map(item => `${item.quantity}x ${item.name}`)
+      .join('\n');
+
     const data: any = {
       name: formData.name,
       description: formData.description,
+      category_id: formData.category,
       available: formData.available,
-      badges: formData.badges
+      badges: formData.badges,
+      is_tobacco: formData.isTobacco, // FIXED: Use snake_case for database
+      is_menu_package: formData.isMenuPackage, // FIXED: Use snake_case for database
+      package_items: packageItemsString || formData.menuContents // FIXED: Use formatted items or fallback to menuContents
     };
 
-    // Add price if provided
-    if (formData.price) {
+    // 🔍 DEBUG: Log form submission data
+    console.log('🔍 FORM DEBUG - getFormData called:');
+    console.log('📝 Form Data:', formData);
+    console.log('📦 Submission Data:', data);
+    console.log('📂 Selected Category ID:', formData.category);
+
+    // Add variants if enabled, otherwise add single price
+    if (formData.hasVariants && formData.sizes.length > 0) {
+      console.log('🎯 VARIANTS DEBUG - Processing variants:');
+      console.log('🎯 Has variants:', formData.hasVariants);
+      console.log('🎯 Variants count:', formData.sizes.length);
+      console.log('🎯 Raw variants data:', formData.sizes);
+
+      data.sizes = formData.sizes.map(size => ({
+        size: size.size,
+        price: size.price,
+        available: size.available ?? true,
+        description: size.description
+      }));
+
+      console.log('🎯 Processed variants for API:', data.sizes);
+    } else if (formData.price) {
+      console.log('🎯 No variants - using single price:', formData.price);
       data.price = parseFloat(formData.price);
+    } else {
+      console.log('⚠️ No price or variants provided');
     }
 
     // Add brand for tobacco products
@@ -194,6 +278,105 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
 
     return data;
   }, [formData]);
+
+  /**
+   * Add a new variant
+   */
+  const addVariant = useCallback(() => {
+    const newVariant: ProductSize = {
+      size: '',
+      price: 0,
+      available: true
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      sizes: [...prev.sizes, newVariant],
+      hasVariants: true
+    }));
+  }, []);
+
+  /**
+   * Remove a variant by index
+   */
+  const removeVariant = useCallback((index: number) => {
+    setFormData(prev => {
+      const newSizes = prev.sizes.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        sizes: newSizes,
+        hasVariants: newSizes.length > 0
+      };
+    });
+  }, []);
+
+  /**
+   * Update a specific variant field
+   */
+  const updateVariant = useCallback((index: number, field: keyof ProductSize, value: any) => {
+    setFormData(prev => {
+      const newSizes = [...prev.sizes];
+      if (newSizes[index]) {
+        newSizes[index] = { ...newSizes[index], [field]: value };
+      }
+      return {
+        ...prev,
+        sizes: newSizes
+      };
+    });
+  }, []);
+
+  /**
+   * Toggle variants mode on/off
+   */
+  const toggleVariants = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      hasVariants: !prev.hasVariants,
+      sizes: !prev.hasVariants ? prev.sizes : []
+    }));
+  }, []);
+
+  /**
+   * Add a new menu item
+   */
+  const addMenuItem = useCallback(() => {
+    const newItem: MenuPackageItem = {
+      name: '',
+      quantity: '1'
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      menuItems: [...prev.menuItems, newItem]
+    }));
+  }, []);
+
+  /**
+   * Remove a menu item by index
+   */
+  const removeMenuItem = useCallback((index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      menuItems: prev.menuItems.filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  /**
+   * Update a specific menu item field
+   */
+  const updateMenuItem = useCallback((index: number, field: keyof MenuPackageItem, value: any) => {
+    setFormData(prev => {
+      const newItems = [...prev.menuItems];
+      if (newItems[index]) {
+        newItems[index] = { ...newItems[index], [field]: value };
+      }
+      return {
+        ...prev,
+        menuItems: newItems
+      };
+    });
+  }, []);
 
   /**
    * Check if form has changes from initial state
@@ -223,8 +406,8 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
           }
         }
 
-        // Brand validation for shisha products
-        if (formData.category === 'shisha-standard' && !formData.brand) {
+        // Brand validation for tobacco products
+        if (formData.isTobacco && !formData.brand) {
           errors.brand = 'Brand is required for tobacco products';
         }
 
@@ -274,16 +457,29 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
     formData,
     validation,
     isSubmitting,
-    
+
     // Form actions
     updateField,
     updateBadge,
     resetForm,
     loadProduct,
     validateForm,
-    
+
+    // Variant actions
+    addVariant,
+    removeVariant,
+    updateVariant,
+    toggleVariants,
+
+    // Menu package actions
+    addMenuItem,
+    removeMenuItem,
+    updateMenuItem,
+
     // Form utilities
     getFormData,
     hasChanges
   };
 };
+
+export type { MenuPackageItem };

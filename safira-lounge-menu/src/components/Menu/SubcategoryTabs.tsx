@@ -1,43 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
 const TabsWrapper = styled.div`
   position: relative;
   margin: 20px 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
   display: flex;
   justify-content: center;
-  /* Prevent touch events from bubbling up to parent swipe handlers */
-  touch-action: pan-x;
-  
-  /* Ultra smooth scroll behavior with longer duration */
-  scroll-behavior: smooth;
-  
-  /* CSS scroll-timeline für flüssigere Animationen */
-  @media (prefers-reduced-motion: no-preference) {
-    transition: scroll-position 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-  
-  /* Scroll snap für sanftere Positionierung */
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0;
-  
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(233, 30, 99, 0.5);
-    border-radius: 2px;
-  }
+  width: 100%;
 `;
 
 const TabsHeader = styled.div`
@@ -66,36 +36,16 @@ const TabsSubtitle = styled.p`
   }
 `;
 
-const ScrollHint = styled.div`
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.8rem;
-  font-family: 'Aldrich', sans-serif;
-  pointer-events: none;
-  animation: fadeInOut 3s infinite;
-  
-  @keyframes fadeInOut {
-    0%, 50%, 100% { opacity: 0.5; }
-    25%, 75% { opacity: 0.8; }
-  }
-  
-  @media (max-width: 480px) {
-    display: none;
-  }
-`;
 
 const TabsContainer = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 10px;
   padding: 0 15px;
   background: transparent;
-  min-width: max-content;
   justify-content: center;
-  
+  max-width: 100%;
+
   @media (max-width: 480px) {
     gap: 8px;
     padding: 0 10px;
@@ -123,7 +73,7 @@ const TabButton = styled(motion.button)<{ $active: boolean }>`
   min-height: 42px;
   white-space: nowrap;
   width: auto;
-  min-width: 140px;
+  min-width: 120px;
   position: relative;
   
   ${props => props.$active && `
@@ -152,7 +102,7 @@ const TabButton = styled(motion.button)<{ $active: boolean }>`
     font-size: 0.85rem;
     padding: 10px 12px;
     min-height: 40px;
-    min-width: 130px;
+    min-width: 100px;
     
     &::after {
       display: none;
@@ -183,7 +133,6 @@ interface SubcategoryTabsProps {
   activeCategory: string;
   onCategoryChange: (categoryId: string) => void;
   language: string;
-  scrollable?: boolean;
   mainCategoryId?: string;
   /** Whether this is used for filtering instead of navigation */
   filterMode?: boolean;
@@ -194,14 +143,9 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
   activeCategory,
   onCategoryChange,
   language,
-  scrollable = true,
   mainCategoryId = '',
   filterMode = false
 }) => {
-  const tabsWrapperRef = useRef<HTMLDivElement>(null);
-  const activeTabRef = useRef<HTMLButtonElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const previousScrollRef = useRef<number>(0);
 
   const getCategoryName = (nameObj: any) => {
     if (typeof nameObj === 'string') return nameObj;
@@ -257,57 +201,28 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
     return categoryTitles[language] || categoryTitles.de;
   };
 
-  const hasScrollableContent = categories.length > 4;
+  const getTranslatedText = (key: 'selectCategoryFilter' | 'swipeToChange') => {
+    const translations = {
+      selectCategoryFilter: {
+        de: 'Wähle eine Kategorie zum Filtern der Produkte',
+        en: 'Select a category to filter products',
+        da: 'Vælg en kategori for at filtrere produkter',
+        tr: 'Ürünleri filtrelemek için bir kategori seçin',
+        it: 'Seleziona una categoria per filtrare i prodotti'
+      },
+      swipeToChange: {
+        de: 'Kategorie wechseln: links/rechts wischen oder Tab antippen',
+        en: 'Change category: swipe left/right or tap tab',
+        da: 'Skift kategori: swipe til venstre/højre eller tryk på fane',
+        tr: 'Kategori değiştir: sola/sağa kaydır veya sekmeye dokunun',
+        it: 'Cambia categoria: scorri a sinistra/destra o tocca scheda'
+      }
+    };
 
-  // Zentriere aktiven Tab mit benachbarten Tabs sichtbar
-  useEffect(() => {
-    if (!activeTabRef.current || !tabsWrapperRef.current) return;
+    const translationObj = translations[key];
+    return translationObj[language as keyof typeof translationObj] || translationObj.de || '';
+  };
 
-    const tabElement = activeTabRef.current;
-    const wrapperElement = tabsWrapperRef.current;
-    
-    const wrapperWidth = wrapperElement.offsetWidth;
-    const tabLeft = tabElement.offsetLeft;
-    const tabWidth = tabElement.offsetWidth;
-    const tabCenter = tabLeft + tabWidth / 2;
-    const wrapperCenter = wrapperWidth / 2;
-    
-    // Berechne perfekte Zentrierung: Tab-Center soll in Wrapper-Center sein
-    let targetScroll = tabCenter - wrapperCenter;
-    
-    // Begrenze auf gültige Scroll-Bereiche
-    const maxScroll = wrapperElement.scrollWidth - wrapperWidth;
-    targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
-    
-    const currentScroll = wrapperElement.scrollLeft;
-    
-    if (!isInitialized) {
-      // Beim ersten Mal instant setzen
-      wrapperElement.scrollLeft = targetScroll;
-      previousScrollRef.current = targetScroll;
-      setIsInitialized(true);
-    } else if (Math.abs(targetScroll - currentScroll) > 5) {
-      // Ultra smooth scroll mit Delay für sanftere Animation
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          // Setze CSS für längere, sanftere Animation
-          wrapperElement.style.scrollBehavior = 'smooth';
-          wrapperElement.style.transition = 'scroll-left 0.6s cubic-bezier(0.25, 0.8, 0.25, 1)';
-          
-          wrapperElement.scrollTo({
-            left: targetScroll,
-            behavior: 'smooth'
-          });
-          previousScrollRef.current = targetScroll;
-          
-          // Reset nach Animation
-          setTimeout(() => {
-            wrapperElement.style.transition = '';
-          }, 600);
-        });
-      }, 50);
-    }
-  }, [activeCategory, isInitialized])
 
   return (
     <div>
@@ -315,14 +230,12 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
         <TabsTitle>{getMainCategoryTitle()}</TabsTitle>
         <TabsSubtitle>
           {filterMode
-            ? "Wähle eine Kategorie zum Filtern der Produkte"
-            : hasScrollableContent
-              ? "Tabs scrollen: hier wischen • Kategorie wechseln: außerhalb der Tabs wischen"
-              : "Kategorie wechseln: links/rechts wischen oder Tab antippen"}
+            ? getTranslatedText('selectCategoryFilter')
+            : getTranslatedText('swipeToChange')}
         </TabsSubtitle>
       </TabsHeader>
       
-      <TabsWrapper data-tab-container="true" ref={tabsWrapperRef}>
+      <TabsWrapper data-tab-container="true">
         <TabsContainer>
           {categories.map((category, index) => (
             <TabButton
@@ -335,7 +248,6 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
                 onCategoryChange(category.id);
               }}
               data-tab-button="true"
-              ref={activeCategory === category.id ? activeTabRef : null}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               initial={false}
@@ -346,12 +258,6 @@ const SubcategoryTabs: React.FC<SubcategoryTabsProps> = ({
             </TabButton>
           ))}
         </TabsContainer>
-        
-        {hasScrollableContent && (
-          <ScrollHint>
-            ← Wischen →
-          </ScrollHint>
-        )}
       </TabsWrapper>
     </div>
   );

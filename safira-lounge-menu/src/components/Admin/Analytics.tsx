@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  FaChartBar, 
-  FaEye, 
-  FaClock, 
-  FaMobile, 
+import styled from 'styled-components';
+import {
+  FaChartBar,
+  FaEye,
+  FaClock,
+  FaMobile,
   FaDesktop,
   FaGlobe,
   FaQrcode,
@@ -14,52 +14,17 @@ import {
   FaArrowDown
 } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  ResponsivePageTitle,
+  ResponsiveMainContent,
+  ResponsiveStatsGrid,
+  ResponsiveStatCard,
+  ResponsiveCardGrid,
+  ResponsiveCard,
+  ResponsiveLoadingContainer
+} from '../../styles/AdminLayout';
 
-const AnalyticsContainer = styled.div`
-  max-width: 1200px;
-`;
-
-const Header = styled.div`
-  margin-bottom: 40px;
-`;
-
-const Title = styled.h1`
-  font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
-  color: #FF41FB;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 65, 251, 0.8);
-`;
-
-const Subtitle = styled.p`
-  font-family: 'Aldrich', sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.1rem;
-`;
-
-const StatsOverview = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
-`;
-
-const StatCard = styled(motion.div)`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 15px;
-  padding: 25px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #FF41FB;
-    box-shadow: 0 10px 30px rgba(255, 65, 251, 0.2);
-    transform: translateY(-5px);
-  }
-`;
-
+// Using styled-components for custom chart elements not covered by responsive system
 const StatHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -102,24 +67,6 @@ const StatLabel = styled.div`
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-`;
-
-const ChartsSection = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 30px;
-  margin-bottom: 40px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ChartCard = styled.div`
-  background: rgba(255, 65, 251, 0.08);
-  border: 2px solid rgba(255, 65, 251, 0.2);
-  border-radius: 15px;
-  padding: 30px;
 `;
 
 const ChartTitle = styled.h3`
@@ -361,20 +308,22 @@ const Analytics: React.FC = () => {
   };
 
   return (
-    <AnalyticsContainer>
-      <Header>
-        <Title>{t('admin.analytics')}</Title>
-        <Subtitle>
-          Einblicke in die Nutzung Ihrer digitalen Speisekarte
-        </Subtitle>
-      </Header>
+    <ResponsiveMainContent>
+      <ResponsivePageTitle style={{ textAlign: 'center', marginBottom: '10px' }}>
+        {t('admin.analytics')}
+      </ResponsivePageTitle>
+      <p style={{
+        textAlign: 'center',
+        marginBottom: '30px',
+        fontFamily: 'Aldrich, sans-serif',
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: '1.1rem'
+      }}>
+        Einblicke in die Nutzung Ihrer digitalen Speisekarte
+      </p>
 
-      <StatsOverview>
-        <StatCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+      <ResponsiveStatsGrid>
+        <ResponsiveStatCard>
           <StatHeader>
             <StatIcon>
               <FaEye />
@@ -386,13 +335,9 @@ const Analytics: React.FC = () => {
           </StatHeader>
           <StatValue>{analyticsData.totalViews.toLocaleString()}</StatValue>
           <StatLabel>Gesamte Aufrufe</StatLabel>
-        </StatCard>
+        </ResponsiveStatCard>
 
-        <StatCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <ResponsiveStatCard>
           <StatHeader>
             <StatIcon>
               <FaQrcode />
@@ -404,13 +349,9 @@ const Analytics: React.FC = () => {
           </StatHeader>
           <StatValue>{analyticsData.qrScans}</StatValue>
           <StatLabel>QR-Code Scans</StatLabel>
-        </StatCard>
+        </ResponsiveStatCard>
 
-        <StatCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <ResponsiveStatCard>
           <StatHeader>
             <StatIcon>
               <FaClock />
@@ -422,13 +363,9 @@ const Analytics: React.FC = () => {
           </StatHeader>
           <StatValue>{analyticsData.avgSessionTime}</StatValue>
           <StatLabel>Ø Sitzungsdauer</StatLabel>
-        </StatCard>
+        </ResponsiveStatCard>
 
-        <StatCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <ResponsiveStatCard>
           <StatHeader>
             <StatIcon>
               <FaUsers />
@@ -442,11 +379,11 @@ const Analytics: React.FC = () => {
             {((analyticsData.mobileUsers + analyticsData.desktopUsers) / 7).toFixed(0)}
           </StatValue>
           <StatLabel>Ø Tägl. Nutzer</StatLabel>
-        </StatCard>
-      </StatsOverview>
+        </ResponsiveStatCard>
+      </ResponsiveStatsGrid>
 
-      <ChartsSection>
-        <ChartCard>
+      <ResponsiveCardGrid>
+        <ResponsiveCard>
           <ChartTitle>Stündliche Aufrufe</ChartTitle>
           <SimpleChart>
             {analyticsData.hourlyData.map((data, index) => (
@@ -462,9 +399,9 @@ const Analytics: React.FC = () => {
               </ChartBar>
             ))}
           </SimpleChart>
-        </ChartCard>
+        </ResponsiveCard>
 
-        <ChartCard>
+        <ResponsiveCard>
           <ChartTitle>Beliebte Kategorien</ChartTitle>
           <TopItems>
             {analyticsData.popularCategories.map((category, index) => (
@@ -474,10 +411,10 @@ const Analytics: React.FC = () => {
               </TopItem>
             ))}
           </TopItems>
-        </ChartCard>
-      </ChartsSection>
+        </ResponsiveCard>
+      </ResponsiveCardGrid>
 
-      <ChartCard>
+      <ResponsiveCard>
         <ChartTitle>Gerätenutzung</ChartTitle>
         <DeviceBreakdown>
           <DeviceCard>
@@ -499,7 +436,7 @@ const Analytics: React.FC = () => {
             <DeviceLabel>Desktop ({analyticsData.desktopUsers})</DeviceLabel>
           </DeviceCard>
         </DeviceBreakdown>
-      </ChartCard>
+      </ResponsiveCard>
 
       <TableAnalytics>
         <ChartTitle>Tischaktivität</ChartTitle>
@@ -515,7 +452,7 @@ const Analytics: React.FC = () => {
           {renderTableCards()}
         </TableGrid>
       </TableAnalytics>
-    </AnalyticsContainer>
+    </ResponsiveMainContent>
   );
 };
 

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Category, MainCategory } from '../types';
+import { Category, MainCategory, FlexibleText } from '../types';
 
 export interface UseMenuNavigationOptions {
   /** Main categories configuration */
@@ -32,7 +32,7 @@ export interface UseMenuNavigationReturn {
   /** Reset to main menu */
   resetToMainMenu: () => void;
   /** Get current category info */
-  getCurrentCategory: () => { name: string; description: string | null } | null;
+  getCurrentCategory: () => { name: FlexibleText; description: string | null } | null;
   /** Get categories for current main category */
   getCurrentCategories: () => Category[];
 }
@@ -122,28 +122,26 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
    */
   const getCurrentCategory = useCallback(() => {
     if (!selectedMainCategory) return null;
-    
+
     const mainCat = mainCategories[selectedMainCategory];
     if (!mainCat) return null;
-    
+
     // If specific subcategory is selected, show its name
     if (selectedCategory && selectedCategory !== 'all') {
       const specificCat = categories.find((cat: Category) => cat.id === selectedCategory);
-      
+
       if (specificCat) {
-        const name = typeof specificCat.name === 'string' 
-          ? specificCat.name 
-          : specificCat.name.de || Object.values(specificCat.name)[0] || 'Unknown Category';
+        // Return the full multilingual object or string as-is for MenuHeader compatibility
         return {
-          name: name as string,
+          name: specificCat.name, // Keep the original multilingual structure
           description: null
         };
       }
     }
-    
+
     // Otherwise show main category
     return {
-      name: mainCat.name.de,
+      name: mainCat.name, // Keep the original multilingual structure
       description: null
     };
   }, [selectedMainCategory, selectedCategory, mainCategories, categories]);
@@ -153,23 +151,47 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
    */
   const getCurrentCategories = useCallback(() => {
     if (!selectedMainCategory) return [];
-    const currentMainCategory = mainCategories[selectedMainCategory];
-    if (!currentMainCategory) return [];
-    
-    return categories.filter((cat: Category) => 
-      currentMainCategory.categoryIds.includes(cat.id)
-    );
-  }, [selectedMainCategory, mainCategories, categories]);
+
+    // Find the main category using selectedMainCategory (now contains actual API ID)
+    const mainCategory = categories.find((cat: Category) => cat.id === selectedMainCategory && cat.isMainCategory === true);
+    if (!mainCategory) {
+      console.warn('[getCurrentCategories] Could not find main category for ID:', selectedMainCategory);
+      return [];
+    }
+
+    // Return subcategories if available
+    return (mainCategory as any).subcategories || [];
+  }, [selectedMainCategory, categories]);
 
   // URL effect to sync with navigation
   useEffect(() => {
     const drinkCategories = getCategoryIdsForMainCategory('drinks');
     const shishaCategories = getCategoryIdsForMainCategory('shisha');
 
-    console.log('[URL Effect] category param:', category, 'current selectedCategory:', selectedCategory, 'current selectedMainCategory:', selectedMainCategory);
+    // Map numeric category IDs to English main category names for clean URLs
+    const categoryIdMapping: { [key: string]: string } = {
+      '1': 'shisha',      // Shisha category
+      '2': 'beverages',   // Getränke/Beverages category
+      '3': 'snacks'       // Snacks category
+    };
+
+    // Check if category is a numeric ID that should be mapped to an English name
+    let mappedCategory = category;
+    if (category && categoryIdMapping[category]) {
+      mappedCategory = categoryIdMapping[category];
+      console.log('[URL Effect] Mapping category ID', category, 'to', mappedCategory);
+      // Redirect to the English name URL for clean URLs
+      navigate(`/menu/${mappedCategory}`, { replace: true });
+      return;
+    }
+
+    console.log('[URL Effect] category param:', mappedCategory, 'current selectedCategory:', selectedCategory, 'current selectedMainCategory:', selectedMainCategory);
+
+    // Use mapped category for further processing
+    const processedCategory = mappedCategory;
 
     // Only update if URL category is different from current state
-    if (!category) {
+    if (!processedCategory) {
       // No category in URL - reset to main menu
       if (selectedMainCategory !== null || selectedCategory !== 'all') {
         setSelectedMainCategory(null);
@@ -179,12 +201,15 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
     }
 
     // Skip if we're already in the correct state (but allow main category switches)
-    if (category === selectedCategory) {
+    if (processedCategory === selectedCategory) {
       const correctMainCategory =
-        (category === 'drinks' && selectedMainCategory === 'drinks') ||
-        (drinkCategories.includes(category) && selectedMainCategory === 'drinks') ||
-        (shishaCategories.includes(category) && selectedMainCategory === 'shisha') ||
-        (category === 'menus' && selectedMainCategory === 'menus');
+        (processedCategory === 'drinks' && selectedMainCategory === 'drinks') ||
+        (processedCategory === 'beverages' && selectedMainCategory === 'beverages') ||
+        (processedCategory === 'shisha' && selectedMainCategory === 'shisha') ||
+        (processedCategory === 'snacks' && selectedMainCategory === 'snacks') ||
+        (drinkCategories.includes(processedCategory) && selectedMainCategory === 'drinks') ||
+        (shishaCategories.includes(processedCategory) && selectedMainCategory === 'shisha') ||
+        (processedCategory === 'menus' && selectedMainCategory === 'menus');
 
       if (correctMainCategory) {
         console.log('[URL Effect] Already in correct state, skipping');
@@ -192,42 +217,60 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
       }
     }
     
-    if (category === 'menus') {
+    if (processedCategory === 'menus') {
       // Menus main category - always reset properly
       setSelectedMainCategory('menus');
       setSelectedCategory('all');
       return;
-    } else if (category === 'drinks') {
+    } else if (processedCategory === 'shisha') {
+      // Shisha main category - use the actual ID from API data
+      console.log('[URL Effect] Shisha main category selected');
+      setSelectedMainCategory('1'); // Use actual API ID instead of 'shisha'
+      setSelectedCategory('all');
+      return;
+    } else if (processedCategory === 'beverages') {
+      // Beverages main category - use actual API ID
+      console.log('[URL Effect] Beverages category selected');
+      setSelectedMainCategory('2'); // Use actual API ID instead of 'beverages'
+      setSelectedCategory('all');
+      return;
+    } else if (processedCategory === 'snacks') {
+      // Snacks main category - use actual API ID
+      console.log('[URL Effect] Snacks main category selected');
+      setSelectedMainCategory('3'); // Use actual API ID instead of 'snacks'
+      setSelectedCategory('all');
+      return;
+    } else if (processedCategory === 'drinks') {
       // "drinks" is a virtual category - always redirect to softdrinks
       console.log('[URL Effect] Virtual drinks category - redirecting to softdrinks');
       navigate('/menu/softdrinks', { replace: true });
       return;
-    } else if (category === 'cocktails' || category === 'mocktails') {
+    } else if (processedCategory === 'cocktails' || processedCategory === 'mocktails') {
       // Redirect old URLs to combined category
       navigate('/menu/cocktails-mocktails', { replace: true });
       return;
-    } else if (category && drinkCategories.includes(category)) {
+    } else if (processedCategory && drinkCategories.includes(processedCategory)) {
       // Drink subcategories - always set main category properly
       setSelectedMainCategory('drinks');
-      setSelectedCategory(category === 'cocktails-mocktails' ? 'cocktails-mocktails' : category);
-    } else if (category && shishaCategories.includes(category)) {
+      setSelectedCategory(processedCategory === 'cocktails-mocktails' ? 'cocktails-mocktails' : processedCategory);
+    } else if (processedCategory && shishaCategories.includes(processedCategory)) {
       // Shisha subcategories - always set main category properly
       setSelectedMainCategory('shisha');
-      setSelectedCategory(category);
-    } else if (category && mainCategories[category]) {
+      setSelectedCategory(processedCategory);
+    } else if (processedCategory && mainCategories[processedCategory]) {
       // Direct main category access
-      setSelectedMainCategory(category);
+      setSelectedMainCategory(processedCategory);
       setSelectedCategory('all');
     } else {
       // Check if it's a standalone category that should be treated as a main category
-      const categoryExists = categories.find((cat: Category) => cat.id === category);
+      const categoryExists = categories.find((cat: Category) => cat.id === processedCategory);
       if (categoryExists) {
-        console.log('[URL Effect] Found standalone category:', category, '- treating as main category');
-        setSelectedMainCategory(category);
+        console.log('[URL Effect] Found standalone category:', processedCategory, '- treating as main category');
+        setSelectedMainCategory(processedCategory);
         setSelectedCategory('all');
       } else {
         // Unknown category - reset to main menu
-        console.warn('[URL Effect] Unknown category:', category, '- resetting to main menu');
+        console.warn('[URL Effect] Unknown category:', processedCategory, '- resetting to main menu');
         setSelectedMainCategory(null);
         setSelectedCategory('all');
       }

@@ -25,8 +25,17 @@ const ProductListItem = styled.div`
 const ProductContent = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 5px;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const ProductNameContainer = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
 `;
 
 const ProductName = styled.h3`
@@ -35,6 +44,9 @@ const ProductName = styled.h3`
   margin: 0;
   font-size: 1rem;
   font-weight: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const ProductPrice = styled.div`
@@ -49,6 +61,168 @@ const ProductDescription = styled.div`
   font-size: 0.9rem;
   margin-top: 5px;
   font-family: 'Aldrich', sans-serif;
+`;
+
+const BadgesContainer = styled.div`
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.6rem;
+  font-family: 'Aldrich', sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid;
+  backdrop-filter: blur(4px);
+
+  ${props => {
+    switch (props.$type) {
+      case 'neu':
+        return `
+          background: rgba(76, 175, 80, 0.2);
+          color: #4CAF50;
+          border-color: #4CAF50;
+          box-shadow:
+            0 0 10px rgba(76, 175, 80, 0.6),
+            0 0 20px rgba(76, 175, 80, 0.4),
+            inset 0 0 10px rgba(76, 175, 80, 0.1);
+          text-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
+        `;
+      case 'beliebt':
+        return `
+          background: rgba(255, 107, 53, 0.2);
+          color: #FF6B35;
+          border-color: #FF6B35;
+          box-shadow:
+            0 0 10px rgba(255, 107, 53, 0.6),
+            0 0 20px rgba(255, 107, 53, 0.4),
+            inset 0 0 10px rgba(255, 107, 53, 0.1);
+          text-shadow: 0 0 8px rgba(255, 107, 53, 0.8);
+        `;
+      case 'kurze_zeit':
+        return `
+          background: rgba(255, 215, 0, 0.2);
+          color: #FFD700;
+          border-color: #FFD700;
+          box-shadow:
+            0 0 10px rgba(255, 215, 0, 0.6),
+            0 0 20px rgba(255, 215, 0, 0.4),
+            inset 0 0 10px rgba(255, 215, 0, 0.1);
+          text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        `;
+      default:
+        return `
+          background: rgba(150, 150, 150, 0.2);
+          color: #999;
+          border-color: #999;
+          box-shadow:
+            0 0 10px rgba(150, 150, 150, 0.6),
+            0 0 20px rgba(150, 150, 150, 0.4);
+        `;
+    }
+  }}
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.8s ease;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+    ${props => {
+      switch (props.$type) {
+        case 'neu':
+          return `
+            box-shadow:
+              0 0 15px rgba(76, 175, 80, 0.8),
+              0 0 30px rgba(76, 175, 80, 0.6),
+              inset 0 0 15px rgba(76, 175, 80, 0.2);
+          `;
+        case 'beliebt':
+          return `
+            box-shadow:
+              0 0 15px rgba(255, 107, 53, 0.8),
+              0 0 30px rgba(255, 107, 53, 0.6),
+              inset 0 0 15px rgba(255, 107, 53, 0.2);
+          `;
+        case 'kurze_zeit':
+          return `
+            box-shadow:
+              0 0 15px rgba(255, 215, 0, 0.8),
+              0 0 30px rgba(255, 215, 0, 0.6),
+              inset 0 0 15px rgba(255, 215, 0, 0.2);
+          `;
+        default:
+          return `
+            box-shadow:
+              0 0 15px rgba(150, 150, 150, 0.8),
+              0 0 30px rgba(150, 150, 150, 0.6);
+          `;
+      }
+    }}
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+`;
+
+const VariantsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 65, 251, 0.2);
+`;
+
+const VariantItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Aldrich', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 6px 0;
+`;
+
+const VariantSize = styled.span`
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+`;
+
+const VariantPrice = styled.span`
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+`;
+
+const PriceRange = styled.span`
+  color: #FF41FB;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(255, 65, 251, 0.3);
+  font-size: 0.9rem;
 `;
 
 // Component interfaces
@@ -103,6 +277,96 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
   };
 
   /**
+   * Check if product has multiple size variants
+   */
+  const hasMultipleSizes = () => {
+    return product.sizes && product.sizes.length > 0;
+  };
+
+  /**
+   * Get price display for variants
+   * If variants exist, ignore main product price and only use variant prices
+   */
+  const getPriceDisplay = () => {
+    if (hasMultipleSizes()) {
+      // When variants exist, ONLY use variant prices (ignore main product price)
+      const prices = product.sizes!.map(size => {
+        const price = typeof size.price === 'number' ? size.price : parseFloat(size.price || '0');
+        return price;
+      }).filter(p => p > 0);
+
+      // If no valid variant prices, show "Preis auf Anfrage"
+      if (prices.length === 0) {
+        return 'Preis auf Anfrage';
+      }
+
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+
+      if (minPrice === maxPrice) {
+        return formatPrice(minPrice);
+      }
+      return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+    }
+
+    // Only use main price if no variants exist
+    return formatPrice(product.price);
+  };
+
+  /**
+   * Get badge text in current language
+   */
+  const getBadgeText = (badgeType: 'neu' | 'beliebt' | 'kurze_zeit'): string => {
+    const badgeTranslations = {
+      neu: {
+        de: 'NEU',
+        en: 'NEW',
+        da: 'NY',
+        tr: 'YENİ',
+        it: 'NUOVO'
+      },
+      beliebt: {
+        de: 'BELIEBT',
+        en: 'POPULAR',
+        da: 'POPULÆR',
+        tr: 'POPÜLER',
+        it: 'POPOLARE'
+      },
+      kurze_zeit: {
+        de: 'KURZE ZEIT',
+        en: 'LIMITED TIME',
+        da: 'BEGRÆNSET TID',
+        tr: 'KISA SÜRESİNE',
+        it: 'TEMPO LIMITATO'
+      }
+    };
+
+    const translation = badgeTranslations[badgeType];
+    return translation[language] || translation.de || badgeType.toUpperCase();
+  };
+
+  /**
+   * Get badges to display
+   */
+  const getActiveBadges = () => {
+    if (!product.badges) return [];
+
+    const activeBadges: Array<{ type: 'neu' | 'beliebt' | 'kurze_zeit'; text: string }> = [];
+
+    if (product.badges.neu) {
+      activeBadges.push({ type: 'neu', text: getBadgeText('neu') });
+    }
+    if (product.badges.beliebt) {
+      activeBadges.push({ type: 'beliebt', text: getBadgeText('beliebt') });
+    }
+    if (product.badges.kurze_zeit) {
+      activeBadges.push({ type: 'kurze_zeit', text: getBadgeText('kurze_zeit') });
+    }
+
+    return activeBadges;
+  };
+
+  /**
    * Handle click
    */
   const handleClick = () => {
@@ -121,18 +385,53 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
       tabIndex={interactive ? 0 : undefined}
     >
       <ProductContent>
-        <ProductName>
-          {getProductName()}
-        </ProductName>
+        <ProductNameContainer>
+          <ProductName>
+            {getProductName()}
+          </ProductName>
+
+          {/* Render badges */}
+          {getActiveBadges().length > 0 && (
+            <BadgesContainer>
+              {getActiveBadges().map((badge, index) => (
+                <Badge
+                  key={`${badge.type}-${index}`}
+                  $type={badge.type}
+                  title={badge.text}
+                >
+                  {badge.text}
+                </Badge>
+              ))}
+            </BadgesContainer>
+          )}
+        </ProductNameContainer>
+
         <ProductPrice>
-          {formatPrice(product.price)}
+          {/* Nur bei Produkten OHNE Varianten den Preis anzeigen */}
+          {!hasMultipleSizes() && getPriceDisplay()}
         </ProductPrice>
       </ProductContent>
-      
+
       {getProductDescription() && (
         <ProductDescription>
           {getProductDescription()}
         </ProductDescription>
+      )}
+
+      {/* Show detailed variants if available */}
+      {hasMultipleSizes() && (
+        <VariantsContainer>
+          {product.sizes!.map((size, index) => (
+            <VariantItem key={index}>
+              <VariantSize>
+                {size.size || size.description || `Größe ${index + 1}`}
+              </VariantSize>
+              <VariantPrice>
+                {formatPrice(size.price)}
+              </VariantPrice>
+            </VariantItem>
+          ))}
+        </VariantsContainer>
       )}
     </ProductListItem>
   );
