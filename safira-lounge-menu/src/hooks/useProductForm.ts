@@ -136,6 +136,18 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    * Load existing product data into form
    */
   const loadProduct = useCallback((product: Product) => {
+    // Auto-detect if product is a menu package (even if flag is not set)
+    const hasMenuContents = Boolean(product.menuContents && product.menuContents.trim().length > 0);
+    const isActuallyMenuPackage = Boolean(product.isMenuPackage) || hasMenuContents;
+
+    console.log('🔍 LOAD PRODUCT DEBUG:');
+    console.log('📦 Product ID:', product.id);
+    console.log('📦 Product Name:', product.name);
+    console.log('📦 isMenuPackage flag:', product.isMenuPackage);
+    console.log('📦 menuContents:', product.menuContents);
+    console.log('📦 hasMenuContents:', hasMenuContents);
+    console.log('📦 isActuallyMenuPackage (auto-detected):', isActuallyMenuPackage);
+
     const loadedData: ProductFormData = {
       name: getProductName(product.name),
       description: getProductDescription(product.description),
@@ -151,7 +163,7 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
       sizes: product.sizes || [],
       hasVariants: Boolean(product.sizes && product.sizes.length > 0),
       isTobacco: Boolean(product.isTobacco), // NEW: Load tobacco flag from product
-      isMenuPackage: Boolean(product.isMenuPackage), // NEW: Load menu package flag from product
+      isMenuPackage: isActuallyMenuPackage, // FIXED: Auto-detect menu package by checking menuContents
       menuContents: product.menuContents || '', // NEW: Load menu contents from product
       menuItems: parseMenuItems(product.menuContents) // NEW: Parse menu contents into items array
     };
