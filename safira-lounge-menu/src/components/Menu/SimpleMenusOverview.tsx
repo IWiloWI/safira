@@ -172,7 +172,10 @@ export const SimpleMenusOverview: React.FC = () => {
             </CategoryTitle>
             
             <ProductsGrid>
-              {(category.items || []).slice(0, 5).map((product: any, idx: number) => (
+              {(category.items || [])
+                .sort((a: any, b: any) => (a.price || 0) - (b.price || 0)) // Sort by price (cheapest first)
+                .slice(0, 5)
+                .map((product: any, idx: number) => (
                 <ProductItem key={product.id || idx}>
                   <ProductName>
                     {getLocalizedText(product.name)}
