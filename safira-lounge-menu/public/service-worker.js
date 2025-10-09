@@ -4,7 +4,7 @@
  * Implements aggressive caching strategy for instant loads and offline support
  */
 
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0'; // Bumped for instant updates
 const CACHE_NAMES = {
   static: `safira-static-${CACHE_VERSION}`,
   videos: `safira-videos-${CACHE_VERSION}`,
@@ -22,15 +22,20 @@ const CRITICAL_ASSETS = [
   '/images/safira_logo_280w.webp'
 ];
 
-// Network-first resources (API calls)
+// Network-first resources (API calls + JS/CSS for instant updates)
 const NETWORK_FIRST = [
   '/api/',
-  '/safira-api-fixed.php'
+  '/safira-api-fixed.php',
+  '/static/js/main.',     // Main JS bundle - always fresh
+  '/static/css/main.'     // Main CSS - always fresh
 ];
 
 // Cache-first resources (static assets) - ONLY same-origin
 const CACHE_FIRST = [
-  '/static/',
+  '/static/js/vendors.',   // Vendor bundles (rarely change)
+  '/static/js/react-vendor.',
+  '/static/js/ui-vendor.',
+  '/static/js/runtime.',
   '/images/'
 ];
 
