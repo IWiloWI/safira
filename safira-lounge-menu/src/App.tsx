@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import './styles/globals.css';
@@ -13,9 +13,11 @@ import LiveRegion from './components/Common/LiveRegion';
 import PagePreloader from './components/Common/PagePreloader';
 import { usePageTransition } from './hooks/usePageTransition';
 import HomePage from './pages/HomePage';
-import MenuPage from './pages/MenuPage';
-import AdminPage from './pages/AdminPage';
-import TablePage from './pages/TablePage';
+
+// Lazy load heavy components
+const MenuPage = lazy(() => import('./pages/MenuPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const TablePage = lazy(() => import('./pages/TablePage'));
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -67,41 +69,43 @@ const AppContent: React.FC = () => {
 
       <ContentWrapper id="main-content" role="main">
         <ErrorBoundary>
-          <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route 
-                      path="/menu" 
-                      element={
-                        <ErrorBoundary>
-                          <MenuPage />
-                        </ErrorBoundary>
-                      } 
-                    />
-                    <Route 
-                      path="/menu/:category" 
-                      element={
-                        <ErrorBoundary>
-                          <MenuPage />
-                        </ErrorBoundary>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/*" 
-                      element={
-                        <ErrorBoundary>
-                          <AdminPage />
-                        </ErrorBoundary>
-                      } 
-                    />
-                    <Route 
-                      path="/table/:tableId" 
-                      element={
-                        <ErrorBoundary>
-                          <TablePage />
-                        </ErrorBoundary>
-                      } 
-                    />
-          </Routes>
+          <Suspense fallback={<PagePreloader isLoading={true} loadingText="Lädt..." />}>
+            <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route
+                        path="/menu"
+                        element={
+                          <ErrorBoundary>
+                            <MenuPage />
+                          </ErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/menu/:category"
+                        element={
+                          <ErrorBoundary>
+                            <MenuPage />
+                          </ErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/admin/*"
+                        element={
+                          <ErrorBoundary>
+                            <AdminPage />
+                          </ErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/table/:tableId"
+                        element={
+                          <ErrorBoundary>
+                            <TablePage />
+                          </ErrorBoundary>
+                        }
+                      />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </ContentWrapper>
     </AppContainer>

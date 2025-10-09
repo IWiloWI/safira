@@ -6,7 +6,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTimes, FaLeaf, FaUtensils, FaClipboardList } from 'react-icons/fa';
+import { FaTimes, FaLeaf, FaUtensils, FaClipboardList } from 'react-icons/fa';
 
 interface ProductTypeSelectorProps {
   isOpen: boolean;
