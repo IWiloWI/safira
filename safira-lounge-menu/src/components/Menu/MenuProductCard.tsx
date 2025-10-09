@@ -419,8 +419,9 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
               // Simple string in array
               return item;
             } else if (typeof item === 'object' && item !== null) {
-              // Object with fields - try different possible field names
-              return item.description_de || item.name || item.description || item.title || item.id || JSON.stringify(item);
+              // Object with multilingual fields - use current language
+              const langKey = `description_${language}`;
+              return item[langKey] || item.description_de || item.name || item.description || item.title || item.id || JSON.stringify(item);
             }
             return String(item);
           }).filter(item => item && item.length > 0);
