@@ -33,10 +33,18 @@ const ModalContent = styled(motion.div)`
   border: 2px solid rgba(255, 65, 251, 0.3);
   border-radius: 20px;
   padding: 40px;
-  max-width: 500px;
+  max-width: 700px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   backdrop-filter: blur(15px);
   text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 25px 15px;
+    max-width: 95%;
+    max-height: 85vh;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -52,6 +60,10 @@ const ModalTitle = styled.h2`
   font-size: 1.8rem;
   text-transform: uppercase;
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -75,6 +87,11 @@ const Subtitle = styled.p`
   font-size: 1rem;
   margin-bottom: 40px;
   line-height: 1.5;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+  }
 `;
 
 const TypeOptionsContainer = styled.div`
@@ -82,6 +99,12 @@ const TypeOptionsContainer = styled.div`
   gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 15px;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const TypeOption = styled(motion.button)`
@@ -120,6 +143,42 @@ const TypeOption = styled(motion.button)`
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.7);
     line-height: 1.4;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 280px;
+    padding: 25px 15px;
+
+    .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 12px;
+
+    .icon {
+      font-size: 2rem;
+    }
+
+    .title {
+      font-size: 1rem;
+    }
+
+    .description {
+      font-size: 0.8rem;
+    }
   }
 `;
 
