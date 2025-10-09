@@ -232,6 +232,8 @@ export const addProduct = async (
     badges: product.badges,
     brand: product.brand || '', // Add brand field
     is_tobacco: product.isTobacco || false, // Add tobacco flag
+    is_menu_package: (product as any).isMenuPackage || (product as any).is_menu_package || false, // Add menu package flag (camelCase or snake_case)
+    package_items: (product as any).menuContents || (product as any).package_items || null, // Add menu package items (camelCase or snake_case)
     ...(translationOptions && { translationOptions })
   };
 
@@ -283,7 +285,9 @@ export const updateProduct = async (categoryId: string, itemId: string, product:
   let requestData: any = {
     ...product,
     brand: product.brand || '', // Add brand field
-    is_tobacco: product.isTobacco || false // Add tobacco flag
+    is_tobacco: product.isTobacco || false, // Add tobacco flag
+    is_menu_package: (product as any).isMenuPackage || (product as any).is_menu_package || false, // Add menu package flag (camelCase or snake_case)
+    package_items: (product as any).menuContents || (product as any).package_items || null // Add menu package items (camelCase or snake_case)
   };
 
   // Add sizes/variants if they exist

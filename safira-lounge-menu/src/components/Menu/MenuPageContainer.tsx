@@ -513,11 +513,18 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
    */
   const renderMenusOverview = () => {
     if (selectedMainCategory !== 'menus') return null;
-    
+
     // Get menus category from API data
     const menusCategory = categories.find(cat => cat.id === 'safira-menus');
-    const menuProducts = menusCategory ? menusCategory.items || [] : [];
-    
+    const menuProductsRaw = menusCategory ? menusCategory.items || [] : [];
+
+    // Sort menu products by price (cheapest first)
+    const menuProducts = [...menuProductsRaw].sort((a, b) => {
+      const priceA = a.price || 0;
+      const priceB = b.price || 0;
+      return priceA - priceB;
+    });
+
     return (
       <>
         <MenuHeader
