@@ -21,7 +21,7 @@ const mockAxios = new MockAdapter(axios);
 
 describe('Tobacco API Service', () => {
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
 
   beforeEach(() => {
     mockAxios.reset();

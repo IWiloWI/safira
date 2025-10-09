@@ -52,8 +52,9 @@ const ProductName = styled.h3`
 const ProductPrice = styled.div`
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   margin-left: 20px;
+  font-weight: 600;
 `;
 
 const ProductDescription = styled.div`
@@ -217,14 +218,14 @@ const VariantPrice = styled.span`
   color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  font-size: 1rem;
+  font-size: 1.2rem;
 `;
 
 const PriceRange = styled.span`
   color: #FF41FB;
   font-weight: 600;
   text-shadow: 0 0 8px rgba(255, 65, 251, 0.3);
-  font-size: 0.9rem;
+  font-size: 1.2rem;
 `;
 
 const MenuItemsContainer = styled.div`

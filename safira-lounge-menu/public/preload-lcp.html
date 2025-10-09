@@ -1,0 +1,97 @@
+<!--
+  LCP Prerender Solution
+  This inline code renders the logo immediately without waiting for React
+  Place this in index.html body to eliminate render delay
+-->
+
+<style>
+  /* Critical above-the-fold styles - inline for instant render */
+  .lcp-preload-container {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .lcp-preload-container.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .lcp-logo-immediate {
+    height: 200px;
+    width: auto;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  }
+
+  @media (max-width: 768px) {
+    .lcp-logo-immediate {
+      height: 150px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .lcp-logo-immediate {
+      height: 120px;
+    }
+  }
+</style>
+
+<!-- Render logo immediately - this is the LCP element -->
+<div class="lcp-preload-container" id="lcp-preload">
+  <img
+    class="lcp-logo-immediate"
+    src="/images/safira_logo_220w.webp"
+    srcset="/images/safira_logo_120w.webp 120w, /images/safira_logo_220w.webp 220w, /images/safira_logo_280w.webp 280w"
+    sizes="(max-width: 480px) 120px, (max-width: 768px) 150px, 200px"
+    alt="Safira Lounge"
+    fetchpriority="high"
+    decoding="async"
+  >
+</div>
+
+<script>
+  // Hide preloaded logo once React renders
+  (function() {
+    function hidePreloadLogo() {
+      const preload = document.getElementById('lcp-preload');
+      if (preload) {
+        preload.classList.add('hidden');
+        // Remove from DOM after transition
+        setTimeout(() => {
+          preload.remove();
+        }, 300);
+      }
+    }
+
+    // Wait for React to mount
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        // Check every 100ms if React header is rendered
+        const checkInterval = setInterval(() => {
+          const reactHeader = document.querySelector('[data-testid="menu-header"]') ||
+                            document.querySelector('header') ||
+                            document.querySelector('.logo-section');
+
+          if (reactHeader) {
+            clearInterval(checkInterval);
+            hidePreloadLogo();
+          }
+        }, 100);
+
+        // Failsafe: remove after 3 seconds regardless
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          hidePreloadLogo();
+        }, 3000);
+      });
+    }
+  })();
+</script>

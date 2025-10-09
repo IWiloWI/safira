@@ -11,6 +11,7 @@ import { useMenu } from '../../hooks/useMenu';
 import { useMenuNavigation } from '../../hooks/useMenuNavigation';
 import { useMenuSearch } from '../../hooks/useMenuSearch';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useAdminChangeDetection } from '../../hooks/useAdminChangeDetection';
 import { MenuHeader } from './MenuHeader';
 import VideoBackground from '../Common/VideoBackground';
 import { CategoryNavigation } from './CategoryNavigation';
@@ -48,6 +49,7 @@ const ContentContainer = styled(motion.div)`
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  padding-bottom: 100px;
 `;
 
 
@@ -98,7 +100,16 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   const languageContext = useLanguage();
   const { language, setLanguage } = languageContext;
   const { isMobile } = useResponsive();
-  
+
+  // Auto-refresh when admin makes changes - INSTANT MODE
+  useAdminChangeDetection({
+    interval: 5000, // Check every 5 seconds for instant refresh
+    enabled: true, // Always enabled on customer pages
+    onChangeDetected: () => {
+      console.log('📡 Admin changes detected, reloading menu...');
+    }
+  });
+
   // Filter state
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: ''
@@ -240,6 +251,30 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [selectedMainCategory, categories]);
 
   /**
+   * Get all products for search (calculated before useMenuSearch)
+   */
+  const searchableProducts = useMemo(() => {
+    if (!selectedMainCategory) return [];
+
+    // Find the main category using selectedMainCategory
+    const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
+    if (!mainCategory) return [];
+
+    // Collect all products from main category and its subcategories
+    let allProducts: Product[] = [...(mainCategory.items || [])];
+
+    if (mainCategory.subcategories) {
+      mainCategory.subcategories.forEach(subcat => {
+        if (subcat.items) {
+          allProducts = allProducts.concat(subcat.items);
+        }
+      });
+    }
+
+    return allProducts;
+  }, [selectedMainCategory, categories]);
+
+  /**
    * Initialize search and filtering
    */
   const {
@@ -250,7 +285,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     hasActiveSearch,
     resultsCount
   } = useMenuSearch({
-    products: [], // Will be populated by API
+    products: searchableProducts, // Use actual products from current category
     language,
     selectedMainCategory,
     selectedCategory,
@@ -342,17 +377,21 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     }
 
     // Collect all products from main category and its subcategories
-    let allProducts: Product[] = [...(mainCategory.items || [])];
+    // Filter out unavailable products (available === false)
+    let allProducts: Product[] = (mainCategory.items || [])
+      .filter(product => product.available !== false);
 
     if (mainCategory.subcategories) {
       mainCategory.subcategories.forEach(subcat => {
         if (subcat.items) {
-          // Add subcategory ID to products for filtering
-          const subcatProducts = subcat.items.map(product => ({
-            ...product,
-            subcategoryId: subcat.id,
-            subcategoryName: subcat.name
-          }));
+          // Add subcategory ID to products for filtering and filter out unavailable products
+          const subcatProducts = subcat.items
+            .filter(product => product.available !== false)
+            .map(product => ({
+              ...product,
+              subcategoryId: subcat.id,
+              subcategoryName: subcat.name
+            }));
           allProducts = allProducts.concat(subcatProducts);
         }
       });
@@ -362,23 +401,58 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [selectedMainCategory, categories]);
 
   /**
-   * Filter products by active subcategory filter
+   * Filter products by active subcategory filter AND search query
    */
   const subcategoryFilteredProducts = useMemo(() => {
-    if (!selectedMainCategory || activeSubcategoryFilter === '') {
-      return allMainCategoryProducts;
+    let products = allMainCategoryProducts;
+
+    // First apply subcategory filter
+    if (selectedMainCategory && activeSubcategoryFilter !== '') {
+      const subcategoryId = activeSubcategoryFilter.replace('subcat_', '');
+      console.log('[MenuPageContainer] Filtering by subcategory ID:', subcategoryId);
+
+      products = products.filter(product => {
+        const hasSubcategoryId = (product as any).subcategoryId === subcategoryId;
+        return hasSubcategoryId;
+      });
     }
 
-    // Extract the actual subcategory ID (remove subcat_ prefix if present)
-    const subcategoryId = activeSubcategoryFilter.replace('subcat_', '');
-    console.log('[MenuPageContainer] Filtering by subcategory ID:', subcategoryId);
+    // Then apply search filter
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase();
+      products = products.filter(product => {
+        // Search in product name
+        const name = typeof product.name === 'string'
+          ? product.name
+          : product.name[language] || product.name['de'];
 
-    return allMainCategoryProducts.filter(product => {
-      const hasSubcategoryId = (product as any).subcategoryId === subcategoryId;
-      console.log(`Product ${product.name} has subcategoryId: ${(product as any).subcategoryId}, matches: ${hasSubcategoryId}`);
-      return hasSubcategoryId;
-    });
-  }, [allMainCategoryProducts, selectedMainCategory, activeSubcategoryFilter]);
+        // Search in product description
+        const description = product.description
+          ? (typeof product.description === 'string'
+            ? product.description
+            : product.description[language] || product.description['de'] || '')
+          : '';
+
+        // Search in brand
+        const brand = product.brand || '';
+
+        // Search in ingredients
+        const productAny = product as any;
+        const ingredients = productAny.ingredients
+          ? (typeof productAny.ingredients === 'string'
+            ? productAny.ingredients
+            : productAny.ingredients[language] || productAny.ingredients['de'] || '')
+          : '';
+
+        // Combine all searchable text
+        const searchableText = `${name} ${description} ${brand} ${ingredients}`.toLowerCase();
+
+        return searchableText.includes(searchLower);
+      });
+    }
+
+    return products;
+  }, [allMainCategoryProducts, selectedMainCategory, activeSubcategoryFilter, searchQuery, language]);
 
   /**
    * Get available brands for filtering
@@ -416,7 +490,6 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           showLogo
           language={language}
           onLanguageChange={setLanguage}
-          navigationHint="Wählen Sie eine Kategorie aus"
         />
         
         <CategoryNavigation
@@ -568,26 +641,11 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   };
 
   /**
-   * Render mobile navigation
+   * Render mobile navigation - DISABLED (not needed)
    */
   const renderMobileNavigation = () => {
-    if (!isMobile || !selectedMainCategory || selectedMainCategory === 'menus') {
-      return null;
-    }
-    
-    return (
-      <MenuMobileNav
-        categories={currentCategories}
-        activeCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-        language={language}
-        onBack={handleBack}
-        onSearch={() => {/* Open search modal */}}
-        onQRCode={undefined}
-        enableSwipe
-        showFAB
-      />
-    );
+    // Mobile navigation disabled - category navigation is handled by CategoryNavigation component
+    return null;
   };
 
   // Add effect to track backgroundCategory changes

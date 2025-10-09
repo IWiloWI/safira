@@ -68,14 +68,29 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
       const data = await getProducts();
       
       // Transform API data to flat product list WITH category assignment from the data structure
-      const allProducts = data.categories.flatMap(cat =>
-        cat.items.map(item => ({
+      const allProducts = data.categories.flatMap(cat => {
+        // Get products directly in category
+        const directProducts = cat.items.map(item => ({
           ...item,
           // Preserve categoryId if it exists in the item, otherwise use the parent category id
           categoryId: (item as any).categoryId || cat.id,
           categoryName: cat.name
-        }))
-      );
+        }));
+
+        // Get products from subcategories
+        const subcategoryProducts = (cat.subcategories || []).flatMap(subcat =>
+          subcat.items.map(item => ({
+            ...item,
+            // Preserve categoryId if it exists (like "subcat_6"), otherwise use subcategory format
+            categoryId: (item as any).categoryId || `subcat_${subcat.id}`,
+            subcategoryId: subcat.id,
+            categoryName: cat.name,
+            subcategoryName: subcat.name
+          }))
+        );
+
+        return [...directProducts, ...subcategoryProducts];
+      });
       
       setProducts(allProducts as Product[]);
       setFilteredProducts(allProducts as Product[]);
@@ -84,14 +99,29 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
       setError('Failed to load products from API');
       
       // Fallback to local data WITH category assignment from the data structure
-      const allProducts = productsData.categories.flatMap(cat =>
-        cat.items.map(item => ({
+      const allProducts = productsData.categories.flatMap(cat => {
+        // Get products directly in category
+        const directProducts = cat.items.map(item => ({
           ...item,
           // Preserve categoryId if it exists in the item, otherwise use the parent category id
           categoryId: (item as any).categoryId || cat.id,
           categoryName: cat.name
-        }))
-      );
+        }));
+
+        // Get products from subcategories
+        const subcategoryProducts = ((cat as any).subcategories || []).flatMap((subcat: any) =>
+          subcat.items.map((item: any) => ({
+            ...item,
+            // Preserve categoryId if it exists (like "subcat_6"), otherwise use subcategory format
+            categoryId: item.categoryId || `subcat_${subcat.id}`,
+            subcategoryId: subcat.id,
+            categoryName: cat.name,
+            subcategoryName: subcat.name
+          }))
+        );
+
+        return [...directProducts, ...subcategoryProducts];
+      });
       setProducts(allProducts as Product[]);
       setFilteredProducts(allProducts as Product[]);
     } finally {

@@ -1,0 +1,12 @@
+# robots.txt for Safira Lounge
+# https://test.safira-lounge.de
+
+User-agent: *
+Allow: /
+
+# Disallow admin areas
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://test.safira-lounge.de/sitemap.xml

@@ -275,6 +275,13 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
       .map(item => item.name)
       .join('\n');
 
+    console.log('🔍 MENU PACKAGE DEBUG:');
+    console.log('📋 isMenuPackage:', formData.isMenuPackage);
+    console.log('📋 menuItems array:', formData.menuItems);
+    console.log('📋 menuItems count:', formData.menuItems.length);
+    console.log('📋 packageItemsString:', packageItemsString);
+    console.log('📋 packageItemsString length:', packageItemsString.length);
+
     const data: any = {
       name: formData.name,
       description: formData.description,
@@ -283,13 +290,14 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
       badges: formData.badges,
       is_tobacco: formData.isTobacco, // FIXED: Use snake_case for database
       is_menu_package: formData.isMenuPackage, // FIXED: Use snake_case for database
-      package_items: packageItemsString || formData.menuContents // FIXED: Use formatted items or fallback to menuContents
+      package_items: packageItemsString || formData.menuContents || null // FIXED: Use formatted items or fallback to menuContents
     };
 
     // 🔍 DEBUG: Log form submission data
     console.log('🔍 FORM DEBUG - getFormData called:');
     console.log('📝 Form Data:', formData);
     console.log('📦 Submission Data:', data);
+    console.log('📦 package_items value:', data.package_items);
     console.log('📂 Selected Category ID:', formData.category);
 
     // Add variants if enabled, otherwise add single price
@@ -526,7 +534,7 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
 
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.name, formData.category, formData.price, formData.brand, formData.description]);
+  }, [formData.name, formData.category, formData.price, formData.brand, formData.description, formData.isTobacco]);
 
   // Set default category on categories load
   useEffect(() => {

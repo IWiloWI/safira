@@ -12,7 +12,8 @@ import VideoManager from '../components/Admin/VideoManager';
 import CategoryManager from '../components/Admin/CategoryManager';
 import SubcategoryManager from '../components/Admin/SubcategoryManager';
 import NavigationSettings from '../components/Admin/NavigationSettings';
-import { FaTachometerAlt, FaBoxes, FaLeaf, FaVideo, FaFolder, FaLayerGroup, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { KioskSettings } from '../components/Admin/KioskSettings';
+import { FaTachometerAlt, FaBoxes, FaLeaf, FaVideo, FaFolder, FaLayerGroup, FaCog, FaSignOutAlt, FaDesktop } from 'react-icons/fa';
 import {
   ResponsiveContainer,
   ResponsivePageHeader,
@@ -98,6 +99,7 @@ const AdminPage: React.FC = () => {
           <Route path="/videos" element={<VideoManager />} />
           <Route path="/categories" element={<CategoryManager />} />
           <Route path="/navigation" element={<NavigationSettings />} />
+          <Route path="/kiosk" element={<KioskSettings />} />
           {/* <Route path="/qr-codes" element={<QRGenerator />} /> */}
           {/* <Route path="/analytics" element={<Analytics />} /> */}
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

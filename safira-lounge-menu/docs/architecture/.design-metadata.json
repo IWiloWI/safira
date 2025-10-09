@@ -1,0 +1,147 @@
+{
+  "project": "Safira Lounge Menu",
+  "component": "Modal System",
+  "design": "Full-Width Mobile Modal Architecture",
+  "version": "1.0.0",
+  "status": "ready-for-implementation",
+  "created": "2025-10-06",
+  "author": "System Architecture Designer",
+  
+  "summary": {
+    "problem": "Modals had 12px side margins on mobile due to overlay padding, using CSS hacks as workarounds",
+    "solution": "Remove overlay padding on mobile, use 100vw width for cards, clean up negative margin hacks",
+    "impact": "Full viewport width utilization, clean CSS architecture, optimal mobile UX"
+  },
+  
+  "documentation": {
+    "total_files": 5,
+    "total_size": "60.8KB",
+    "files": [
+      {
+        "name": "README.md",
+        "purpose": "Index and quick reference",
+        "size": "9.4KB",
+        "audience": "All team members"
+      },
+      {
+        "name": "Design_Summary.md",
+        "purpose": "Executive overview and key decisions",
+        "size": "10.0KB",
+        "audience": "Developers, designers, PMs"
+      },
+      {
+        "name": "Full_Width_Modal_Design.md",
+        "purpose": "Complete technical specification",
+        "size": "14.0KB",
+        "audience": "Senior developers, architects"
+      },
+      {
+        "name": "Modal_Component_Hierarchy.md",
+        "purpose": "Visual architecture diagrams",
+        "size": "15.0KB",
+        "audience": "Visual learners, developers"
+      },
+      {
+        "name": "Implementation_Guide.md",
+        "purpose": "Step-by-step implementation",
+        "size": "12.0KB",
+        "audience": "Implementing developers"
+      }
+    ]
+  },
+  
+  "implementation": {
+    "estimated_time_minutes": 45,
+    "difficulty": "beginner-intermediate",
+    "files_to_modify": 2,
+    "primary_files": [
+      "src/components/Menu/QRCodeModal.tsx",
+      "src/components/Common/BottomNavigation.tsx"
+    ],
+    "reference_files": [
+      "src/components/Menu/MenuMobileNav.tsx"
+    ]
+  },
+  
+  "architecture": {
+    "pattern": "responsive-container-hierarchy",
+    "approach": "mobile-first",
+    "key_concepts": [
+      "Overlay controls outer padding",
+      "Card controls content width",
+      "Content inherits width naturally",
+      "Breakout pattern for edge-to-edge"
+    ]
+  },
+  
+  "breakpoints": {
+    "extra_small": { "max_width": 360, "card_padding": "20px 12px", "card_width": "100vw" },
+    "mobile": { "max_width": 480, "card_padding": "24px 16px", "card_width": "100vw" },
+    "tablet": { "max_width": 768, "card_padding": "24px 20px", "card_width": "100vw" },
+    "desktop": { "min_width": 769, "card_padding": "32px 28px", "card_width": "max 460px" }
+  },
+  
+  "testing": {
+    "breakpoints_to_test": ["360px", "480px", "768px", ">769px"],
+    "browsers": ["Chrome", "Safari", "Firefox", "Edge"],
+    "devices": ["iPhone SE", "iPhone 14", "Pixel", "iPad"],
+    "accessibility": ["keyboard", "screen-reader", "touch-targets"],
+    "performance_targets": {
+      "first_contentful_paint": "< 1.8s",
+      "largest_contentful_paint": "< 2.5s",
+      "cumulative_layout_shift": "< 0.1",
+      "time_to_interactive": "< 3.8s"
+    }
+  },
+  
+  "success_criteria": [
+    "Modals span 100% screen width on mobile",
+    "No padding/margin constraints on mobile",
+    "Content uses full available width",
+    "Clean CSS without hacks",
+    "Proper responsive breakpoints",
+    "Maintains accessibility"
+  ],
+  
+  "design_decisions": [
+    {
+      "decision": "Remove overlay padding on mobile",
+      "reasoning": "Allows modal card to reach viewport edges",
+      "alternative_considered": "Use negative margins (rejected - too hacky)",
+      "impact": "Cleaner CSS, easier maintenance"
+    },
+    {
+      "decision": "Use 100vw instead of 100%",
+      "reasoning": "More explicit, accounts for scrollbar",
+      "alternative_considered": "Use 100% (rejected - depends on parent)",
+      "impact": "Predictable full-width behavior"
+    },
+    {
+      "decision": "Remove negative margin hacks",
+      "reasoning": "Architecture now supports full-width naturally",
+      "alternative_considered": "Keep hacks (rejected - unmaintainable)",
+      "impact": "Cleaner code, easier to understand"
+    }
+  ],
+  
+  "neural_training": {
+    "patterns_learned": [
+      "responsive-modal-architecture",
+      "mobile-first-css-strategy",
+      "container-width-management",
+      "breakout-pattern-implementation"
+    ],
+    "confidence": 0.794
+  },
+  
+  "memory_stored": {
+    "session_id": "modal-design-2025-10-06",
+    "database": ".swarm/memory.db",
+    "entries": [
+      "modal-design",
+      "implementation-guide",
+      "component-hierarchy",
+      "design-summary"
+    ]
+  }
+}

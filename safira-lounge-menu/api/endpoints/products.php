@@ -67,13 +67,13 @@ switch ($method) {
 function getAllProducts($dbh) {
     try {
         // Get all categories
-        $categoriesQuery = "SELECT * FROM categories ORDER BY name";
+        $categoriesQuery = "SELECT * FROM categories ORDER BY name_de";
         $stmt = $dbh->prepare($categoriesQuery);
         $stmt->execute();
         $categories = $stmt->fetchAll();
 
         // Get all products
-        $productsQuery = "SELECT * FROM products WHERE available = 1 ORDER BY name";
+        $productsQuery = "SELECT * FROM products WHERE available = 1 ORDER BY name_de";
         $stmt = $dbh->prepare($productsQuery);
         $stmt->execute();
         $products = $stmt->fetchAll();
@@ -86,16 +86,50 @@ function getAllProducts($dbh) {
                 return $product['category_id'] === $category['id'];
             });
 
+            // Build multilingual name object
+            $categoryName = [
+                'de' => $category['name_de'] ?? '',
+                'en' => $category['name_en'] ?? '',
+                'tr' => $category['name_tr'] ?? '',
+                'da' => $category['name_da'] ?? ''
+            ];
+
+            // Build multilingual description object
+            $categoryDesc = [
+                'de' => $category['description_de'] ?? '',
+                'en' => $category['description_en'] ?? '',
+                'tr' => $category['description_tr'] ?? '',
+                'da' => $category['description_da'] ?? ''
+            ];
+
             $result['categories'][] = [
-                'id' => $category['id'],
-                'name' => json_decode($category['name'] ?? '{}'),
+                'id' => (string)$category['id'],
+                'name' => $categoryName,
                 'icon' => $category['icon'],
-                'description' => json_decode($category['description'] ?? '{}'),
+                'description' => $categoryDesc,
+                'isMainCategory' => (bool)($category['is_main_category'] ?? true),
+                'parentPage' => $category['parent_category_id'] ? (string)$category['parent_category_id'] : null,
                 'items' => array_map(function($product) {
+                    // Build multilingual product name
+                    $productName = [
+                        'de' => $product['name_de'] ?? '',
+                        'en' => $product['name_en'] ?? '',
+                        'tr' => $product['name_tr'] ?? '',
+                        'da' => $product['name_da'] ?? ''
+                    ];
+
+                    // Build multilingual product description
+                    $productDesc = [
+                        'de' => $product['description_de'] ?? '',
+                        'en' => $product['description_en'] ?? '',
+                        'tr' => $product['description_tr'] ?? '',
+                        'da' => $product['description_da'] ?? ''
+                    ];
+
                     return [
-                        'id' => $product['id'],
-                        'name' => json_decode($product['name'] ?? '{}'),
-                        'description' => json_decode($product['description'] ?? '{}'),
+                        'id' => (string)$product['id'],
+                        'name' => $productName,
+                        'description' => $productDesc,
                         'price' => (float)$product['price'],
                         'imageUrl' => $product['image_url'],
                         'available' => (bool)$product['available'],

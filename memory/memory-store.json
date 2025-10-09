@@ -1,0 +1,16 @@
+{
+  "default": [
+    {
+      "key": "swarm/reviewer/validation",
+      "value": "{\"component\":\"QRCodeModal\",\"status\":\"REVIEW_IN_PROGRESS\",\"timestamp\":\"2025-10-02T17:11:00Z\",\"reviewer\":\"code-review-agent\"}",
+      "namespace": "default",
+      "timestamp": 1759425214632
+    },
+    {
+      "key": "swarm/reviewer/final-status",
+      "value": "{\"component\":\"QRCodeModal\",\"status\":\"APPROVED\",\"score\":\"93.1/100\",\"timestamp\":\"2025-10-02T17:11:30Z\",\"improvements_detected\":\"auto-linter-applied\",\"critical_issues\":\"0\",\"recommendations\":\"10\"}",
+      "namespace": "default",
+      "timestamp": 1759425271189
+    }
+  ]
+}

@@ -298,15 +298,32 @@ const ProductFilters: React.FC<ProductFiltersProps> = memo(({
         >
           <option value="all">All Categories</option>
           <option value="unassigned">Nicht zugeordnet</option>
-          {(() => {
-            const filteredCats = categories.filter(cat => !cat.isMainCategory);
-            // Debug logging removed for performance
-            return filteredCats.map(cat => (
+          {categories.map(cat => {
+            // For main categories, show them bold with nested subcategories
+            if (cat.isMainCategory) {
+              const mainOption = (
+                <option key={cat.id} value={cat.id} style={{ fontWeight: 'bold' }}>
+                  {getCategoryName(cat)}
+                </option>
+              );
+
+              // Add subcategories indented
+              const subOptions = (cat.subcategories || []).map(subcat => (
+                <option key={subcat.id} value={subcat.id} style={{ paddingLeft: '20px' }}>
+                  &nbsp;&nbsp;↳ {getCategoryName(subcat)}
+                </option>
+              ));
+
+              return [mainOption, ...subOptions];
+            }
+
+            // For standalone subcategories (shouldn't happen with fixed API)
+            return (
               <option key={cat.id} value={cat.id}>
                 {getCategoryName(cat)}
               </option>
-            ));
-          })()}
+            );
+          })}
         </FilterSelect>
 
         <FilterSelect

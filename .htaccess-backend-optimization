@@ -1,0 +1,40 @@
+# Backend PHP Performance Optimization
+# Add these settings to your PHP backend .htaccess or php.ini
+
+# Enable OPcache for PHP (dramatically reduces server response time)
+<IfModule mod_php7.c>
+    php_flag opcache.enable On
+    php_value opcache.memory_consumption 128
+    php_value opcache.interned_strings_buffer 8
+    php_value opcache.max_accelerated_files 10000
+    php_flag opcache.validate_timestamps On
+    php_value opcache.revalidate_freq 2
+    php_flag opcache.save_comments On
+    php_flag opcache.enable_file_override On
+</IfModule>
+
+# Disable unnecessary PHP features for better performance
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+</IfModule>
+
+# Enable output buffering
+<IfModule mod_php7.c>
+    php_flag output_buffering On
+    php_value output_buffering 4096
+</IfModule>
+
+# Compression for PHP responses
+<IfModule mod_php7.c>
+    php_flag zlib.output_compression On
+    php_value zlib.output_compression_level 6
+</IfModule>
+
+# Memory and execution limits (adjust based on your needs)
+<IfModule mod_php7.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 30
+    php_value max_input_time 60
+</IfModule>

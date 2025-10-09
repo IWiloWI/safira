@@ -28,6 +28,12 @@ const Video = styled(motion.video)`
   position: absolute;
   top: 0;
   left: 0;
+
+  /* Force hardware acceleration on mobile */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 `;
 
 const Overlay = styled.div`
@@ -36,13 +42,8 @@ const Overlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.15) 0%,
-    rgba(0, 0, 0, 0.25) 50%,
-    rgba(0, 0, 0, 0.2) 100%
-  );
-  
+  background: rgba(0, 0, 0, 0.1); /* 10% schwarzer Filter */
+
   &::after {
     content: '';
     position: absolute;
@@ -71,12 +72,18 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
   const [videoMappings, setVideoMappings] = useState<{ [key: string]: string }>({});
+  const [shouldLoadVideo] = useState(true); // Load immediately for LCP optimization
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [connectionSpeed, setConnectionSpeed] = useState<'fast' | 'slow'>('fast');
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Load video mappings from server API
   const loadVideoMappingsFromServer = async () => {
     try {
       console.log('VideoBackground: Loading video mappings from server...');
-      const response = await fetch('/safira-api-fixed.php?action=get_video_mappings');
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
+      const response = await fetch(`${API_BASE_URL}?action=get_video_mappings`);
       console.log('VideoBackground: Server response status:', response.status, response.statusText);
 
       if (response.ok) {
@@ -117,6 +124,21 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
     }
     return {};
   };
+
+  // Detect connection speed on mount
+  useEffect(() => {
+    // Detect connection speed using Network Information API
+    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (connection) {
+      const effectiveType = connection.effectiveType;
+      // 'slow-2g', '2g', '3g' = slow, '4g' = fast
+      const isSlow = ['slow-2g', '2g', '3g'].includes(effectiveType);
+      setConnectionSpeed(isSlow ? 'slow' : 'fast');
+      console.log('🌐 VideoBackground: Detected connection speed:', effectiveType, isSlow ? '(slow)' : '(fast)');
+    } else {
+      console.log('🌐 VideoBackground: Network Information API not available, assuming fast connection');
+    }
+  }, []);
 
   // Load video mappings on component mount
   useEffect(() => {
@@ -390,7 +412,11 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
           setCurrentVideo(newVideo);
           console.log('🎬 VideoBackground: ✅ Video actually switched to:', newVideo);
         }, 150); // Half of the transition duration
-        return () => clearTimeout(timer);
+
+        // FIX: Cleanup timer on unmount
+        return () => {
+          clearTimeout(timer);
+        };
       }
     } else if (!newVideo) {
       console.log('🎬 VideoBackground: ⚠️ No video found for category:', category);
@@ -399,19 +425,68 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
     }
   }, [category, videoMappings]); // Removed currentVideo from dependencies to prevent loops
 
+  // FIX: Component unmount cleanup - TABLET-FRIENDLY (only pause, don't destroy)
+  // Removing src and calling load() breaks autoplay on tablets due to strict autoplay policies
+  useEffect(() => {
+    return () => {
+      console.log('🎬 VideoBackground: Component unmounting - pausing video (tablet-friendly)');
+      if (videoRef.current) {
+        const video = videoRef.current;
+        // Only pause, don't remove src or reset element
+        // This preserves autoplay token for tablets/mobile devices
+        video.pause();
+        console.log('🎬 VideoBackground: Video paused (keeping element alive)');
+      }
+    };
+  }, []); // Empty deps - only run on unmount
+
+  // Handle user interaction to enable autoplay - TABLET FIX
+  // Re-establish listeners on each video change for tablet autoplay policy compliance
+  useEffect(() => {
+    const handleInteraction = () => {
+      console.log('🎬 User interaction detected for video:', currentVideo);
+      setUserInteracted(true);
+
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play().catch(err => {
+          console.error('🎬 Play failed even after user interaction:', err);
+        });
+      }
+    };
+
+    // Re-attach listeners whenever video changes (critical for tablets)
+    // Tablets need fresh user interaction token after each navigation
+    const events = ['click', 'touchstart', 'touchend', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, handleInteraction, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, [currentVideo]); // Re-run when video changes (tablet fix)
+
   // Handle video error and fallback
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    console.error('Video error for', category, ':', e);
-    console.error('Video source:', currentVideo);
-    
+    const video = e.currentTarget;
+    const error = video.error;
+
+    console.error('🎬 Video error for', category);
+    console.error('🎬 Video source:', currentVideo);
+    console.error('🎬 Error code:', error?.code, 'Message:', error?.message);
+    console.error('🎬 Network state:', video.networkState);
+    console.error('🎬 Ready state:', video.readyState);
+
     // Only try fallback once and only if we're not already on the fallback video
     if (!hasError && currentVideo !== getFallbackVideo()) {
-      console.log('Falling back to default video');
+      console.log('🎬 Falling back to default video');
       setHasError(true);
       setCurrentVideo(getFallbackVideo());
     } else {
       // If even the fallback fails, stop trying to avoid infinite loops
-      console.error('Fallback video also failed, disabling video for category:', category);
+      console.error('🎬 Fallback video also failed, disabling video for category:', category);
       setCurrentVideo(null);
       setHasError(true);
     }
@@ -435,25 +510,123 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ category }) => {
       <AnimatePresence mode="wait">
         {videoToDisplay && (
           <Video
+            ref={videoRef}
             key={videoToDisplay}
+            preload={connectionSpeed === 'slow' ? 'metadata' : 'auto'}
             autoPlay
             muted
             loop
             playsInline
+            disablePictureInPicture
+            disableRemotePlayback
+            controls={false}
+            crossOrigin="anonymous"
+            data-lazy={!shouldLoadVideo}
             onError={handleVideoError}
-            onLoadStart={() => console.log('Video loading started for:', category, 'Source:', videoToDisplay)}
-            onCanPlay={() => console.log('Video can play for:', category)}
-            onLoadedData={() => console.log('Video loaded successfully for:', category)}
+            onLoadStart={() => {
+              console.log('🎬 Video loading started for:', category);
+              console.log('🎬 Video source:', videoToDisplay);
+              console.log('🎬 User interacted:', userInteracted);
+              console.log('🎬 Connection speed:', connectionSpeed);
+              setIsBuffering(true);
+            }}
+            onLoadedMetadata={(e) => {
+              const video = e.currentTarget;
+              console.log('🎬 Video metadata loaded');
+              console.log('🎬 Video duration:', video.duration);
+              console.log('🎬 Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+
+              // Force play as soon as metadata is loaded
+              video.play().catch(err => {
+                console.warn('🎬 Autoplay prevented on metadata load:', err.name, err.message);
+              });
+            }}
+            onCanPlay={(e) => {
+              const video = e.currentTarget;
+              console.log('🎬 Video can play for:', category);
+              console.log('🎬 Video paused state:', video.paused);
+              console.log('🎬 Video muted state:', video.muted);
+              console.log('🎬 Video ready state:', video.readyState);
+              setIsBuffering(false);
+
+              // Force play on mobile devices
+              video.play().catch(err => {
+                console.warn('🎬 Autoplay prevented on canPlay, waiting for user interaction:', err.name, err.message);
+              });
+            }}
+            onPlay={() => {
+              console.log('🎬 ✅ Video is now playing for:', category);
+              setIsBuffering(false);
+            }}
+            onPause={(e) => {
+              console.log('🎬 ⏸️ Video paused for:', category);
+
+              // TABLET FIX: Auto-resume if paused unexpectedly (not by user)
+              // This helps tablets recover from autoplay blocks
+              const video = e.currentTarget;
+              if (video.readyState >= 3 && !document.hidden) {
+                setTimeout(() => {
+                  if (video.paused) {
+                    console.log('🎬 Attempting auto-resume for tablet...');
+                    video.play().catch(err =>
+                      console.warn('🎬 Auto-resume failed:', err)
+                    );
+                  }
+                }, 100);
+              }
+            }}
+            onLoadedData={() => console.log('🎬 Video loaded successfully for:', category)}
+            onStalled={(e) => {
+              console.warn('🎬 Video stalled for:', category);
+              // Try to resume playback if stalled
+              const video = e.currentTarget;
+              if (video.paused) {
+                video.play().catch(err => console.warn('🎬 Resume failed:', err));
+              }
+            }}
+            onSuspend={(e) => {
+              console.warn('🎬 Video suspended for:', category);
+              // Force resume if suspended - browser is pausing to save bandwidth
+              const video = e.currentTarget;
+              // Always try to resume, regardless of paused state
+              if (video.readyState >= 2) { // Has enough data loaded
+                setTimeout(() => {
+                  video.play().catch(err => console.warn('🎬 Resume after suspend failed:', err));
+                }, 50);
+              }
+            }}
+            onWaiting={(e) => {
+              console.warn('🎬 Video waiting for:', category, '- buffering...');
+              setIsBuffering(true);
+              // Continue playing when buffering completes
+              const video = e.currentTarget;
+              const resumePlay = () => {
+                if (video.readyState >= 3) {
+                  setIsBuffering(false);
+                  video.play().catch(err => console.warn('🎬 Resume after buffering failed:', err));
+                }
+              };
+              // FIX: Use {once: true} to auto-remove listener after first trigger
+              video.addEventListener('canplay', resumePlay, { once: true });
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
+            {/* Multiple source formats for better compatibility */}
             {videoToDisplay.endsWith('.mov') ? (
-              <source src={videoToDisplay} type="video/quicktime" />
+              <>
+                <source src={videoToDisplay} type="video/quicktime" />
+                <source src={videoToDisplay} type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" />
+              </>
             ) : (
-              <source src={videoToDisplay} type="video/mp4" />
+              <>
+                <source src={videoToDisplay} type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" />
+                <source src={videoToDisplay} type="video/mp4" />
+              </>
             )}
+            Your browser does not support the video tag.
           </Video>
         )}
       </AnimatePresence>

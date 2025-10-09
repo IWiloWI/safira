@@ -1,0 +1,122 @@
+{
+  "generated": "2025-10-06T08:39:48.408Z",
+  "sizes": [
+    300,
+    600,
+    900,
+    1200
+  ],
+  "quality": 82,
+  "images": [
+    {
+      "original": "Biere-Safira.jpg",
+      "baseName": "biere-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Cocktails-Safira.jpg",
+      "baseName": "cocktails-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Eistee-Safira-1.jpg",
+      "baseName": "eistee-safira-1",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "GETRAeNKE-Safira.jpg",
+      "baseName": "getraenke-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Hot-Drinks-Safira-1.jpg",
+      "baseName": "hot-drinks-safira-1",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Hot-Drinks-Safira-2.jpg",
+      "baseName": "hot-drinks-safira-2",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Red-Bull-Safira.jpg",
+      "baseName": "red-bull-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Saefte-Safira.jpg",
+      "baseName": "saefte-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Shisha-Safira.jpg",
+      "baseName": "shisha-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Snacks-Safira.jpg",
+      "baseName": "snacks-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    },
+    {
+      "original": "Softdrinks-Safira.jpg",
+      "baseName": "softdrinks-safira",
+      "sizes": [
+        300,
+        600,
+        900,
+        1200
+      ]
+    }
+  ]
+}

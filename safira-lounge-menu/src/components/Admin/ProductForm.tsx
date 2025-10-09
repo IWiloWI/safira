@@ -789,11 +789,23 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
               }}
               required
             >
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
-                  {String(getCategoryName(cat))}
-                </option>
-              ))}
+              {categories.map(cat => {
+                // Main category option
+                const mainCategoryOption = (
+                  <option key={cat.id} value={cat.id} style={{ fontWeight: 'bold' }}>
+                    {String(getCategoryName(cat))}
+                  </option>
+                );
+
+                // Subcategory options (indented)
+                const subcategoryOptions = cat.subcategories?.map(subcat => (
+                  <option key={subcat.id} value={subcat.id} style={{ paddingLeft: '20px' }}>
+                    &nbsp;&nbsp;↳ {String(getCategoryName(subcat))}
+                  </option>
+                )) || [];
+
+                return [mainCategoryOption, ...subcategoryOptions];
+              })}
             </Select>
             {validation.errors.category && (
               <ErrorMessage>{validation.errors.category}</ErrorMessage>

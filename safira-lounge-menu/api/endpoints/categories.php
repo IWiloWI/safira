@@ -61,17 +61,35 @@ switch ($method) {
  */
 function getAllCategories($dbh) {
     try {
-        $query = "SELECT * FROM categories ORDER BY name";
+        $query = "SELECT * FROM categories ORDER BY name_de";
         $stmt = $dbh->prepare($query);
         $stmt->execute();
         $categories = $stmt->fetchAll();
 
         $result = array_map(function($category) {
+            // Build multilingual name object
+            $categoryName = [
+                'de' => $category['name_de'] ?? '',
+                'en' => $category['name_en'] ?? '',
+                'tr' => $category['name_tr'] ?? '',
+                'da' => $category['name_da'] ?? ''
+            ];
+
+            // Build multilingual description object
+            $categoryDesc = [
+                'de' => $category['description_de'] ?? '',
+                'en' => $category['description_en'] ?? '',
+                'tr' => $category['description_tr'] ?? '',
+                'da' => $category['description_da'] ?? ''
+            ];
+
             return [
-                'id' => $category['id'],
-                'name' => json_decode($category['name'] ?? '{}'),
+                'id' => (string)$category['id'],
+                'name' => $categoryName,
                 'icon' => $category['icon'],
-                'description' => json_decode($category['description'] ?? '{}')
+                'description' => $categoryDesc,
+                'isMainCategory' => (bool)($category['is_main_category'] ?? true),
+                'parentPage' => $category['parent_category_id'] ? (string)$category['parent_category_id'] : null
             ];
         }, $categories);
 
@@ -97,11 +115,29 @@ function getCategory($dbh, $categoryId) {
             sendError('Category not found', 404);
         }
 
+        // Build multilingual name object
+        $categoryName = [
+            'de' => $category['name_de'] ?? '',
+            'en' => $category['name_en'] ?? '',
+            'tr' => $category['name_tr'] ?? '',
+            'da' => $category['name_da'] ?? ''
+        ];
+
+        // Build multilingual description object
+        $categoryDesc = [
+            'de' => $category['description_de'] ?? '',
+            'en' => $category['description_en'] ?? '',
+            'tr' => $category['description_tr'] ?? '',
+            'da' => $category['description_da'] ?? ''
+        ];
+
         $result = [
-            'id' => $category['id'],
-            'name' => json_decode($category['name'] ?? '{}'),
+            'id' => (string)$category['id'],
+            'name' => $categoryName,
             'icon' => $category['icon'],
-            'description' => json_decode($category['description'] ?? '{}')
+            'description' => $categoryDesc,
+            'isMainCategory' => (bool)($category['is_main_category'] ?? true),
+            'parentPage' => $category['parent_category_id'] ? (string)$category['parent_category_id'] : null
         ];
 
         sendJson($result);

@@ -44,7 +44,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && npm run server:build",
+    "build": "react-scripts build && node scripts/make-css-async.js && npm run server:build",
+    "optimize-images": "node scripts/optimize-images.js",
+    "optimize-images:categories": "node scripts/optimize-images.js categories",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "node server/dist/index.js",
@@ -85,7 +87,8 @@
     "@types/styled-components": "^5.1.28",
     "concurrently": "^8.2.1",
     "jest-axe": "^10.0.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "sharp": "^0.34.4"
   },
   "proxy": "http://localhost:5001"
 }

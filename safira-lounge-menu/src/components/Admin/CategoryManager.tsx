@@ -520,7 +520,7 @@ const CategoryManager: React.FC = () => {
         return;
       }
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const response = await fetch(`${API_URL}?action=delete_main_category&id=${categoryId}`, {
         method: 'POST',
         headers: {
@@ -572,6 +572,39 @@ const CategoryManager: React.FC = () => {
         return;
       }
 
+      // Step 1: Upload image if new image was selected
+      let imageUrl = formData.image || '';
+
+      if (formData.image && formData.image.startsWith('data:image')) {
+        // New image upload - process to responsive WebP
+        try {
+          const uploadResponse = await fetch('/api/endpoints/image-upload.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              image: formData.image,
+              name: formData.name_de || 'category'
+            })
+          });
+
+          const uploadResult = await uploadResponse.json();
+
+          if (uploadResult.success) {
+            imageUrl = uploadResult.url; // Use the 600w responsive image URL
+            console.log('Image uploaded successfully:', uploadResult);
+          } else {
+            throw new Error(uploadResult.error || 'Image upload failed');
+          }
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          alert('Fehler beim Hochladen des Bildes. Kategorie wird ohne neues Bild gespeichert.');
+          // Continue without new image
+        }
+      }
+
+      // Step 2: Save category with image URL
       const categoryData = {
         name: {
           de: formData.name_de,
@@ -584,10 +617,10 @@ const CategoryManager: React.FC = () => {
           en: formData.description_en || ''
         },
         icon: formData.icon || 'fa-utensils',
-        image: formData.image || ''
+        image: imageUrl
       };
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const action = editingCategory ? 'update_main_category' : 'create_main_category';
       const url = editingCategory ? `${API_URL}?action=${action}&id=${editingCategory.id}` : `${API_URL}?action=${action}`;
 
@@ -719,7 +752,7 @@ const CategoryManager: React.FC = () => {
   const updateCategoryOrder = async (orderedCategories: any[]) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
 
       const response = await fetch(`${API_URL}?action=update_category_order`, {
         method: 'POST',
@@ -1018,11 +1051,12 @@ const CategoryManager: React.FC = () => {
                     borderRadius: '8px',
                     textAlign: 'center'
                   }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Vorschau" 
-                      style={{ 
-                        maxWidth: '100%', 
+                    <img
+                      src={imagePreview}
+                      alt="Vorschau"
+                      loading="lazy"
+                      style={{
+                        maxWidth: '100%',
                         maxHeight: '200px',
                         borderRadius: '8px'
                       }} 

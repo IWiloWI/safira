@@ -16,10 +16,10 @@ const GridContainer = styled(motion.div)`
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
-  
+  padding: 0 20px 120px 20px;
+
   @media (max-width: 768px) {
-    padding: 0 15px;
+    padding: 0 15px 120px 15px;
   }
 `;
 
@@ -28,6 +28,7 @@ const Grid = styled(motion.div)<{ $columns: number; $gap: number }>`
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  padding-bottom: 20px;
 `;
 
 const EmptyState = styled(motion.div)`

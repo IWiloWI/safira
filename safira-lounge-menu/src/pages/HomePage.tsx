@@ -322,7 +322,13 @@ const HomePage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <LogoImage src="/images/safira_logo.png" alt="Safira Lounge" />
+          <LogoImage
+            src="/images/safira_logo_280w.webp"
+            srcSet="/images/safira_logo_120w.webp 120w, /images/safira_logo_220w.webp 220w, /images/safira_logo_280w.webp 280w"
+            sizes="(max-width: 768px) 220px, 280px"
+            alt="Safira Lounge"
+            fetchPriority="high"
+          />
         </LogoContainer>
 
         <Title

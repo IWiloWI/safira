@@ -279,7 +279,8 @@ const ProductManagerContainer: React.FC = () => {
     type: 'success' | 'error';
   }>({ show: false, message: '', type: 'success' });
 
-  // Load categories directly using SubcategoryManager pattern instead of useCategories hook
+  // Load categories with both main categories and subcategories
+  const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
@@ -382,7 +383,7 @@ const ProductManagerContainer: React.FC = () => {
       const token = localStorage.getItem('adminToken');
       
       // Use the correct PHP API endpoint
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const mainCategoriesResponse = await fetch(`${API_URL}?action=products`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -394,41 +395,52 @@ const ProductManagerContainer: React.FC = () => {
       if (mainCategoriesResponse.ok) {
         const data = await mainCategoriesResponse.json();
         const allCategories = data.categories || [];
-        
-        // Debug logging removed for performance
-        
-        // Extract ALL subcategories from main categories and standalone subcategories
+
+        // Separate main categories and subcategories
+        const mainCategories: any[] = [];
         const allSubcategories: any[] = [];
         const seenIds = new Set<string>();
 
         allCategories.forEach((cat: any) => {
-          if (cat.isMainCategory !== true) {
-            // This is a standalone subcategory (like subcat_4, subcat_5)
-            const subcatId = cat.id.toString();
-            if (!seenIds.has(subcatId)) {
-              seenIds.add(subcatId);
-              allSubcategories.push(cat);
-            }
-          } else if (cat.subcategories && cat.subcategories.length > 0) {
-            // This is a main category with embedded subcategories
-            cat.subcategories.forEach((subcat: any) => {
-              const subcatId = `subcat_${subcat.id}`;
-              if (!seenIds.has(subcatId)) {
-                seenIds.add(subcatId);
+          if (cat.isMainCategory === true) {
+            // Normalize subcategory IDs to have "subcat_" prefix for consistency with API
+            const normalizedSubcategories = (cat.subcategories || []).map((subcat: any) => ({
+              ...subcat,
+              id: `subcat_${subcat.id}`
+            }));
+
+            // Store main category with normalized subcategories
+            mainCategories.push({
+              ...cat,
+              subcategories: normalizedSubcategories
+            });
+
+            // Also extract subcategories for ProductList filtering
+            normalizedSubcategories.forEach((subcat: any) => {
+              if (!seenIds.has(subcat.id)) {
+                seenIds.add(subcat.id);
                 allSubcategories.push({
                   ...subcat,
-                  id: subcatId, // Ensure consistent naming
                   parentCategoryId: cat.id,
                   parentCategoryName: cat.name
                 });
               }
             });
+          } else if (cat.isMainCategory === false) {
+            // Standalone subcategory (shouldn't happen with fixed API, but handle it)
+            const subcatId = cat.id.toString();
+            if (!seenIds.has(subcatId)) {
+              seenIds.add(subcatId);
+              allSubcategories.push(cat);
+            }
           }
         });
 
+        console.log('[ProductManagerContainer] Main categories loaded:', mainCategories);
         console.log('[ProductManagerContainer] All subcategories loaded (deduplicated):', allSubcategories);
-        setSubcategories(allSubcategories);
-        // Debug logging removed for performance
+
+        setCategories(mainCategories); // Store main categories with nested subcategories
+        setSubcategories(allSubcategories); // Store flat subcategories for filtering
         showNotification('Kategorien geladen', 'success');
       } else {
         console.error('Failed to load categories:', mainCategoriesResponse.status);
@@ -736,7 +748,7 @@ const ProductManagerContainer: React.FC = () => {
 
         <ProductList
           products={filteredProducts}
-          categories={subcategories}
+          categories={categories}
           onEditProduct={handleEditProduct}
           onDeleteProduct={handleDeleteProduct}
           onToggleAvailability={toggleAvailability}
@@ -766,7 +778,7 @@ const ProductManagerContainer: React.FC = () => {
             <ProductForm
               isOpen={showProductForm}
               editingProduct={editingProduct}
-              categories={subcategories}
+              categories={categories}
               tobaccoCatalog={tobaccoCatalog}
               selectedBrand={selectedBrand}
               newBrand={newBrand}

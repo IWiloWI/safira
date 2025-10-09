@@ -47,44 +47,69 @@ const AdminDashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Load products data
       const productsData = await getProducts();
-      const totalProducts = productsData.categories.reduce((acc, cat) => acc + cat.items.length, 0);
-      const activeProducts = productsData.categories.reduce((acc, cat) => 
-        acc + cat.items.filter((item: any) => item.available !== false).length, 0);
-      const totalCategories = productsData.categories.length;
+      console.log('[AdminDashboard] Products data:', productsData);
+
+      // Count products including subcategories
+      let totalProducts = 0;
+      let activeProducts = 0;
+      let totalCategories = 0;
+
+      productsData.categories.forEach(cat => {
+        // Count main category items
+        totalProducts += cat.items?.length || 0;
+        activeProducts += cat.items?.filter((item: any) => item.available !== false).length || 0;
+        totalCategories++;
+
+        // Count subcategory items
+        if (cat.subcategories && Array.isArray(cat.subcategories)) {
+          cat.subcategories.forEach(subcat => {
+            totalProducts += subcat.items?.length || 0;
+            activeProducts += subcat.items?.filter((item: any) => item.available !== false).length || 0;
+            totalCategories++; // Count subcategories as categories too
+          });
+        }
+      });
+
+      console.log('[AdminDashboard] Counts:', { totalProducts, activeProducts, totalCategories });
 
       // Load analytics data
       let qrScans = 0;
       let activityData: Array<{time: string, description: string, timestamp: string, type: string, user?: string, data: any}> = [];
-      
+
       try {
         const analyticsData = await getAnalytics();
         qrScans = analyticsData.totalQRScans || 0;
         activityData = analyticsData.recentActivity || [];
+        console.log('[AdminDashboard] Analytics loaded:', { qrScans, activityCount: activityData.length });
       } catch (analyticsError) {
-        console.log('Analytics not available, using defaults');
-        // Fallback activity data
+        console.log('[AdminDashboard] Analytics not available, using fallback data');
+      }
+
+      // Always provide fallback activity data if none available
+      if (!activityData || activityData.length === 0) {
+        console.log('[AdminDashboard] Creating fallback activity data');
         activityData = [
-          { 
-            time: 'Heute', 
+          {
+            time: 'Heute',
             description: `Dashboard mit ${totalProducts} Produkten geladen`,
             timestamp: new Date().toISOString(),
             type: 'system',
             user: 'System',
             data: {}
           },
-          { 
-            time: 'Heute', 
+          {
+            time: 'Heute',
             description: `${activeProducts} Produkte sind verfügbar`,
             timestamp: new Date().toISOString(),
             type: 'system',
             user: 'System',
             data: {}
           },
-          { 
-            time: 'Heute', 
+          {
+            time: 'Heute',
             description: `${totalCategories} Kategorien im System`,
             timestamp: new Date().toISOString(),
             type: 'system',
@@ -94,14 +119,17 @@ const AdminDashboard: React.FC = () => {
         ];
       }
 
+      console.log('[AdminDashboard] Final activity data:', activityData);
+
       setStats({
         totalProducts,
         activeProducts,
         totalCategories,
         qrScans
       });
-      
+
       setRecentActivity(activityData);
+      console.log('[AdminDashboard] State updated with stats:', { totalProducts, activeProducts, totalCategories, activityCount: activityData.length });
       
     } catch (error) {
       console.error('Failed to load dashboard data:', error);

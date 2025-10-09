@@ -2,26 +2,131 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/images/safira_logo.png" />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/images/safira_logo.png" />
+    <link rel="icon" href="%PUBLIC_URL%/images/safira_logo_120w.webp" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/images/safira_logo_120w.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#FF41FB" />
     <meta name="description" content="Safira Lounge - Digitale Speisekarte | Shisha Bar Flensburg" />
+
+    <!-- Content Security Policy - Note: Allows both HTTP and HTTPS for test.safira-lounge.de API -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https:;
+      media-src 'self' https:;
+      connect-src 'self' http://test.safira-lounge.de https://test.safira-lounge.de https://fonts.googleapis.com https://fonts.gstatic.com https://api.openai.com;
+      frame-src 'none';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    " />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <!-- DNS Prefetch for faster connections -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+    <!-- Preconnect for critical third-party origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Aldrich&family=Bebas+Neue&family=Oswald:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <!-- Preload critical resources for LCP optimization -->
+    <link rel="preload" href="%PUBLIC_URL%/images/safira_logo_220w.webp" as="image" type="image/webp" fetchpriority="high">
+
+    <!-- PWA Manifest - Required for app installation -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- Font loading optimized -->
+    <link href="https://fonts.googleapis.com/css2?family=Aldrich&family=Bebas+Neue&family=Oswald:wght@500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Aldrich&family=Bebas+Neue&family=Oswald:wght@500;700;800&display=swap" rel="stylesheet"></noscript>
     <title>Safira Lounge - Menu</title>
     <style>
-      /* Fallback für Kallisto - verwende Oswald als Alternative */
-      body {
-        font-family: 'Aldrich', sans-serif;
-      }
+      /* Critical CSS - Above the fold */
+      *{box-sizing:border-box;margin:0;padding:0}
+      :root{--primary-color:#ff1493;--text-primary:#1a1a2e;--transition-speed:0.4s}
+      body,html{background-color:#000;color:#1a1a2e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;height:100vh;min-height:100vh;overflow-x:hidden;scroll-behavior:smooth}
+      #root{background-color:#000;height:100vh;min-height:100vh}
+      h1,h2,h3,h4,h5,h6{font-family:Oswald,sans-serif;font-weight:800;line-height:1.2;text-transform:uppercase}
+      .loading-spinner{animation:spin 1s linear infinite;border:3px solid rgba(255,65,251,0.1);border-radius:50%;border-top-color:#ff1493;height:40px;width:40px}
+      @keyframes spin{0%{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     </style>
   </head>
   <body>
     <noscript>Sie benötigen JavaScript, um diese App zu verwenden.</noscript>
+
+    <!-- LCP Optimization: Render logo immediately without waiting for React -->
+    <style>
+      .lcp-preload-container {
+        position: fixed;
+        top: 20px;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+      }
+      .lcp-preload-container.hidden {
+        opacity: 0;
+      }
+      .lcp-logo-immediate {
+        height: 200px;
+        width: auto;
+        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+      }
+      @media (max-width: 768px) {
+        .lcp-logo-immediate { height: 150px; }
+      }
+      @media (max-width: 480px) {
+        .lcp-logo-immediate { height: 120px; }
+      }
+    </style>
+
+    <div class="lcp-preload-container" id="lcp-preload">
+      <img
+        class="lcp-logo-immediate"
+        src="%PUBLIC_URL%/images/safira_logo_220w.webp"
+        srcset="%PUBLIC_URL%/images/safira_logo_120w.webp 120w, %PUBLIC_URL%/images/safira_logo_220w.webp 220w, %PUBLIC_URL%/images/safira_logo_280w.webp 280w"
+        sizes="(max-width: 480px) 120px, (max-width: 768px) 150px, 200px"
+        alt="Safira Lounge"
+        fetchpriority="high"
+        decoding="async"
+      >
+    </div>
+
+    <script>
+      (function() {
+        function hidePreloadLogo() {
+          var preload = document.getElementById('lcp-preload');
+          if (preload) {
+            preload.classList.add('hidden');
+            setTimeout(function() { preload.remove(); }, 300);
+          }
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function() {
+            var checkInterval = setInterval(function() {
+              var reactHeader = document.querySelector('[data-testid="menu-header"]') ||
+                                document.querySelector('header');
+              if (reactHeader) {
+                clearInterval(checkInterval);
+                hidePreloadLogo();
+              }
+            }, 100);
+            setTimeout(function() {
+              clearInterval(checkInterval);
+              hidePreloadLogo();
+            }, 3000);
+          });
+        }
+      })();
+    </script>
+
     <div id="root"></div>
   </body>
 </html>

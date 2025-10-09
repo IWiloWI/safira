@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  FaTachometerAlt, 
-  FaBoxes, 
-  FaQrcode, 
-  FaChartBar, 
+import {
+  FaTachometerAlt,
+  FaBoxes,
+  FaQrcode,
+  FaChartBar,
   FaSignOutAlt,
   FaBars,
   FaTimes,
   FaLeaf,
   FaVideo,
-  FaLayerGroup
+  FaLayerGroup,
+  FaDesktop
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -184,6 +185,11 @@ const AdminSidebar: React.FC = () => {
       path: '/admin/videos',
       label: 'Video-Manager',
       icon: <FaVideo />
+    },
+    {
+      path: '/admin/kiosk',
+      label: 'Kiosk-Modus',
+      icon: <FaDesktop />
     },
     {
       path: '/admin/qr-codes',

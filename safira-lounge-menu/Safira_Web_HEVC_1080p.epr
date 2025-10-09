@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PremiereData Version="3">
+	<PresetList>
+		<Preset Version="37">
+			<Name>Safira Web - HEVC 1080p (50% kleiner)</Name>
+			<Description>H.265/HEVC Codec für 50% kleinere Dateien bei gleicher Qualität. 1920x1080, VBR 1-Pass, 2 Mbps Target. Ideal für Web-Streaming. Ergebnis: ~4-6 MB für 30 Sekunden. Hinweis: Nicht alle Browser unterstützen H.265!</Description>
+			<OutputFormat>
+				<ID>com.adobe.export.hevc</ID>
+			</OutputFormat>
+			<Video>
+				<Width>1920</Width>
+				<Height>1080</Height>
+				<FrameRate>30</FrameRate>
+				<PixelAspectRatio>1</PixelAspectRatio>
+				<FieldType>Progressive</FieldType>
+				<Codec>
+					<FourCC>hvc1</FourCC>
+					<Settings>
+						<VideoCodec>H.265</VideoCodec>
+						<Profile>Main</Profile>
+						<Level>Auto</Level>
+						<BitrateEncoding>VBR_1Pass</BitrateEncoding>
+						<TargetBitrate>2000000</TargetBitrate>
+						<MaximumBitrate>4000000</MaximumBitrate>
+						<UseMaximumRenderQuality>true</UseMaximumRenderQuality>
+						<RenderAtMaximumDepth>true</RenderAtMaximumDepth>
+					</Settings>
+				</Codec>
+			</Video>
+			<Audio>
+				<SampleRate>48000</SampleRate>
+				<Channels>Stereo</Channels>
+				<SampleType>16Bit</SampleType>
+				<Codec>
+					<FourCC>aac </FourCC>
+					<Settings>
+						<AudioCodec>AAC</AudioCodec>
+						<AudioQuality>High</AudioQuality>
+						<Bitrate>128000</Bitrate>
+					</Settings>
+				</Codec>
+			</Audio>
+			<Multiplexer>
+				<Format>MP4</Format>
+				<Settings>
+					<FastStart>true</FastStart>
+					<StreamCompatibility>MP4</StreamCompatibility>
+				</Settings>
+			</Multiplexer>
+			<Audiences>
+				<Audience>Web</Audience>
+				<Audience>HD</Audience>
+			</Audiences>
+		</Preset>
+	</PresetList>
+</PremiereData>

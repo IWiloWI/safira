@@ -24,13 +24,27 @@ const SkipLinkButton = styled.a`
   font-size: 14px;
   z-index: 10001;
   transition: top 0.2s ease;
-  
+
+  /* Ensure it's always in tab order */
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 1px;
+
   &:focus {
+    /* Remove clip when focused to make visible */
+    clip: auto;
+    clip-path: none;
+    height: auto;
+    overflow: visible;
+    width: auto;
     top: 6px;
     outline: 2px solid #FF41FB;
     outline-offset: 2px;
   }
-  
+
   &:hover:focus {
     background: #333;
   }

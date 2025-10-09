@@ -35,12 +35,11 @@ export const useCategories = (language: string = 'de'): UseCategoriesReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Use the same pattern as CategoryManager for consistency
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/products', {
+
+      // Load from PHP API instead of Node.js
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
+      const response = await fetch(`${API_URL}?action=products`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'X-Requested-With': 'XMLHttpRequest'
         },
         credentials: 'include'
@@ -49,24 +48,54 @@ export const useCategories = (language: string = 'de'): UseCategoriesReturn => {
       if (response.ok) {
         const data = await response.json();
         const allCategories = data.categories || [];
-        
-        // Debug logging to see what we're getting
+
+        // Debug logging
         console.log('API Response from /api/products:', data);
         console.log('All categories:', allCategories);
-        console.log('Categories with isMainCategory flag:', 
-          allCategories.map((cat: any) => ({ id: cat.id, name: cat.name, isMainCategory: cat.isMainCategory }))
-        );
-        
-        // Set all categories
-        setCategories(allCategories);
-        
-        // Filter main categories and subcategories
-        const mainCats = allCategories.filter((cat: any) => cat.isMainCategory === true);
-        const subCats = allCategories.filter((cat: any) => cat.isMainCategory !== true);
-        
+
+        // Extract main categories and flatten subcategories
+        const mainCats: any[] = [];
+        const subCats: any[] = [];
+
+        allCategories.forEach((cat: any) => {
+          if (cat.isMainCategory === true) {
+            // This is a main category
+            mainCats.push(cat);
+
+            // If it has nested subcategories, flatten them
+            if (cat.subcategories && Array.isArray(cat.subcategories)) {
+              cat.subcategories.forEach((subcat: any) => {
+                subCats.push({
+                  ...subcat,
+                  isMainCategory: false,
+                  parentPage: cat.id
+                });
+              });
+            }
+          } else if (cat.isMainCategory === false) {
+            // This is already a flat subcategory
+            subCats.push(cat);
+          }
+        });
+
         console.log('Main categories:', mainCats.map((cat: any) => ({ id: cat.id, name: cat.name })));
-        console.log('Subcategories:', subCats.map((cat: any) => ({ id: cat.id, name: cat.name })));
-        
+        console.log('Subcategories:', subCats.map((cat: any) => ({ id: cat.id, name: cat.name, parentPage: cat.parentPage })));
+
+        // Nest subcategories under their parent categories for ProductForm
+        const nestedCategories = mainCats.map((mainCat: any) => {
+          const childCategories = subCats.filter((subCat: any) =>
+            subCat.parentPage === mainCat.id || subCat.parentPage === String(mainCat.id)
+          );
+
+          return {
+            ...mainCat,
+            subcategories: childCategories.length > 0 ? childCategories : undefined
+          };
+        });
+
+        console.log('Nested categories structure:', nestedCategories);
+
+        setCategories(nestedCategories);
         setMainCategories(mainCats);
         setSubcategories(subCats);
       } else {

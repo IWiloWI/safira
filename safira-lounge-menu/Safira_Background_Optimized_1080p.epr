@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PremiereData Version="3">
+	<PresetList>
+		<Preset Version="37">
+			<Name>Safira Background - Optimized 1080p</Name>
+			<Description>Maximale Kompression für Hintergrund-Videos und Loops. H.264, 1920x1080, VBR 2-Pass, 1.5 Mbps Target, 24 fps. Perfekt für dezente Hintergründe. Ergebnis: ~3-5 MB für 30 Sekunden bei guter Qualität.</Description>
+			<OutputFormat>
+				<ID>com.adobe.export.mpeg4</ID>
+			</OutputFormat>
+			<Video>
+				<Width>1920</Width>
+				<Height>1080</Height>
+				<FrameRate>24</FrameRate>
+				<PixelAspectRatio>1</PixelAspectRatio>
+				<FieldType>Progressive</FieldType>
+				<Codec>
+					<FourCC>avc1</FourCC>
+					<Settings>
+						<VideoCodec>H.264</VideoCodec>
+						<Profile>High</Profile>
+						<Level>4.2</Level>
+						<BitrateEncoding>VBR_2Pass</BitrateEncoding>
+						<TargetBitrate>1500000</TargetBitrate>
+						<MaximumBitrate>3000000</MaximumBitrate>
+						<UseMaximumRenderQuality>true</UseMaximumRenderQuality>
+						<RenderAtMaximumDepth>true</RenderAtMaximumDepth>
+						<KeyFrameDistance>48</KeyFrameDistance>
+						<BFrames>2</BFrames>
+					</Settings>
+				</Codec>
+			</Video>
+			<Audio>
+				<SampleRate>48000</SampleRate>
+				<Channels>Stereo</Channels>
+				<SampleType>16Bit</SampleType>
+				<Codec>
+					<FourCC>aac </FourCC>
+					<Settings>
+						<AudioCodec>AAC</AudioCodec>
+						<AudioQuality>High</AudioQuality>
+						<Bitrate>96000</Bitrate>
+					</Settings>
+				</Codec>
+			</Audio>
+			<Multiplexer>
+				<Format>MP4</Format>
+				<Settings>
+					<FastStart>true</FastStart>
+					<StreamCompatibility>MP4</StreamCompatibility>
+				</Settings>
+			</Multiplexer>
+			<Audiences>
+				<Audience>Web</Audience>
+				<Audience>Background</Audience>
+			</Audiences>
+		</Preset>
+	</PresetList>
+</PremiereData>

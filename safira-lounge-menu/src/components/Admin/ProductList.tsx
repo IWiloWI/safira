@@ -91,7 +91,19 @@ const ProductList: React.FC<ProductListProps> = memo(({
   isLoading = false
 }) => {
   const { language } = useLanguage();
-  
+
+  // Create flat list of all categories (main + subcategories) for ProductCard lookup
+  const flatCategories = useMemo(() => {
+    const flat: Category[] = [];
+    categories.forEach(cat => {
+      flat.push(cat); // Add main category
+      if (cat.subcategories) {
+        flat.push(...cat.subcategories); // Add its subcategories
+      }
+    });
+    return flat;
+  }, [categories]);
+
   // Local state for filtering and pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -300,7 +312,7 @@ const ProductList: React.FC<ProductListProps> = memo(({
                   key={product.id}
                   product={product}
                   index={index}
-                  categories={categories}
+                  categories={flatCategories}
                   onEdit={onEditProduct}
                   onDelete={onDeleteProduct}
                   onToggleAvailability={onToggleAvailability}

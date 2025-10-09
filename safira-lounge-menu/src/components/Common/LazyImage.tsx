@@ -157,8 +157,10 @@ export interface LazyImageProps {
   enableWebP?: boolean;
   /** Image quality (1-100) */
   quality?: number;
-  /** Responsive sizes */
+  /** Responsive image sizes attribute */
   sizes?: string;
+  /** Use optimized responsive images */
+  useResponsive?: boolean;
   /** Additional CSS class */
   className?: string;
   /** Custom loading component */
@@ -180,8 +182,8 @@ export interface LazyImageProps {
   onProgress?: (progress: number) => void;
   /** Enable performance monitoring */
   enablePerformanceMonitoring?: boolean;
-  /** Preload priority */
-  priority?: 'high' | 'low' | 'auto';
+  /** Preload priority for LCP optimization */
+  fetchpriority?: 'high' | 'low' | 'auto';
   /** Decode hint */
   decoding?: 'sync' | 'async' | 'auto';
   /** Loading strategy */
@@ -217,7 +219,7 @@ export const LazyImage: React.FC<LazyImageProps> = memo(({
   onLoadStart,
   onProgress,
   enablePerformanceMonitoring = true,
-  priority = 'auto',
+  fetchpriority = 'auto',
   decoding = 'async',
   loading = 'lazy'
 }) => {
@@ -321,7 +323,7 @@ export const LazyImage: React.FC<LazyImageProps> = memo(({
   const renderPlaceholder = () => {
     if (placeholder) {
       if (typeof placeholder === 'string') {
-        return <img src={placeholder} alt="" style={{ width: '100%', height: '100%', objectFit }} />;
+        return <img src={placeholder} alt="" style={{ width: '100%', height: '100%', objectFit }} loading="lazy" />;
       }
       return placeholder;
     }
@@ -411,6 +413,7 @@ export const LazyImage: React.FC<LazyImageProps> = memo(({
           $objectFit={objectFit}
           decoding={decoding}
           loading={loading}
+          fetchPriority={fetchpriority}
           onLoad={() => {
             // Image load event
           }}

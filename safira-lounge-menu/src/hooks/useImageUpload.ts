@@ -47,11 +47,13 @@ interface UseImageUploadOptions {
   uploadEndpoint?: string;
 }
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
+
 const defaultOptions: Required<UseImageUploadOptions> = {
   maxFiles: 5,
   maxFileSize: 5 * 1024 * 1024, // 5MB
   acceptedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  uploadEndpoint: '/safira-api-fixed.php?action=upload'
+  uploadEndpoint: `${API_BASE_URL}?action=upload`
 };
 
 export const useImageUpload = (options: UseImageUploadOptions = {}): UseImageUploadReturn => {

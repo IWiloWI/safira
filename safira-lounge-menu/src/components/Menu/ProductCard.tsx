@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import useAccessibility from '../../hooks/useAccessibility';
 import { ScreenReaderText } from '../Common/ScreenReaderOnly';
 
-const CardContainer = styled(motion.div)<{ 
-  $isSelected?: boolean; 
-  $isDisabled?: boolean; 
+const CardContainer = styled(motion.div)<{
+  $isSelected?: boolean;
+  $isDisabled?: boolean;
   $isMenuBuilder?: boolean;
   $shouldShowFocusRing?: boolean;
   $reducedMotion?: boolean;
@@ -23,9 +23,13 @@ const CardContainer = styled(motion.div)<{
   border-bottom: ${props => props.$isMenuBuilder ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'};
   cursor: ${props => props.$isDisabled ? 'not-allowed' : 'pointer'};
   opacity: ${props => props.$isDisabled ? 0.5 : 1};
-  
+
   /* Ensure minimum touch target size */
   min-height: 44px;
+
+  @media (max-width: 768px) {
+    padding: ${props => props.$isMenuBuilder ? '12px 60px 12px 12px' : '12px 0'};
+  }
   
   /* Focus styles for keyboard navigation */
   &:focus-within {
@@ -98,6 +102,11 @@ const ProductBadge = styled.span<{ badgeType: 'neu' | 'kurze_zeit' | 'beliebt' }
   font-size: 0.65rem;
   text-transform: uppercase;
   font-weight: bold;
+
+  @media (max-width: 768px) {
+    font-size: 0.55rem;
+    padding: 2px 6px;
+  }
   box-shadow: ${props => {
     switch (props.badgeType) {
       case 'neu': return '0 0 15px rgba(76, 175, 80, 0.8), 0 2px 8px rgba(0, 0, 0, 0.3)';
@@ -154,6 +163,12 @@ const ProductName = styled.h3`
   display: flex;
   align-items: center;
   flex: 1;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+  }
 `;
 
 const SinglePrice = styled.div`
@@ -162,6 +177,27 @@ const SinglePrice = styled.div`
   font-size: 1.1rem;
   color: #FFFFFF;
   text-align: right;
+  white-space: nowrap;
+  margin-left: 10px;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-left: 8px;
+  }
+`;
+
+const ProductDescription = styled.div`
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-top: 5px;
+  font-family: 'Aldrich', sans-serif;
+  line-height: 1.4;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    line-height: 1.25;
+    margin-top: 3px;
+  }
 `;
 
 const SelectionIndicator = styled.div<{ $isSelected: boolean }>`
@@ -413,17 +449,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </ProductHeader>
       
       {productDescription && (
-        <div 
-          style={{ 
-            color: 'rgba(255, 255, 255, 0.7)', 
-            fontSize: '0.9rem', 
-            marginTop: '5px',
-            fontFamily: 'Aldrich, sans-serif'
-          }}
+        <ProductDescription
           aria-label={`Description: ${productDescription}`}
         >
           {productDescription}
-        </div>
+        </ProductDescription>
       )}
       
       {/* Screen reader only status information */}

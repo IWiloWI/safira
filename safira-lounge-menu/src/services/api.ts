@@ -62,7 +62,7 @@ import type {
   ProductBadges,
 } from '../types/common.types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
 
 // Create axios instance
 const api = axios.create({

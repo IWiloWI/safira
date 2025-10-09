@@ -3,7 +3,7 @@
  * Handles navigation between categories, back navigation, and URL management
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Category, MainCategory, FlexibleText } from '../types';
 
@@ -47,6 +47,7 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
 
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isNavigating, setIsNavigating] = useState(false); // FIX: Navigation lock
 
   /**
    * Handle main category navigation
@@ -102,11 +103,45 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
 
   /**
    * Handle back navigation
+   * FIX: Use navigation lock to prevent URL effect interference
    */
   const handleBack = useCallback(() => {
+    const timestamp = Date.now();
+    console.log(`[${timestamp}] [handleBack] ========== BACK BUTTON CLICKED ==========`);
+    console.log(`[${timestamp}] [handleBack] Current URL:`, window.location.pathname);
+    console.log(`[${timestamp}] [handleBack] Current state:`, { selectedMainCategory, selectedCategory });
+
+    // If we're already on /menu, do nothing
+    if (window.location.pathname === '/menu') {
+      console.log(`[${timestamp}] [handleBack] Already on main menu, ignoring`);
+      return;
+    }
+
+    // Prevent duplicate navigation
+    if (isNavigating) {
+      console.log(`[${timestamp}] [handleBack] Navigation already in progress, ignoring`);
+      return;
+    }
+
+    // FIX: Set navigation lock FIRST - this prevents URL effect from interfering
+    console.log(`[${timestamp}] [handleBack] 🔒 Setting navigation lock`);
+    setIsNavigating(true);
+
+    // Reset state
+    console.log(`[${timestamp}] [handleBack] Resetting state to null/'all'`);
     setSelectedMainCategory(null);
-    navigate('/menu');
-  }, [navigate]);
+    setSelectedCategory('all');
+
+    // Navigate with lock active - use longer delay to ensure state propagates
+    console.log(`[${timestamp}] [handleBack] Navigating to /menu (lock active)`);
+    navigate('/menu', { replace: true });
+
+    // Clear lock after React has time to re-render (200ms for safety)
+    setTimeout(() => {
+      console.log(`[${timestamp}] [handleBack] 🔓 Clearing navigation lock`);
+      setIsNavigating(false);
+    }, 200);
+  }, [navigate, selectedMainCategory, selectedCategory, isNavigating]);
 
   /**
    * Reset to main menu
@@ -163,8 +198,17 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
     return (mainCategory as any).subcategories || [];
   }, [selectedMainCategory, categories]);
 
-  // URL effect to sync with navigation
-  useEffect(() => {
+  // URL effect to sync with navigation - FIX: Use useLayoutEffect for better timing
+  useLayoutEffect(() => {
+    const timestamp = Date.now();
+    console.log(`[${timestamp}] [URL Effect] ========== URL EFFECT RUNNING ==========`);
+    console.log(`[${timestamp}] [URL Effect] isNavigating:`, isNavigating);
+    console.log(`[${timestamp}] [URL Effect] category param from URL:`, category);
+    console.log(`[${timestamp}] [URL Effect] Current state:`, { selectedMainCategory, selectedCategory });
+
+    // FIX: Don't skip during navigation - we NEED to sync state immediately
+    // The lock just prevents duplicate navigation, not state sync
+
     const drinkCategories = getCategoryIdsForMainCategory('drinks');
     const shishaCategories = getCategoryIdsForMainCategory('shisha');
 
@@ -179,23 +223,30 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
     let mappedCategory = category;
     if (category && categoryIdMapping[category]) {
       mappedCategory = categoryIdMapping[category];
-      console.log('[URL Effect] Mapping category ID', category, 'to', mappedCategory);
-      // Redirect to the English name URL for clean URLs
-      navigate(`/menu/${mappedCategory}`, { replace: true });
+      console.log(`[${timestamp}] [URL Effect] Mapping category ID`, category, 'to', mappedCategory);
+      // Redirect to the English name URL for clean URLs - but not if already navigating
+      if (!isNavigating) {
+        navigate(`/menu/${mappedCategory}`, { replace: true });
+      }
       return;
     }
 
-    console.log('[URL Effect] category param:', mappedCategory, 'current selectedCategory:', selectedCategory, 'current selectedMainCategory:', selectedMainCategory);
+    console.log(`[${timestamp}] [URL Effect] Processed category:`, mappedCategory);
 
     // Use mapped category for further processing
     const processedCategory = mappedCategory;
 
-    // Only update if URL category is different from current state
+    // FIX: Simplified logic - if no category in URL, reset state to match
     if (!processedCategory) {
-      // No category in URL - reset to main menu
+      console.log(`[${timestamp}] [URL Effect] No category in URL (/menu)`);
+
+      // If URL is /menu, state should always match (both null/'all')
       if (selectedMainCategory !== null || selectedCategory !== 'all') {
+        console.log(`[${timestamp}] [URL Effect] State mismatch - resetting to null/'all'`);
         setSelectedMainCategory(null);
         setSelectedCategory('all');
+      } else {
+        console.log(`[${timestamp}] [URL Effect] ✅ State correct - on main menu`);
       }
       return;
     }
@@ -241,13 +292,17 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
       setSelectedCategory('all');
       return;
     } else if (processedCategory === 'drinks') {
-      // "drinks" is a virtual category - always redirect to softdrinks
+      // "drinks" is a virtual category - always redirect to softdrinks (but not during navigation)
       console.log('[URL Effect] Virtual drinks category - redirecting to softdrinks');
-      navigate('/menu/softdrinks', { replace: true });
+      if (!isNavigating) {
+        navigate('/menu/softdrinks', { replace: true });
+      }
       return;
     } else if (processedCategory === 'cocktails' || processedCategory === 'mocktails') {
-      // Redirect old URLs to combined category
-      navigate('/menu/cocktails-mocktails', { replace: true });
+      // Redirect old URLs to combined category (but not during navigation)
+      if (!isNavigating) {
+        navigate('/menu/cocktails-mocktails', { replace: true });
+      }
       return;
     } else if (processedCategory && drinkCategories.includes(processedCategory)) {
       // Drink subcategories - always set main category properly
@@ -275,7 +330,7 @@ export function useMenuNavigation(options: UseMenuNavigationOptions): UseMenuNav
         setSelectedCategory('all');
       }
     }
-  }, [category, selectedCategory, selectedMainCategory, navigate, getCategoryIdsForMainCategory, mainCategories]);
+  }, [category, selectedCategory, selectedMainCategory, navigate, getCategoryIdsForMainCategory, mainCategories, categories, isNavigating]);
 
   return {
     selectedMainCategory,

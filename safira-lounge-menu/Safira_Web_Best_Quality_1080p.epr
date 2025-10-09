@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PremiereData Version="3">
+	<PresetList>
+		<Preset Version="37">
+			<Name>Safira Web - Best Quality 1080p</Name>
+			<Description>Optimiert für Web-Streaming mit bester Qualität. H.264, 1920x1080, VBR 2-Pass, 3 Mbps Target. Perfekt für Restaurant-Displays und Hintergrund-Videos. Ergebnis: ~6-8 MB für 30 Sekunden.</Description>
+			<OutputFormat>
+				<ID>com.adobe.export.mpeg4</ID>
+			</OutputFormat>
+			<Video>
+				<Width>1920</Width>
+				<Height>1080</Height>
+				<FrameRate>30</FrameRate>
+				<PixelAspectRatio>1</PixelAspectRatio>
+				<FieldType>Progressive</FieldType>
+				<Codec>
+					<FourCC>avc1</FourCC>
+					<Settings>
+						<VideoCodec>H.264</VideoCodec>
+						<Profile>High</Profile>
+						<Level>4.2</Level>
+						<BitrateEncoding>VBR_2Pass</BitrateEncoding>
+						<TargetBitrate>3000000</TargetBitrate>
+						<MaximumBitrate>5000000</MaximumBitrate>
+						<UseMaximumRenderQuality>true</UseMaximumRenderQuality>
+						<RenderAtMaximumDepth>true</RenderAtMaximumDepth>
+						<KeyFrameDistance>30</KeyFrameDistance>
+						<BFrames>2</BFrames>
+					</Settings>
+				</Codec>
+			</Video>
+			<Audio>
+				<SampleRate>48000</SampleRate>
+				<Channels>Stereo</Channels>
+				<SampleType>16Bit</SampleType>
+				<Codec>
+					<FourCC>aac </FourCC>
+					<Settings>
+						<AudioCodec>AAC</AudioCodec>
+						<AudioQuality>High</AudioQuality>
+						<Bitrate>128000</Bitrate>
+					</Settings>
+				</Codec>
+			</Audio>
+			<Multiplexer>
+				<Format>MP4</Format>
+				<Settings>
+					<FastStart>true</FastStart>
+					<StreamCompatibility>MP4</StreamCompatibility>
+				</Settings>
+			</Multiplexer>
+			<Audiences>
+				<Audience>Web</Audience>
+				<Audience>HD</Audience>
+			</Audiences>
+		</Preset>
+	</PresetList>
+</PremiereData>

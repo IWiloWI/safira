@@ -1,0 +1,79 @@
+# Frontend .htaccess for React SPA with performance optimizations
+RewriteEngine On
+RewriteBase /
+
+# Enable Early Hints (HTTP 103) for faster resource loading
+<IfModule mod_headers.c>
+    # Send Early Hints before full response
+    Header set Link "</images/safira_logo_220w.webp>; rel=preload; as=image; fetchpriority=high"
+    Header append Link "</videos/safira_intro.mp4>; rel=preload; as=video; fetchpriority=high"
+    Header append Link "</static/css/main.73148772.css>; rel=preload; as=style"
+    Header append Link "<https://fonts.googleapis.com>; rel=preconnect"
+    Header append Link "<https://fonts.gstatic.com>; rel=preconnect; crossorigin"
+</IfModule>
+
+# Force HTTPS redirect
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Optimized Cache Headers for bfcache compatibility and LCP optimization
+<IfModule mod_headers.c>
+    # HTML - Aggressive caching with stale-while-revalidate for instant loads
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "public, max-age=60, stale-while-revalidate=86400, stale-if-error=604800"
+        Header set Timing-Allow-Origin "*"
+    </FilesMatch>
+
+    # Critical images (logo) - long cache with immutable for LCP
+    <FilesMatch "safira_logo.*\.(webp|png|jpg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set Timing-Allow-Origin "*"
+    </FilesMatch>
+
+    # API responses - Cache with stale-while-revalidate
+    <FilesMatch "\.(php)$">
+        Header set Cache-Control "public, max-age=120, stale-while-revalidate=3600"
+        Header set Timing-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Handle React Router - send all non-file requests to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ /index.html [L]
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Cache static assets aggressively for performance
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/quicktime "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# Enable HTTP/2 Server Push for critical resources
+<IfModule mod_http2.c>
+    H2PushResource add /images/safira_logo_220w.webp
+    H2PushResource add /videos/safira_intro.mp4
+    H2PushResource add /static/css/main.73148772.css
+</IfModule>

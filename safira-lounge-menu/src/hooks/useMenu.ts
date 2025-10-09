@@ -79,16 +79,18 @@ export function useMenu(options: UseMenuOptions): UseMenuReturn {
     loadProducts();
   }, []);
 
-  // Auto-refresh setup (temporarily disabled)
+  // Auto-refresh setup - DISABLED (using useAdminChangeDetection instead)
+  // This SSE-based system is disabled in favor of the simpler polling-based
+  // useAdminChangeDetection hook which is already active in MenuPageContainer
   useAutoRefresh({
     onUpdate: (event) => {
       console.log('🔄 Menu Auto-refresh triggered:', event.type);
       if (event.type.includes('product') || event.type.includes('bulk_price')) {
         console.log('♻️ Reloading products due to:', (event.message || event.type));
-        
+
         setRefreshNotification(event.data?.message || 'Menu updated');
         setTimeout(() => setRefreshNotification(null), 3000);
-        
+
         loadProducts();
       }
     },
@@ -98,7 +100,7 @@ export function useMenu(options: UseMenuOptions): UseMenuReturn {
     onDisconnect: () => {
       console.log('❌ Auto-refresh for menu disconnected');
     },
-    enabled: false // Temporarily disabled to prevent connection spam
+    enabled: false // Disabled - using useAdminChangeDetection polling instead
   });
 
   /**

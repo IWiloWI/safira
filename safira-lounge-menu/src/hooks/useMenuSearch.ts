@@ -112,22 +112,37 @@ export function useMenuSearch(options: UseMenuSearchOptions): UseMenuSearchRetur
       }
     }
 
-    // Apply search filter
+    // Apply search filter (search in name, description, brand, and ingredients)
     if (searchQuery.trim()) {
       const searchLower = searchQuery.toLowerCase();
       filteredProducts = filteredProducts.filter(product => {
-        const name = typeof product.name === 'string' 
-          ? product.name 
+        // Search in product name
+        const name = typeof product.name === 'string'
+          ? product.name
           : product.name[language] || product.name['de'];
-        
+
+        // Search in product description
         const description = product.description
-          ? (typeof product.description === 'string' 
-            ? product.description 
+          ? (typeof product.description === 'string'
+            ? product.description
             : product.description[language] || product.description['de'] || '')
           : '';
-        
-        return name.toLowerCase().includes(searchLower) || 
-               description.toLowerCase().includes(searchLower);
+
+        // Search in brand (for tobacco products)
+        const brand = product.brand || '';
+
+        // Search in ingredients/items (if present as part of product data)
+        const productAny = product as any;
+        const ingredients = productAny.ingredients
+          ? (typeof productAny.ingredients === 'string'
+            ? productAny.ingredients
+            : productAny.ingredients[language] || productAny.ingredients['de'] || '')
+          : '';
+
+        // Combine all searchable text
+        const searchableText = `${name} ${description} ${brand} ${ingredients}`.toLowerCase();
+
+        return searchableText.includes(searchLower);
       });
     }
 

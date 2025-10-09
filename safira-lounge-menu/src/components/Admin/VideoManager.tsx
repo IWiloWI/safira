@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { FaUpload, FaPlay, FaPause, FaTrash, FaSave, FaEye } from 'react-icons/fa';
+import { FaUpload, FaPlay, FaPause, FaTrash, FaSave, FaEye, FaImage } from 'react-icons/fa';
 import { getProducts } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -13,8 +13,8 @@ import {
   ResponsiveLoadingContainer
 } from '../../styles/AdminLayout';
 
-
-
+// Get API URL from environment
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
 
 
 
@@ -200,6 +200,7 @@ interface VideoMapping {
   category: string;
   displayName: string;
   currentVideo: string;
+  fallbackImage?: string;
   isMainCategory?: boolean;
   parentCategory?: string;
 }
@@ -213,6 +214,9 @@ const VideoManager: React.FC = () => {
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
   const [pendingChanges, setPendingChanges] = useState<{ [key: string]: string }>({});
+  const [pendingFallbackImages, setPendingFallbackImages] = useState<{ [key: string]: string }>({});
+  const [uploadingVideo, setUploadingVideo] = useState<{ [key: string]: boolean }>({});
+  const [uploadingImage, setUploadingImage] = useState<{ [key: string]: boolean }>({});
 
   // Available videos - loaded dynamically from API
   const [availableVideos, setAvailableVideos] = useState<string[]>([]);
@@ -232,7 +236,7 @@ const VideoManager: React.FC = () => {
   // Load available videos from the server
   const loadAvailableVideos = async () => {
     try {
-      const response = await fetch('/safira-api-fixed.php?action=list_videos');
+      const response = await fetch(`${API_BASE_URL}?action=list_videos`);
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'success' && data.videos) {
@@ -255,13 +259,16 @@ const VideoManager: React.FC = () => {
   // Load video mappings from server API
   const loadVideoMappings = async () => {
     try {
-      const response = await fetch('/safira-api-fixed.php?action=get_video_mappings');
+      const response = await fetch(`${API_BASE_URL}?action=get_video_mappings`);
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'success') {
-          const serverMappings: { [key: string]: string } = {};
+          const serverMappings: { [key: string]: { video: string, fallbackImage?: string } } = {};
           data.mappings.forEach((mapping: any) => {
-            serverMappings[mapping.category_id] = mapping.video_path;
+            serverMappings[mapping.category_id] = {
+              video: mapping.video_path,
+              fallbackImage: mapping.fallback_image || ''
+            };
           });
           console.log('VideoManager: Loaded video mappings from server:', serverMappings);
           return serverMappings;
@@ -295,36 +302,27 @@ const VideoManager: React.FC = () => {
 
         // Add main categories and subcategories from API
         if (apiData.categories) {
-          // First, create a map of main category IDs to names for lookup
-          const mainCategoryMap = new Map();
           apiData.categories.forEach((category: any) => {
-            if (category.isMainCategory) {
-              const categoryName = typeof category.name === 'string' ? category.name : category.name?.de || category.id;
-              mainCategoryMap.set(category.id, categoryName);
-            }
-          });
+            // Add main category
+            allCategories.push({
+              id: category.id,
+              name: category.name,
+              isMainCategory: true
+            });
 
-          // Then add all categories
-          apiData.categories.forEach((category: any) => {
-            if (category.isMainCategory) {
-              // Add main categories
-              allCategories.push({
-                id: category.id,
-                name: category.name,
-                isMainCategory: true
-              });
-            } else {
-              // Add subcategories (those with isMainCategory: false)
-              // Check if ID already has subcat_ prefix to avoid double prefixing
-              const parentCategoryName = mainCategoryMap.get(category.parentPage) || 'Unknown';
-              const categoryId = category.id.toString().startsWith('subcat_')
-                ? category.id
-                : `subcat_${category.id}`;
-              allCategories.push({
-                id: categoryId, // Use subcat_ prefix but avoid double prefixing
-                name: category.name,
-                isMainCategory: false,
-                parentCategory: parentCategoryName
+            // Add subcategories if they exist
+            if (category.subcategories && Array.isArray(category.subcategories)) {
+              const parentCategoryName = typeof category.name === 'string'
+                ? category.name
+                : category.name?.de || category.id;
+
+              category.subcategories.forEach((subcat: any) => {
+                allCategories.push({
+                  id: `subcat_${subcat.id}`,
+                  name: subcat.name,
+                  isMainCategory: false,
+                  parentCategory: parentCategoryName
+                });
               });
             }
           });
@@ -364,11 +362,13 @@ const VideoManager: React.FC = () => {
           const categoryKey = category.id.toString();
           const displayName = typeof category.name === 'string' ? category.name : category.name.de || category.name.en || categoryKey;
           const defaultVideo = getDefaultVideoForCategory(displayName);
+          const savedMapping = savedMappings[categoryKey];
 
           return {
             category: categoryKey,
             displayName,
-            currentVideo: savedMappings[categoryKey] || defaultVideo,
+            currentVideo: savedMapping?.video || defaultVideo,
+            fallbackImage: savedMapping?.fallbackImage || '',
             isMainCategory: category.isMainCategory,
             parentCategory: category.parentCategory
           };
@@ -430,6 +430,9 @@ const VideoManager: React.FC = () => {
     const tempUrl = URL.createObjectURL(file);
     setPendingChanges(prev => ({ ...prev, [category]: tempUrl }));
 
+    // Set uploading state
+    setUploadingVideo(prev => ({ ...prev, [category]: true }));
+
     // Pause session monitoring during upload
     pauseSessionMonitoring();
 
@@ -441,7 +444,7 @@ const VideoManager: React.FC = () => {
       console.log('VideoManager: Uploading video for category:', category, 'File size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
       console.log('VideoManager: Session monitoring paused during upload');
 
-      const response = await fetch('/safira-api-fixed.php?action=upload', {
+      const response = await fetch(`${API_BASE_URL}?action=upload`, {
         method: 'POST',
         body: formData
       });
@@ -456,6 +459,9 @@ const VideoManager: React.FC = () => {
         setPendingChanges(prev => ({ ...prev, [category]: data.videoUrl }));
         console.log('VideoManager: Video uploaded successfully:', data.videoUrl, 'Original filename:', data.originalFilename);
 
+        // Clear uploading state
+        setUploadingVideo(prev => ({ ...prev, [category]: false }));
+
         // Reload available videos to include the newly uploaded video
         await loadAvailableVideos();
       } else {
@@ -465,6 +471,7 @@ const VideoManager: React.FC = () => {
           const { [category]: removed, ...rest } = prev;
           return rest;
         });
+        setUploadingVideo(prev => ({ ...prev, [category]: false }));
 
         const errorText = await response.text();
         alert('Fehler beim Upload des Videos: ' + errorText);
@@ -477,6 +484,7 @@ const VideoManager: React.FC = () => {
         const { [category]: removed, ...rest } = prev;
         return rest;
       });
+      setUploadingVideo(prev => ({ ...prev, [category]: false }));
 
       alert('Fehler beim Upload des Videos: ' + (error.message || 'Netzwerkfehler'));
       console.error('VideoManager: Upload error:', error);
@@ -487,28 +495,121 @@ const VideoManager: React.FC = () => {
     }
   };
 
+  const handleFallbackImageChange = async (category: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate image file
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+
+    if (file.size > MAX_SIZE) {
+      alert(`Bild zu groß (max 10 MB). Ihre Datei: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      event.target.value = '';
+      return;
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert(`Ungültiges Bildformat: ${file.type}. Erlaubt: JPEG, PNG, WebP`);
+      event.target.value = '';
+      return;
+    }
+
+    // Show temporary preview
+    const tempUrl = URL.createObjectURL(file);
+    setPendingFallbackImages(prev => ({ ...prev, [category]: tempUrl }));
+
+    // Set uploading state
+    setUploadingImage(prev => ({ ...prev, [category]: true }));
+
+    pauseSessionMonitoring();
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'fallback_image');
+
+    try {
+      console.log('VideoManager: Uploading fallback image for category:', category);
+
+      const response = await fetch(`${API_BASE_URL}?action=upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        URL.revokeObjectURL(tempUrl);
+        setPendingFallbackImages(prev => ({ ...prev, [category]: data.imageUrl || data.videoUrl }));
+        setUploadingImage(prev => ({ ...prev, [category]: false }));
+        console.log('VideoManager: Fallback image uploaded successfully:', data.imageUrl || data.videoUrl);
+      } else {
+        URL.revokeObjectURL(tempUrl);
+        setPendingFallbackImages(prev => {
+          const { [category]: removed, ...rest } = prev;
+          return rest;
+        });
+        setUploadingImage(prev => ({ ...prev, [category]: false }));
+        alert('Fehler beim Upload des Bildes');
+      }
+    } catch (error: any) {
+      URL.revokeObjectURL(tempUrl);
+      setPendingFallbackImages(prev => {
+        const { [category]: removed, ...rest } = prev;
+        return rest;
+      });
+      setUploadingImage(prev => ({ ...prev, [category]: false }));
+      alert('Fehler beim Upload des Bildes: ' + (error.message || 'Netzwerkfehler'));
+    } finally {
+      resumeSessionMonitoring();
+    }
+  };
+
   const handleSaveChanges = async (category: string) => {
     const newVideo = pendingChanges[category];
-    if (!newVideo) return;
+    const newFallbackImage = pendingFallbackImages[category];
+
+    if (!newVideo && !newFallbackImage) return;
+
+    // Check if upload is still in progress
+    if (uploadingVideo[category]) {
+      alert('Video-Upload läuft noch. Bitte warten Sie, bis der Upload abgeschlossen ist.');
+      return;
+    }
+
+    if (uploadingImage[category]) {
+      alert('Bild-Upload läuft noch. Bitte warten Sie, bis der Upload abgeschlossen ist.');
+      return;
+    }
 
     // Validate video path (reject blob URLs)
-    if (newVideo.startsWith('blob:')) {
+    if (newVideo && newVideo.startsWith('blob:')) {
       alert('Upload noch nicht abgeschlossen. Bitte warten Sie, bis der Upload fertig ist.');
       return;
     }
 
+    if (newFallbackImage && newFallbackImage.startsWith('blob:')) {
+      alert('Bild-Upload noch nicht abgeschlossen. Bitte warten Sie.');
+      return;
+    }
+
     try {
-      console.log('VideoManager: Saving video mapping:', { category, videoPath: newVideo });
+      console.log('VideoManager: Saving video mapping:', {
+        category,
+        videoPath: newVideo || 'unchanged',
+        fallbackImage: newFallbackImage || 'unchanged'
+      });
 
       // Send as JSON instead of FormData
-      const response = await fetch('/safira-api-fixed.php?action=save_video_mapping', {
+      const response = await fetch(`${API_BASE_URL}?action=save_video_mapping`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           category_id: category,
-          video_path: newVideo
+          video_path: newVideo || videoMappings.find(m => m.category === category)?.currentVideo || '',
+          fallback_image: newFallbackImage || videoMappings.find(m => m.category === category)?.fallbackImage || ''
         })
       });
 
@@ -526,19 +627,28 @@ const VideoManager: React.FC = () => {
       const data = JSON.parse(responseText);
 
       if (data.status === 'success') {
-        console.log('VideoManager: Successfully saved video mapping to server:', category, '->', newVideo);
+        console.log('VideoManager: Successfully saved video mapping to server:', category);
 
         // Update local state only after successful server save
         setVideoMappings(prev =>
           prev.map(mapping =>
             mapping.category === category
-              ? { ...mapping, currentVideo: newVideo }
+              ? {
+                  ...mapping,
+                  currentVideo: newVideo || mapping.currentVideo,
+                  fallbackImage: newFallbackImage || mapping.fallbackImage
+                }
               : mapping
           )
         );
 
         // Remove from pending changes
         setPendingChanges(prev => {
+          const { [category]: removed, ...rest } = prev;
+          return rest;
+        });
+
+        setPendingFallbackImages(prev => {
           const { [category]: removed, ...rest } = prev;
           return rest;
         });
@@ -565,6 +675,10 @@ const VideoManager: React.FC = () => {
 
   const handleDiscardChanges = (category: string) => {
     setPendingChanges(prev => {
+      const { [category]: removed, ...rest } = prev;
+      return rest;
+    });
+    setPendingFallbackImages(prev => {
       const { [category]: removed, ...rest } = prev;
       return rest;
     });
@@ -662,16 +776,36 @@ const VideoManager: React.FC = () => {
 
               <CurrentVideoInfo>
                 <CurrentVideoName>
-                  <strong>Aktuell:</strong> {getVideoFileName(currentVideo)}
+                  <strong>Video:</strong> {getVideoFileName(currentVideo)}
+                  {uploadingVideo[mapping.category] && (
+                    <span style={{ color: '#FFD700', marginLeft: '10px' }}>
+                      ⏳ Upload läuft...
+                    </span>
+                  )}
                 </CurrentVideoName>
-                {hasChanges && (
-                  <div style={{ 
-                    color: '#4CAF50', 
-                    fontSize: '0.8rem', 
+                <CurrentVideoName style={{ marginTop: '8px' }}>
+                  <strong>Fallback-Bild:</strong> {
+                    (pendingFallbackImages[mapping.category] || mapping.fallbackImage)
+                      ? getVideoFileName(pendingFallbackImages[mapping.category] || mapping.fallbackImage || '')
+                      : 'Nicht gesetzt'
+                  }
+                  {uploadingImage[mapping.category] && (
+                    <span style={{ color: '#FFD700', marginLeft: '10px' }}>
+                      ⏳ Upload läuft...
+                    </span>
+                  )}
+                </CurrentVideoName>
+                {(hasChanges || pendingFallbackImages[mapping.category]) && (
+                  <div style={{
+                    color: uploadingVideo[mapping.category] || uploadingImage[mapping.category] ? '#FFD700' : '#4CAF50',
+                    fontSize: '0.8rem',
                     marginTop: '5px',
                     fontFamily: 'Aldrich, sans-serif'
                   }}>
-                    ● Nicht gespeicherte Änderungen
+                    {uploadingVideo[mapping.category] || uploadingImage[mapping.category]
+                      ? '⏳ Upload läuft - bitte warten...'
+                      : '● Nicht gespeicherte Änderungen'
+                    }
                   </div>
                 )}
               </CurrentVideoInfo>
@@ -700,12 +834,19 @@ const VideoManager: React.FC = () => {
                   }}
                   onChange={(e) => {
                     if (e.target.value) {
-                      setPendingChanges(prev => ({ ...prev, [mapping.category]: e.target.value }));
+                      console.log('VideoManager: Video selected from dropdown:', e.target.value, 'for category:', mapping.category);
+                      setPendingChanges(prev => {
+                        const updated = { ...prev, [mapping.category]: e.target.value };
+                        console.log('VideoManager: Updated pendingChanges:', updated);
+                        return updated;
+                      });
                     }
                   }}
-                  value={pendingChanges[mapping.category] || ''}
+                  value={pendingChanges[mapping.category] || currentVideo || ''}
                 >
-                  <option value="" style={{ background: '#1a1a1a' }}>Video wählen...</option>
+                  <option value="" style={{ background: '#1a1a1a' }}>
+                    {availableVideos.length === 0 ? 'Keine Videos verfügbar' : 'Video wählen...'}
+                  </option>
                   {availableVideos.map(video => (
                     <option key={video} value={video} style={{ background: '#1a1a1a' }}>
                       {video.split('/').pop()?.replace(/\.(mp4|mov)$/, '').replace(/-/g, ' ')}
@@ -719,22 +860,33 @@ const VideoManager: React.FC = () => {
                   variant="primary"
                 >
                   <FaUpload />
-                  Upload
+                  Video Upload
                 </ControlButton>
 
-                {hasChanges && (
+                <ControlButton
+                  as="label"
+                  htmlFor={`fallback-${mapping.category}`}
+                  variant="primary"
+                >
+                  <FaImage />
+                  Fallback-Bild
+                </ControlButton>
+
+                {(hasChanges || pendingFallbackImages[mapping.category]) && (
                   <>
                     <ControlButton
                       onClick={() => handleSaveChanges(mapping.category)}
                       variant="success"
+                      disabled={uploadingVideo[mapping.category] || uploadingImage[mapping.category]}
                     >
                       <FaSave />
-                      Speichern
+                      {uploadingVideo[mapping.category] || uploadingImage[mapping.category] ? 'Upload läuft...' : 'Speichern'}
                     </ControlButton>
 
                     <ControlButton
                       onClick={() => handleDiscardChanges(mapping.category)}
                       variant="danger"
+                      disabled={uploadingVideo[mapping.category] || uploadingImage[mapping.category]}
                     >
                       <FaTrash />
                       Verwerfen
@@ -748,6 +900,12 @@ const VideoManager: React.FC = () => {
                 type="file"
                 accept="video/mp4,video/quicktime,video/webm"
                 onChange={(e) => handleFileChange(mapping.category, e)}
+              />
+              <FileInput
+                id={`fallback-${mapping.category}`}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/jpg"
+                onChange={(e) => handleFallbackImageChange(mapping.category, e)}
               />
             </ResponsiveCard>
           );

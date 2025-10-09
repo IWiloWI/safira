@@ -318,7 +318,7 @@ const QRGenerator: React.FC = () => {
           <body>
             <div class="qr-container">
               <h2>Safira Lounge - Tisch ${qrData.table}</h2>
-              <img src="${imgData}" alt="QR Code">
+              <img src="${imgData}" alt="QR Code" loading="lazy">
               <p>Scannen Sie diesen Code für die digitale Speisekarte</p>
             </div>
           </body>

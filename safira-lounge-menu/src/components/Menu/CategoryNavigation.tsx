@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import SubcategoryTabs from './SubcategoryTabs';
 import { Category, Language, MainCategory } from '../../types';
 import { useResponsive } from '../../hooks/useResponsive';
+import { generateSrcSet, getImageSizes } from '../../utils/imageUtils';
 
 // Styled components
 const NavigationContainer = styled(motion.div)`
@@ -46,11 +47,15 @@ const MainCategoryCard = styled(motion.button)`
   background: transparent;
   margin: 0 auto;
 
+  @media (max-width: 768px) {
+    max-width: 280px;
+  }
+
   &:hover {
     transform: translateY(-12px) scale(1.05);
-    
+
     img {
-      box-shadow: 
+      box-shadow:
         0 0 15px rgba(255, 65, 251, 1),
         0 0 30px rgba(255, 65, 251, 0.8),
         0 0 45px rgba(255, 65, 251, 0.6),
@@ -64,11 +69,18 @@ const MainCategoryCard = styled(motion.button)`
     display: block;
     border-radius: 30px;
     border: none;
-    box-shadow: 
+    box-shadow:
       0 0 10px rgba(255, 20, 147, 0.8),
       0 0 20px rgba(255, 20, 147, 0.6),
       0 0 30px rgba(255, 20, 147, 0.4);
     transition: all 0.5s ease;
+
+    @media (max-width: 768px) {
+      box-shadow:
+        0 0 5px rgba(255, 20, 147, 0.5),
+        0 0 10px rgba(255, 20, 147, 0.3),
+        0 0 15px rgba(255, 20, 147, 0.2);
+    }
   }
 `;
 
@@ -202,10 +214,15 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
               whileTap={{ scale: 0.95 }}
               aria-label={`Select ${categoryName}`}
             >
-              <img 
-                src={config.image} 
+              <img
+                src={config.image}
+                srcSet={generateSrcSet(config.image)}
+                sizes={getImageSizes(600)}
                 alt={categoryName}
+                width="600"
+                height="600"
                 loading={index < 2 ? 'eager' : 'lazy'}
+                fetchPriority={index < 2 ? 'high' : 'auto'}
               />
             </MainCategoryCard>
           );

@@ -33,21 +33,39 @@ const LogoImg = styled.img`
   width: auto;
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
   transition: all 0.3s ease;
-  
+
   @media (max-width: 768px) {
     height: 150px;
   }
-  
+
   @media (max-width: 480px) {
     height: 120px;
   }
-  
+
   &:hover {
     filter: drop-shadow(0 8px 20px rgba(255, 65, 251, 0.3));
     transform: scale(1.02);
   }
 `;
 
+// Visually hidden text for accessibility (h1 requirement)
+const VisuallyHidden = styled.span`
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+`;
+
+const MainHeading = styled.h1`
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+`;
 
 const BackButton = styled(motion.button)`
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(255, 240, 255, 0.90));
@@ -254,11 +272,18 @@ export const MenuHeader: React.FC<MenuHeaderProps> = React.memo(({
         <LogoSection
           variants={itemVariants}
         >
-          <LogoImg 
-            src="/images/safira_logo.png" 
-            alt="Safira Lounge"
-            loading="eager"
-          />
+          <MainHeading>
+            <VisuallyHidden>Safira Lounge Digital Menu</VisuallyHidden>
+            <LogoImg
+              src="/images/safira_logo_220w.webp"
+              srcSet="/images/safira_logo_120w.webp 120w, /images/safira_logo_220w.webp 220w, /images/safira_logo_280w.webp 280w"
+              sizes="(max-width: 480px) 120px, (max-width: 768px) 150px, 200px"
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              fetchPriority="high"
+            />
+          </MainHeading>
           
           {navigationHint && (
             <NavigationHint

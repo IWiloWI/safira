@@ -708,7 +708,7 @@ const SubcategoryManager: React.FC = () => {
       if (productCount > 0) {
         // Erst alle Produkte löschen
         const deletePromises = subcategory?.items?.map(async (product: any) => {
-          const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+          const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
           const productResponse = await fetch(`${API_URL}?action=update_product&category_id=${subcategoryId}&id=${product.id}`, {
             method: 'DELETE',
             headers: {
@@ -730,7 +730,7 @@ const SubcategoryManager: React.FC = () => {
       }
 
       // Dann die Kategorie löschen via PHP API
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const response = await fetch(`${API_URL}?action=delete_subcategory&id=${subcategoryId}`, {
         method: 'POST',
         headers: {
@@ -784,7 +784,7 @@ const SubcategoryManager: React.FC = () => {
         items: editingSubcategory?.items || []
       };
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const action = editingSubcategory ? 'update_subcategory' : 'create_subcategory';
       const method = editingSubcategory ? 'PUT' : 'POST';
 
@@ -880,7 +880,7 @@ const SubcategoryManager: React.FC = () => {
       // Skip CSRF for PHP API - not implemented yet
       const csrfToken = 'php-api-no-csrf';
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+      const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
       const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
         method: 'POST',
         headers: {
@@ -980,7 +980,7 @@ const SubcategoryManager: React.FC = () => {
       // Remove products sequentially to avoid overwhelming server
       for (const productId of Array.from(selectedIds)) {
         try {
-          const API_URL = process.env.REACT_APP_API_URL || 'http://test.safira-lounge.de/safira-api-fixed.php';
+          const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
           const response = await fetch(`${API_URL}?action=delete_product&category_id=${subcategoryId}&id=${productId}`, {
             method: 'POST',
             headers: {

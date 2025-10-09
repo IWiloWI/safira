@@ -181,7 +181,13 @@ const Header: React.FC = () => {
     <HeaderContainer scrolled={scrolled}>
       <HeaderWrapper>
         <Logo to="/menu">
-          <LogoImg src="/images/safira_logo.png" alt="Safira Lounge" />
+          <LogoImg
+            src="/images/safira_logo_120w.webp"
+            srcSet="/images/safira_logo_120w.webp 120w, /images/safira_logo_220w.webp 220w, /images/safira_logo_280w.webp 280w"
+            sizes="60px"
+            alt="Safira Lounge"
+            fetchPriority="high"
+          />
           <LogoText>Safira</LogoText>
         </Logo>
 
