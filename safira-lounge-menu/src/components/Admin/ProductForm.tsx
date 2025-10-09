@@ -36,127 +36,206 @@ const Modal = styled(motion.div)`
   left: 0;
   width: 100%;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  overflow-y: auto;
 `;
 
 const ModalContent = styled(motion.div)`
-  background: rgba(255, 65, 251, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 20px;
-  padding: 30px;
-  max-width: 600px;
+  background: linear-gradient(135deg, rgba(20, 20, 30, 0.97), rgba(30, 15, 40, 0.97));
+  border: 2px solid rgba(255, 65, 251, 0.4);
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 700px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
-  backdrop-filter: blur(15px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(255, 65, 251, 0.25);
+
+  @media (max-width: 768px) {
+    padding: 25px 20px;
+    max-width: 95%;
+  }
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 65, 251, 0.4);
+    border-radius: 10px;
+
+    &:hover {
+      background: rgba(255, 65, 251, 0.6);
+    }
+  }
 `;
 
 const ModalHeader = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
+  position: relative;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 65, 251, 0.2);
 `;
 
 const ModalTitle = styled.h2`
   font-family: 'Oswald', sans-serif;
-  color: #FF41FB;
-  font-size: 1.8rem;
+  background: linear-gradient(135deg, #FF41FB, #FFD700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 2rem;
   text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 2px;
+  font-weight: 800;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
+  position: absolute;
+  top: -10px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  padding: 5px;
+  padding: 8px;
   border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
+  font-size: 1.2rem;
 
   &:hover {
     color: #FF41FB;
-    background: rgba(255, 65, 251, 0.1);
+    background: rgba(255, 65, 251, 0.15);
+    border-color: rgba(255, 65, 251, 0.4);
+    transform: rotate(90deg);
   }
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
 `;
 
 const Label = styled.label`
   display: block;
   font-family: 'Aldrich', sans-serif;
-  color: #FF41FB;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
+  background: linear-gradient(135deg, #FF41FB, #FFD700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 65, 251, 0.25);
+  border-radius: 12px;
   color: white;
   font-family: 'Aldrich', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 
   &:focus {
     outline: none;
     border-color: #FF41FB;
-    box-shadow: 0 0 15px rgba(255, 65, 251, 0.3);
+    background: rgba(255, 65, 251, 0.12);
+    box-shadow: 0 0 20px rgba(255, 65, 251, 0.25),
+                inset 0 0 20px rgba(255, 65, 251, 0.1);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 65, 251, 0.25);
+  border-radius: 12px;
   color: white;
   font-family: 'Aldrich', sans-serif;
-  min-height: 80px;
+  font-size: 0.95rem;
+  min-height: 100px;
   resize: vertical;
+  transition: all 0.3s ease;
+  line-height: 1.6;
 
   &:focus {
     outline: none;
     border-color: #FF41FB;
-    box-shadow: 0 0 15px rgba(255, 65, 251, 0.3);
+    background: rgba(255, 65, 251, 0.12);
+    box-shadow: 0 0 20px rgba(255, 65, 251, 0.25),
+                inset 0 0 20px rgba(255, 65, 251, 0.1);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 65, 251, 0.3);
-  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 65, 251, 0.25);
+  border-radius: 12px;
   color: white;
   font-family: 'Aldrich', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 
   &:focus {
     outline: none;
     border-color: #FF41FB;
+    background: rgba(255, 65, 251, 0.12);
+    box-shadow: 0 0 20px rgba(255, 65, 251, 0.25);
   }
 
   option {
-    background: #1a1a1a;
+    background: #1a1a2e;
     color: white;
+    padding: 10px;
   }
 `;
 
@@ -239,57 +318,95 @@ const VariantsToggle = styled.button`
 
 const VariantItem = styled.div`
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 65, 251, 0.15);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 65, 251, 0.25);
+  }
 `;
 
 const VariantInput = styled.input`
   flex: 1;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 65, 251, 0.3);
-  border-radius: 6px;
+  border: 2px solid rgba(255, 65, 251, 0.25);
+  border-radius: 8px;
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 
   &:focus {
     outline: none;
     border-color: #FF41FB;
+    background: rgba(255, 65, 251, 0.12);
+    box-shadow: 0 0 15px rgba(255, 65, 251, 0.2);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
   }
 `;
 
 const RemoveVariantButton = styled.button`
-  background: rgba(244, 67, 54, 0.2);
-  border: 1px solid rgba(244, 67, 54, 0.5);
-  border-radius: 6px;
-  color: #f44336;
-  padding: 8px 12px;
+  background: rgba(244, 67, 54, 0.15);
+  border: 2px solid rgba(244, 67, 54, 0.4);
+  border-radius: 8px;
+  color: #ff5252;
+  padding: 10px 16px;
   cursor: pointer;
   font-family: 'Aldrich', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 
   &:hover {
-    background: rgba(244, 67, 54, 0.3);
+    background: rgba(244, 67, 54, 0.25);
+    border-color: rgba(244, 67, 54, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const AddVariantButton = styled.button`
-  background: rgba(76, 175, 80, 0.2);
-  border: 1px solid rgba(76, 175, 80, 0.5);
-  border-radius: 6px;
-  color: #4CAF50;
-  padding: 8px 15px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2));
+  border: 2px solid rgba(76, 175, 80, 0.5);
+  border-radius: 10px;
+  color: #66BB6A;
+  padding: 12px 20px;
   cursor: pointer;
   font-family: 'Aldrich', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%;
+  margin-top: 10px;
 
   &:hover {
-    background: rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(139, 195, 74, 0.3));
+    border-color: rgba(76, 175, 80, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -297,16 +414,18 @@ const ModalActions = styled.div`
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin-top: 30px;
+  margin-top: 35px;
+  padding-top: 25px;
+  border-top: 2px solid rgba(255, 65, 251, 0.2);
 `;
 
 const Button = styled(motion.button)<{ variant?: 'secondary' }>`
-  padding: 12px 25px;
-  background: ${props => props.variant === 'secondary' 
-    ? 'transparent' 
-    : 'linear-gradient(135deg, #FF41FB, #ff21f5)'};
-  border: 2px solid #FF41FB;
-  border-radius: 10px;
+  padding: 14px 30px;
+  background: ${props => props.variant === 'secondary'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'linear-gradient(135deg, #FF41FB, #FFD700)'};
+  border: 2px solid ${props => props.variant === 'secondary' ? 'rgba(255, 255, 255, 0.2)' : '#FF41FB'};
+  border-radius: 12px;
   color: white;
   font-family: 'Aldrich', sans-serif;
   font-size: 0.9rem;
