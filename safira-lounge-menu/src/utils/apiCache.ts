@@ -20,7 +20,7 @@ class ApiCacheManager {
 
   // Default TTL configurations for different endpoints
   private readonly DEFAULT_CONFIGS: Record<string, CacheConfig> = {
-    products: { ttl: 30 * 1000, staleWhileRevalidate: false }, // 30 seconds (reduced for instant updates)
+    products: { ttl: 0, staleWhileRevalidate: false }, // No cache - instant updates for customers
     tobacco_catalog: { ttl: 10 * 60 * 1000 }, // 10 minutes
     get_active_languages: { ttl: 30 * 60 * 1000 }, // 30 minutes
     categories: { ttl: 10 * 60 * 1000, staleWhileRevalidate: true }, // 10 minutes
