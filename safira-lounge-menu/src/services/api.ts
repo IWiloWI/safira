@@ -271,6 +271,11 @@ export const addProduct = async (
   const response = await api.post<any>(``, requestData, {
     params: { action: 'create_product' }
   });
+
+  // Invalidate products cache to force immediate refresh
+  apiCache.invalidate('products');
+  console.log('✅ API: Product created, cache invalidated');
+
   const data = response.data.data || response.data;
   return data.product || data;
 };
@@ -318,7 +323,9 @@ export const updateProduct = async (categoryId: string, itemId: string, product:
       throw new Error(data.error || 'Failed to update product');
     }
 
-    console.log('✅ API SERVICE - Update successful, returning product data');
+    // Invalidate products cache to force immediate refresh
+    apiCache.invalidate('products');
+    console.log('✅ API SERVICE - Update successful, cache invalidated, returning product data');
     return data.product || data;
   } catch (error: any) {
     // Handle axios errors (like 500 status)
@@ -365,6 +372,10 @@ export const deleteProduct = async (categoryId: string, itemId: string): Promise
       params: { action: 'delete_product', id: itemId }
     });
     console.log(`✅ API: DELETE response received:`, response);
+
+    // Invalidate products cache to force immediate refresh
+    apiCache.invalidate('products');
+    console.log('✅ API: Product deleted, cache invalidated');
 
     // Check if response indicates success
     if (response.status && response.status >= 400) {
