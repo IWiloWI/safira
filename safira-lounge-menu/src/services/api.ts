@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiCache } from '../utils/apiCache';
 
 // Import all types from the new type system
 import type {
@@ -200,10 +201,15 @@ export const login = async (username: string, password: string): Promise<AuthRes
 
 // Products
 export const getProducts = async (): Promise<ProductData> => {
-  const response = await api.get<GetProductsResponse>('', {
-    params: { action: 'products' }
-  });
-  return response.data.data || (response.data as unknown as ProductData);
+  return apiCache.get(
+    'products',
+    async () => {
+      const response = await api.get<GetProductsResponse>('', {
+        params: { action: 'products' }
+      });
+      return response.data.data || (response.data as unknown as ProductData);
+    }
+  );
 };
 
 export const updateProducts = async (products: ProductData): Promise<ProductData> => {
@@ -542,24 +548,27 @@ export const updateProductTranslations = async (
 
 // Tobacco Catalog API - Real implementation using PHP backend
 export const getTobaccoCatalog = async (): Promise<TobaccoCatalog> => {
-  try {
-    const response = await api.get('', {
-      params: { action: 'tobacco_catalog' }
-    });
+  return apiCache.get(
+    'tobacco_catalog',
+    async () => {
+      const response = await api.get('', {
+        params: { action: 'tobacco_catalog' }
+      });
 
-    const data = response.data.data || response.data;
-    return {
-      brands: data.brands || [],
-      tobaccos: data.tobaccos || []
-    };
-  } catch (error) {
+      const data = response.data.data || response.data;
+      return {
+        brands: data.brands || [],
+        tobaccos: data.tobaccos || []
+      };
+    }
+  ).catch(error => {
     console.error('Failed to load tobacco catalog:', error);
     // Return fallback data on error
     return {
       brands: ['Al Fakher', 'Adalya', 'Serbetli', 'Fumari', 'Starbuzz'],
       tobaccos: []
     };
-  }
+  });
 };
 
 export const addBrandToCatalog = async (brand: string): Promise<{ brands: string[] }> => {
@@ -700,17 +709,20 @@ export const getActiveLanguages = async (): Promise<{
   active_languages: Array<{code: string, name: string, flag: string}>;
   language_codes: string[];
 }> => {
-  try {
-    const response = await api.get('', {
-      params: { action: 'get_active_languages' }
-    });
+  return apiCache.get(
+    'get_active_languages',
+    async () => {
+      const response = await api.get('', {
+        params: { action: 'get_active_languages' }
+      });
 
-    if (response.data.success) {
-      return response.data.data;
-    } else {
-      throw new Error('Failed to get active languages');
+      if (response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error('Failed to get active languages');
+      }
     }
-  } catch (error) {
+  ).catch(error => {
     console.error('Failed to get active languages:', error);
     // Fallback to default languages
     return {
@@ -721,7 +733,7 @@ export const getActiveLanguages = async (): Promise<{
       ],
       language_codes: ['de', 'en', 'da']
     };
-  }
+  });
 };
 
 // Debug function for tobacco system
