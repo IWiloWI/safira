@@ -842,59 +842,61 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
             )}
           </FormGroup>
 
-          {/* Product Variants Section - Right after price */}
-          <VariantsSection>
-            <VariantsHeader>
-              <Label>Produktvarianten (z.B. verschiedene Größen)</Label>
-              <VariantsToggle
-                type="button"
-                onClick={toggleVariants}
-              >
-                {formData.hasVariants ? 'Varianten deaktivieren' : 'Varianten aktivieren'}
-              </VariantsToggle>
-            </VariantsHeader>
-
-            {formData.hasVariants && (
-              <>
-                {formData.sizes.map((variant, index) => (
-                  <VariantItem key={index}>
-                    <VariantInput
-                      type="text"
-                      placeholder="Größe (z.B. 0,3L, Klein, etc.)"
-                      value={variant.size}
-                      onChange={(e) => updateVariant(index, 'size', e.target.value)}
-                    />
-                    <VariantInput
-                      type="number"
-                      step="0.01"
-                      placeholder="Preis"
-                      value={variant.price}
-                      onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
-                    />
-                    <RemoveVariantButton
-                      type="button"
-                      onClick={() => removeVariant(index)}
-                    >
-                      Entfernen
-                    </RemoveVariantButton>
-                  </VariantItem>
-                ))}
-
-                <AddVariantButton
+          {/* Product Variants Section - Only show for regular products (not menu packages or tobacco) */}
+          {!formData.isMenuPackage && (productType === 'regular' || editingProduct) && (
+            <VariantsSection>
+              <VariantsHeader>
+                <Label>Produktvarianten (z.B. verschiedene Größen)</Label>
+                <VariantsToggle
                   type="button"
-                  onClick={addVariant}
+                  onClick={toggleVariants}
                 >
-                  + Variante hinzufügen
-                </AddVariantButton>
+                  {formData.hasVariants ? 'Varianten deaktivieren' : 'Varianten aktivieren'}
+                </VariantsToggle>
+              </VariantsHeader>
 
-                {formData.sizes.length === 0 && (
-                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', textAlign: 'center', margin: '10px 0' }}>
-                    Keine Varianten hinzugefügt. Klicke auf "Variante hinzufügen" um zu beginnen.
-                  </p>
-                )}
-              </>
-            )}
-          </VariantsSection>
+              {formData.hasVariants && (
+                <>
+                  {formData.sizes.map((variant, index) => (
+                    <VariantItem key={index}>
+                      <VariantInput
+                        type="text"
+                        placeholder="Größe (z.B. 0,3L, Klein, etc.)"
+                        value={variant.size}
+                        onChange={(e) => updateVariant(index, 'size', e.target.value)}
+                      />
+                      <VariantInput
+                        type="number"
+                        step="0.01"
+                        placeholder="Preis"
+                        value={variant.price}
+                        onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
+                      />
+                      <RemoveVariantButton
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                      >
+                        Entfernen
+                      </RemoveVariantButton>
+                    </VariantItem>
+                  ))}
+
+                  <AddVariantButton
+                    type="button"
+                    onClick={addVariant}
+                  >
+                    + Variante hinzufügen
+                  </AddVariantButton>
+
+                  {formData.sizes.length === 0 && (
+                    <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', textAlign: 'center', margin: '10px 0' }}>
+                      Keine Varianten hinzugefügt. Klicke auf "Variante hinzufügen" um zu beginnen.
+                    </p>
+                  )}
+                </>
+              )}
+            </VariantsSection>
+          )}
 
           <FormGroup>
             <Label>{t('admin.productCategory')}</Label>
@@ -931,8 +933,8 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
             )}
           </FormGroup>
 
-          {/* Tobacco Product Checkbox - Only show for regular products or when editing */}
-          {(productType === 'regular' || editingProduct) && (
+          {/* Tobacco Product Checkbox - Only show for regular products (not menu packages) */}
+          {(productType === 'regular' || editingProduct) && !formData.isMenuPackage && (
             <FormGroup>
               <CheckboxLabel>
                 <input
@@ -945,8 +947,8 @@ const ProductForm: React.FC<ProductFormProps> = memo(({
             </FormGroup>
           )}
 
-          {/* Tobacco Brand Selection - Show for tobacco products or when tobacco checkbox is checked */}
-          {(productType === 'tobacco' || formData.isTobacco) && (
+          {/* Tobacco Brand Selection - Show for tobacco products (not menu packages) */}
+          {(productType === 'tobacco' || formData.isTobacco) && !formData.isMenuPackage && (
             <FormGroup>
               <Label>
                 🚬 Tabak-Marke
