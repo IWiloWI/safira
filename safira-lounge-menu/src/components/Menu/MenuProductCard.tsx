@@ -397,9 +397,11 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
    */
   const getMenuItems = (): string[] => {
     if (!product.isMenuPackage || !product.menuContents) {
+      console.log('🔍 DEBUG - No menu contents:', { isMenuPackage: product.isMenuPackage, menuContents: product.menuContents });
       return [];
     }
 
+    console.log('🔍 DEBUG - Product:', product);
     console.log('🔍 DEBUG - Menu Contents:', product.menuContents);
     console.log('🔍 DEBUG - Type of menuContents:', typeof product.menuContents);
 
@@ -411,22 +413,31 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
         console.log('🔍 DEBUG - Parsed as JSON:', parsed);
 
         if (Array.isArray(parsed)) {
-          // Extract descriptions from array of objects
-          return parsed.map(item => {
-            if (typeof item === 'object' && item !== null) {
-              // Try different possible field names
-              return item.description_de || item.name || item.description || item.id || JSON.stringify(item);
+          // Extract descriptions from array of objects or simple strings
+          const items = parsed.map(item => {
+            if (typeof item === 'string') {
+              // Simple string in array
+              return item;
+            } else if (typeof item === 'object' && item !== null) {
+              // Object with fields - try different possible field names
+              return item.description_de || item.name || item.description || item.title || item.id || JSON.stringify(item);
             }
             return String(item);
           }).filter(item => item && item.length > 0);
+
+          console.log('🔍 DEBUG - Extracted items:', items);
+          return items;
         }
       } catch (e) {
-        console.log('🔍 DEBUG - Not JSON, treating as plain text');
+        console.log('🔍 DEBUG - Not JSON, treating as plain text with newlines');
         // Not JSON, treat as plain text with newlines
-        return product.menuContents
+        const items = product.menuContents
           .split('\n')
           .map(item => item.trim())
           .filter(item => item.length > 0);
+
+        console.log('🔍 DEBUG - Split items:', items);
+        return items;
       }
     }
 
