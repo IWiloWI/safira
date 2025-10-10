@@ -232,10 +232,18 @@ export const addProduct = async (
     badges: product.badges,
     brand: product.brand || '', // Add brand field
     is_tobacco: product.isTobacco || false, // Add tobacco flag
-    is_menu_package: (product as any).isMenuPackage || (product as any).is_menu_package || false, // Add menu package flag (camelCase or snake_case)
-    package_items: (product as any).menuContents || (product as any).package_items || null, // Add menu package items (camelCase or snake_case)
     ...(translationOptions && { translationOptions })
   };
+
+  // Only include is_menu_package if explicitly provided to avoid overwriting with false
+  if ((product as any).isMenuPackage !== undefined || (product as any).is_menu_package !== undefined) {
+    requestData.is_menu_package = (product as any).isMenuPackage || (product as any).is_menu_package;
+  }
+
+  // Only include package_items if explicitly provided
+  if ((product as any).menuContents !== undefined || (product as any).package_items !== undefined) {
+    requestData.package_items = (product as any).menuContents || (product as any).package_items;
+  }
 
   // 🔍 DEBUG: Check if product has sizes/variants
   console.log('🎯 API SERVICE DEBUG - Checking for variants in product data:', product);
@@ -290,10 +298,18 @@ export const updateProduct = async (categoryId: string, itemId: string, product:
   let requestData: any = {
     ...product,
     brand: product.brand || '', // Add brand field
-    is_tobacco: product.isTobacco || false, // Add tobacco flag
-    is_menu_package: (product as any).isMenuPackage || (product as any).is_menu_package || false, // Add menu package flag (camelCase or snake_case)
-    package_items: (product as any).menuContents || (product as any).package_items || null // Add menu package items (camelCase or snake_case)
+    is_tobacco: product.isTobacco || false // Add tobacco flag
   };
+
+  // Only include is_menu_package if explicitly provided to avoid overwriting with false
+  if ((product as any).isMenuPackage !== undefined || (product as any).is_menu_package !== undefined) {
+    requestData.is_menu_package = (product as any).isMenuPackage || (product as any).is_menu_package;
+  }
+
+  // Only include package_items if explicitly provided
+  if ((product as any).menuContents !== undefined || (product as any).package_items !== undefined) {
+    requestData.package_items = (product as any).menuContents || (product as any).package_items;
+  }
 
   // Add sizes/variants if they exist
   if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
