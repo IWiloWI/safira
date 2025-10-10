@@ -280,12 +280,17 @@ export const useProducts = (language: string = 'de'): UseProductsReturn => {
    */
   const toggleBadge = useCallback(async (product: Product, badgeType: 'neu' | 'kurze_zeit' | 'beliebt') => {
     try {
-      const currentBadges = product.badges || { neu: false, kurze_zeit: false, beliebt: false };
+      // Ensure badges is always an object, not an array
+      const defaultBadges = { neu: false, kurze_zeit: false, beliebt: false };
+      const currentBadges = (product.badges && typeof product.badges === 'object' && !Array.isArray(product.badges))
+        ? product.badges
+        : defaultBadges;
+
       const updatedBadges = {
         ...currentBadges,
         [badgeType]: !currentBadges[badgeType]
       };
-      
+
       await updateProductData(product.categoryId!, product.id, { badges: updatedBadges });
     } catch (error) {
       console.error('Failed to toggle badge:', error);

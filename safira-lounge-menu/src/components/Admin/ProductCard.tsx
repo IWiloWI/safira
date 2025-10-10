@@ -6,13 +6,14 @@
 import React, { memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  FaEdit, 
-  FaTrash, 
-  FaEye, 
+import {
+  FaEdit,
+  FaTrash,
+  FaEye,
   FaEyeSlash,
   FaLanguage,
-  FaTag
+  FaTag,
+  FaListUl
 } from 'react-icons/fa';
 import { Product, Category } from '../../types/product.types';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -27,6 +28,7 @@ interface ProductCardProps {
   onToggleBadge: (product: Product, badgeType: 'neu' | 'kurze_zeit' | 'beliebt') => void;
   onTranslate: (product: Product, field: 'name' | 'description') => void;
   onAssignCategory: (product: Product, categoryId: string | null) => void;
+  onEditVariants?: (product: Product) => void;
   getProductName: (nameObj: any) => string;
   getProductDescription: (descObj: any) => string;
   renderPrice: (product: Product) => string;
@@ -289,11 +291,17 @@ const ProductCard = memo(React.forwardRef<HTMLDivElement, ProductCardProps>(({
   onToggleBadge,
   onTranslate,
   onAssignCategory,
+  onEditVariants,
   getProductName,
   getProductDescription,
   renderPrice
 }, ref) => {
   const { t } = useLanguage();
+
+  // Check if product has variants or menu contents
+  const hasVariants = product.sizes && product.sizes.length > 0;
+  const hasMenuContents = product.isMenuPackage && product.menuContents;
+  const showVariantsButton = hasVariants || hasMenuContents;
 
   const handleBadgeToggle = (badgeType: 'neu' | 'kurze_zeit' | 'beliebt') => {
     onToggleBadge(product, badgeType);
@@ -372,14 +380,22 @@ const ProductCard = memo(React.forwardRef<HTMLDivElement, ProductCardProps>(({
           >
             <FaLanguage />
           </ActionButton>
-          <ActionButton 
+          <ActionButton
             $variant="translate"
             onClick={() => onTranslate(product, 'description')}
             title="Translate description"
           >
             <FaLanguage />
           </ActionButton>
-          <ActionButton 
+          {showVariantsButton && onEditVariants && (
+            <ActionButton
+              onClick={() => onEditVariants(product)}
+              title={hasMenuContents ? "Edit menu contents" : "Edit variants"}
+            >
+              <FaListUl />
+            </ActionButton>
+          )}
+          <ActionButton
             onClick={() => onEdit(product)}
             title="Edit product"
           >

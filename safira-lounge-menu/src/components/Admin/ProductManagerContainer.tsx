@@ -590,6 +590,13 @@ const ProductManagerContainer: React.FC = () => {
     }
   };
 
+  // Variants/Menu Contents edit handler
+  const handleEditVariants = (product: Product) => {
+    // Open the product form in edit mode to edit variants/menu contents
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
   // Translation handlers
   const handleOpenTranslation = (product: Product, field: 'name' | 'description') => {
     setEditingProduct(product);
@@ -755,6 +762,7 @@ const ProductManagerContainer: React.FC = () => {
           onToggleBadge={toggleBadge}
           onTranslateProduct={handleOpenTranslation}
           onAssignCategory={handleAssignCategory}
+          onEditVariants={handleEditVariants}
           getProductName={getProductName}
           getProductDescription={getProductDescription}
           renderPrice={renderPrice}

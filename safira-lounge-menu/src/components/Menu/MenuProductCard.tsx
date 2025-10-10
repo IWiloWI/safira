@@ -409,7 +409,14 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
     if (typeof product.menuContents === 'string') {
       try {
         // Try to parse as JSON first (in case it's an array of objects)
-        const parsed = JSON.parse(product.menuContents);
+        let parsed = JSON.parse(product.menuContents);
+
+        // Check if it's a double-encoded JSON string
+        if (typeof parsed === 'string') {
+          console.log('🔍 DEBUG - Double-encoded JSON detected, parsing again');
+          parsed = JSON.parse(parsed);
+        }
+
         console.log('🔍 DEBUG - Parsed as JSON:', parsed);
 
         if (Array.isArray(parsed)) {

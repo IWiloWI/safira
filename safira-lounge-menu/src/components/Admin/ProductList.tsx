@@ -23,6 +23,7 @@ interface ProductListProps {
   onToggleBadge: (product: Product, badgeType: 'neu' | 'kurze_zeit' | 'beliebt') => void;
   onTranslateProduct: (product: Product, field: 'name' | 'description') => void;
   onAssignCategory: (product: Product, categoryId: string | null) => void;
+  onEditVariants?: (product: Product) => void;
   getProductName: (nameObj: any) => string;
   getProductDescription: (descObj: any) => string;
   renderPrice: (product: Product) => string;
@@ -85,6 +86,7 @@ const ProductList: React.FC<ProductListProps> = memo(({
   onToggleBadge,
   onTranslateProduct,
   onAssignCategory,
+  onEditVariants,
   getProductName,
   getProductDescription,
   renderPrice,
@@ -319,6 +321,7 @@ const ProductList: React.FC<ProductListProps> = memo(({
                   onToggleBadge={onToggleBadge}
                   onTranslate={onTranslateProduct}
                   onAssignCategory={onAssignCategory}
+                  onEditVariants={onEditVariants}
                   getProductName={getProductName}
                   getProductDescription={getProductDescription}
                   renderPrice={renderPrice}
