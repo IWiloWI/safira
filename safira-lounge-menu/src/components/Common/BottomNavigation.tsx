@@ -649,8 +649,10 @@ interface DynamicSocial {
 // Simple fallback translations
 const fallbackTranslations = {
   menu: { de: 'Menü', en: 'Menu', da: 'Menu', tr: 'Menü', it: 'Menu' },
+  categories: { de: 'Kategorien', en: 'Categories', da: 'Kategorier', tr: 'Kategoriler', it: 'Categorie' },
   language: { de: 'Sprache', en: 'Language', da: 'Sprog', tr: 'Dil', it: 'Lingua' },
-  social: { de: 'Social Media', en: 'Social Media', da: 'Social Media', tr: 'Sosyal Medya', it: 'Social Media' },
+  wifi: { de: 'WiFi', en: 'WiFi', da: 'WiFi', tr: 'WiFi', it: 'WiFi' },
+  social: { de: 'Social', en: 'Social', da: 'Social', tr: 'Sosyal', it: 'Social' },
   selectCategory: { de: 'Kategorie wählen', en: 'Select Category', da: 'Vælg kategori', tr: 'Kategori Seç', it: 'Seleziona Categoria' },
   selectLanguage: { de: 'Sprache wählen', en: 'Select Language', da: 'Vælg sprog', tr: 'Dil Seç', it: 'Seleziona Lingua' },
   information: { de: 'Information', en: 'Information', da: 'Information', tr: 'Bilgi', it: 'Informazioni' },
@@ -831,7 +833,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             whileTap={{ scale: 0.95 }}
           >
             <Menu />
-            <span>Kategorien</span>
+            <span>{getTranslation('categories')}</span>
           </NavButton>
 
           <NavButton
@@ -841,17 +843,17 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             whileTap={{ scale: 0.95 }}
           >
             <Globe2 />
-            <span>Sprache</span>
+            <span>{getTranslation('language')}</span>
           </NavButton>
 
           <NavButton
             onClick={() => setShowWifi(true)}
-            aria-label="WiFi"
+            aria-label={getTranslation('wifi')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Wifi />
-            <span>WiFi</span>
+            <span>{getTranslation('wifi')}</span>
           </NavButton>
 
           <NavButton
@@ -861,7 +863,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             whileTap={{ scale: 0.95 }}
           >
             <Share2 />
-            <span>Social</span>
+            <span>{getTranslation('social')}</span>
           </NavButton>
         </NavBar>
       </NavContainer>
