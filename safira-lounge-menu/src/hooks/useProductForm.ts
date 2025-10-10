@@ -137,7 +137,12 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
    */
   const loadProduct = useCallback((product: Product) => {
     // Auto-detect if product is a menu package (even if flag is not set)
-    const hasMenuContents = Boolean(product.menuContents && product.menuContents.trim().length > 0);
+    const hasMenuContents = Boolean(
+      product.menuContents &&
+      (Array.isArray(product.menuContents)
+        ? product.menuContents.length > 0
+        : typeof product.menuContents === 'string' && product.menuContents.trim().length > 0)
+    );
     const isActuallyMenuPackage = Boolean(product.isMenuPackage) || hasMenuContents;
 
     console.log('🔍 LOAD PRODUCT DEBUG:');
@@ -164,18 +169,29 @@ export const useProductForm = (categories: any[] = [], getProductName: (name: an
       hasVariants: Boolean(product.sizes && product.sizes.length > 0),
       isTobacco: Boolean(product.isTobacco), // NEW: Load tobacco flag from product
       isMenuPackage: isActuallyMenuPackage, // FIXED: Auto-detect menu package by checking menuContents
-      menuContents: product.menuContents || '', // NEW: Load menu contents from product
+      menuContents: typeof product.menuContents === 'string' ? product.menuContents : '', // NEW: Load menu contents from product (legacy string format)
       menuItems: parseMenuItems(product.menuContents) // NEW: Parse menu contents into items array
     };
 
-    function parseMenuItems(menuContents?: string): MenuPackageItem[] {
+    function parseMenuItems(menuContents?: string | any[]): MenuPackageItem[] {
       if (!menuContents) return [];
-      const lines = menuContents.split('\n').filter(line => line.trim());
-      // Only store the name/description, no quantity needed
-      return lines.map(line => ({
-        quantity: '1', // Keep quantity field for backward compatibility, but don't use it
-        name: line.trim()
-      }));
+
+      // Handle array format (new format - not used in form, only in MenuContentsEditor)
+      if (Array.isArray(menuContents)) {
+        return []; // Form doesn't use array format
+      }
+
+      // Handle string format (legacy format used in form)
+      if (typeof menuContents === 'string') {
+        const lines = menuContents.split('\n').filter(line => line.trim());
+        // Only store the name/description, no quantity needed
+        return lines.map(line => ({
+          quantity: '1', // Keep quantity field for backward compatibility, but don't use it
+          name: line.trim()
+        }));
+      }
+
+      return [];
     }
 
     setFormData(loadedData);

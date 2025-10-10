@@ -286,6 +286,21 @@ class DatabaseService {
       values.push(updates.available);
     }
 
+    if (updates.menuContents !== undefined) {
+      setParts.push('menu_contents = ?');
+      // Store as JSON if it's an array, otherwise as string
+      values.push(
+        Array.isArray(updates.menuContents)
+          ? JSON.stringify(updates.menuContents)
+          : updates.menuContents
+      );
+    }
+
+    if (updates.isMenuPackage !== undefined) {
+      setParts.push('is_menu_package = ?');
+      values.push(updates.isMenuPackage);
+    }
+
     if (setParts.length === 0) {
       return; // No updates to apply
     }

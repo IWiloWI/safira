@@ -54,7 +54,7 @@ const ProductPrice = styled.div`
   font-family: 'Aldrich', sans-serif;
   font-size: 1.2rem;
   margin-left: 20px;
-  font-weight: 600;
+  font-weight: 400;
 `;
 
 const ProductDescription = styled.div`
@@ -98,6 +98,41 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
             0 0 20px rgba(76, 175, 80, 0.4),
             inset 0 0 10px rgba(76, 175, 80, 0.1);
           text-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
+          animation: ledGlowGreen 4s ease-in-out infinite both;
+
+          @keyframes ledGlowGreen {
+            0%, 100% {
+              box-shadow:
+                0 0 8px rgba(76, 175, 80, 0.4),
+                0 0 16px rgba(76, 175, 80, 0.2),
+                inset 0 0 8px rgba(76, 175, 80, 0.08);
+              opacity: 0.88;
+            }
+            20% {
+              box-shadow:
+                0 0 9px rgba(76, 175, 80, 0.5),
+                0 0 18px rgba(76, 175, 80, 0.3),
+                0 0 24px rgba(76, 175, 80, 0.15),
+                inset 0 0 9px rgba(76, 175, 80, 0.1);
+              opacity: 0.93;
+            }
+            50% {
+              box-shadow:
+                0 0 12px rgba(76, 175, 80, 0.7),
+                0 0 24px rgba(76, 175, 80, 0.5),
+                0 0 36px rgba(76, 175, 80, 0.3),
+                inset 0 0 12px rgba(76, 175, 80, 0.15);
+              opacity: 1;
+            }
+            80% {
+              box-shadow:
+                0 0 9px rgba(76, 175, 80, 0.5),
+                0 0 18px rgba(76, 175, 80, 0.3),
+                0 0 24px rgba(76, 175, 80, 0.15),
+                inset 0 0 9px rgba(76, 175, 80, 0.1);
+              opacity: 0.93;
+            }
+          }
         `;
       case 'beliebt':
         return `
@@ -109,6 +144,41 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
             0 0 20px rgba(255, 107, 53, 0.4),
             inset 0 0 10px rgba(255, 107, 53, 0.1);
           text-shadow: 0 0 8px rgba(255, 107, 53, 0.8);
+          animation: ledGlowOrange 4s ease-in-out infinite both;
+
+          @keyframes ledGlowOrange {
+            0%, 100% {
+              box-shadow:
+                0 0 8px rgba(255, 107, 53, 0.4),
+                0 0 16px rgba(255, 107, 53, 0.2),
+                inset 0 0 8px rgba(255, 107, 53, 0.08);
+              opacity: 0.88;
+            }
+            20% {
+              box-shadow:
+                0 0 9px rgba(255, 107, 53, 0.5),
+                0 0 18px rgba(255, 107, 53, 0.3),
+                0 0 24px rgba(255, 107, 53, 0.15),
+                inset 0 0 9px rgba(255, 107, 53, 0.1);
+              opacity: 0.93;
+            }
+            50% {
+              box-shadow:
+                0 0 12px rgba(255, 107, 53, 0.7),
+                0 0 24px rgba(255, 107, 53, 0.5),
+                0 0 36px rgba(255, 107, 53, 0.3),
+                inset 0 0 12px rgba(255, 107, 53, 0.15);
+              opacity: 1;
+            }
+            80% {
+              box-shadow:
+                0 0 9px rgba(255, 107, 53, 0.5),
+                0 0 18px rgba(255, 107, 53, 0.3),
+                0 0 24px rgba(255, 107, 53, 0.15),
+                inset 0 0 9px rgba(255, 107, 53, 0.1);
+              opacity: 0.93;
+            }
+          }
         `;
       case 'kurze_zeit':
         return `
@@ -120,6 +190,41 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
             0 0 20px rgba(255, 215, 0, 0.4),
             inset 0 0 10px rgba(255, 215, 0, 0.1);
           text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+          animation: ledGlowGold 4s ease-in-out infinite both;
+
+          @keyframes ledGlowGold {
+            0%, 100% {
+              box-shadow:
+                0 0 8px rgba(255, 215, 0, 0.4),
+                0 0 16px rgba(255, 215, 0, 0.2),
+                inset 0 0 8px rgba(255, 215, 0, 0.08);
+              opacity: 0.88;
+            }
+            20% {
+              box-shadow:
+                0 0 9px rgba(255, 215, 0, 0.5),
+                0 0 18px rgba(255, 215, 0, 0.3),
+                0 0 24px rgba(255, 215, 0, 0.15),
+                inset 0 0 9px rgba(255, 215, 0, 0.1);
+              opacity: 0.93;
+            }
+            50% {
+              box-shadow:
+                0 0 12px rgba(255, 215, 0, 0.7),
+                0 0 24px rgba(255, 215, 0, 0.5),
+                0 0 36px rgba(255, 215, 0, 0.3),
+                inset 0 0 12px rgba(255, 215, 0, 0.15);
+              opacity: 1;
+            }
+            80% {
+              box-shadow:
+                0 0 9px rgba(255, 215, 0, 0.5),
+                0 0 18px rgba(255, 215, 0, 0.3),
+                0 0 24px rgba(255, 215, 0, 0.15),
+                inset 0 0 9px rgba(255, 215, 0, 0.1);
+              opacity: 0.93;
+            }
+          }
         `;
       default:
         return `
@@ -216,14 +321,14 @@ const VariantSize = styled.span`
 
 const VariantPrice = styled.span`
   color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
+  font-weight: 400;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   font-size: 1.2rem;
 `;
 
 const PriceRange = styled.span`
   color: #FF41FB;
-  font-weight: 600;
+  font-weight: 400;
   text-shadow: 0 0 8px rgba(255, 65, 251, 0.3);
   font-size: 1.2rem;
 `;
@@ -405,6 +510,27 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
     console.log('🔍 DEBUG - Menu Contents:', product.menuContents);
     console.log('🔍 DEBUG - Type of menuContents:', typeof product.menuContents);
 
+    // Handle if menuContents is already an array (parsed from API)
+    if (Array.isArray(product.menuContents)) {
+      console.log('🔍 DEBUG - menuContents is already an array');
+
+      // Extract descriptions from array of objects
+      const items = product.menuContents.map((item: any) => {
+        if (typeof item === 'string') {
+          // Simple string in array
+          return item;
+        } else if (typeof item === 'object' && item !== null) {
+          // Object with multilingual fields - use current language
+          const langKey = `description_${language}`;
+          return item[langKey] || item.description_de || item[language] || item.de || item.name || item.description || item.title || JSON.stringify(item);
+        }
+        return String(item);
+      }).filter(item => item && item.length > 0);
+
+      console.log('🔍 DEBUG - Extracted items from array:', items);
+      return items;
+    }
+
     // Handle if menuContents is a JSON string
     if (typeof product.menuContents === 'string') {
       try {
@@ -428,7 +554,7 @@ export const MenuProductCard: React.FC<MenuProductCardProps> = React.memo(({
             } else if (typeof item === 'object' && item !== null) {
               // Object with multilingual fields - use current language
               const langKey = `description_${language}`;
-              return item[langKey] || item.description_de || item.name || item.description || item.title || item.id || JSON.stringify(item);
+              return item[langKey] || item.description_de || item[language] || item.de || item.name || item.description || item.title || item.id || JSON.stringify(item);
             }
             return String(item);
           }).filter(item => item && item.length > 0);

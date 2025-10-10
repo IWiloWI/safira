@@ -29,6 +29,7 @@ import ProductList from './ProductList';
 import ProductForm from './ProductForm';
 import BulkActions from './BulkActions';
 import ProductTypeSelector from './ProductTypeSelector';
+import MenuContentsEditor from './MenuContentsEditor';
 import api, { getTobaccoCatalog, addBrandToCatalog, addTobaccoToCatalog, updateProductTranslations, bulkUpdateTobaccoPrice, updateProductSubcategory, translateText } from '../../services/api';
 
 const Container = styled.div`
@@ -260,6 +261,7 @@ const ProductManagerContainer: React.FC = () => {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [showProductTypeSelector, setShowProductTypeSelector] = useState(false); // NEW: Product type selection
   const [showProductForm, setShowProductForm] = useState(false);
+  const [showMenuContentsEditor, setShowMenuContentsEditor] = useState(false); // NEW: Menu contents editor
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductType, setSelectedProductType] = useState<'regular' | 'tobacco' | 'menu-package'>('regular'); // NEW: Selected product type
   const [showBulkPriceModal, setShowBulkPriceModal] = useState(false);
@@ -592,9 +594,40 @@ const ProductManagerContainer: React.FC = () => {
 
   // Variants/Menu Contents edit handler
   const handleEditVariants = (product: Product) => {
-    // Open the product form in edit mode to edit variants/menu contents
     setEditingProduct(product);
-    setShowProductForm(true);
+
+    // Check if product is a menu package
+    if (product.isMenuPackage) {
+      // Open dedicated menu contents editor for menu packages
+      setShowMenuContentsEditor(true);
+    } else {
+      // Open product form for regular products with variants/sizes
+      setShowProductForm(true);
+    }
+  };
+
+  // Menu Contents editor handlers
+  const handleSaveMenuContents = async (menuContents: any[]) => {
+    if (!editingProduct) return;
+
+    try {
+      await updateProductData(
+        editingProduct.categoryId!,
+        editingProduct.id,
+        { menuContents } as any
+      );
+      showNotification('Menu contents updated successfully!', 'success');
+      setShowMenuContentsEditor(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Failed to update menu contents:', error);
+      showNotification('Failed to update menu contents. Please try again.', 'error');
+    }
+  };
+
+  const handleCloseMenuContentsEditor = () => {
+    setShowMenuContentsEditor(false);
+    setEditingProduct(null);
   };
 
   // Translation handlers
@@ -801,6 +834,17 @@ const ProductManagerContainer: React.FC = () => {
               onNewBrandChange={setNewBrand}
               onAddBrand={handleAddBrand}
               isSubmitting={isLoading}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Menu Contents Editor Modal */}
+        <AnimatePresence>
+          {showMenuContentsEditor && editingProduct && (
+            <MenuContentsEditor
+              product={editingProduct}
+              onSave={handleSaveMenuContents}
+              onClose={handleCloseMenuContentsEditor}
             />
           )}
         </AnimatePresence>

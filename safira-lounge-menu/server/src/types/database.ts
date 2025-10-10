@@ -58,6 +58,8 @@ export interface Product {
     beliebt?: boolean;
   };
   brand?: string; // For tobacco products
+  isMenuPackage?: boolean; // Menu package flag
+  menuContents?: string | MultilingualText[]; // Menu package contents
 }
 
 export interface TobaccoItem {

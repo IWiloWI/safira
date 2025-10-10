@@ -50,7 +50,7 @@ export interface Product extends BaseEntity {
   /** Whether this product is a menu package */
   isMenuPackage?: boolean;
   /** Menu package contents description (for menu packages) */
-  menuContents?: string;
+  menuContents?: string | MultilingualText[];
   /** Product image URL */
   imageUrl?: string;
   /** Product thumbnail URL */
