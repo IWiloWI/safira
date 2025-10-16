@@ -22,6 +22,7 @@ import { MenuMobileNav } from './MenuMobileNav';
 import ProductList from './ProductList';
 import SubcategoryTabs from './SubcategoryTabs';
 import { BottomNavigation } from '../Common/BottomNavigation';
+import MenuSearchResults from './MenuSearchResults';
 import { Product, Category, MainCategory, MultilingualText } from '../../types';
 import productsData from '../../data/products.json';
 
@@ -110,10 +111,13 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
     }
   });
 
-  // Filter state
+  // Filter state for category pages
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: ''
   });
+
+  // Separate global search state for main menu page
+  const [globalSearchQuery, setGlobalSearchQuery] = useState<string>('');
 
   // Subcategory filter state (separate from navigation)
   // Empty string means "show all", specific ID means filter by that subcategory
@@ -234,8 +238,12 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   useEffect(() => {
     if (!selectedMainCategory) {
       setActiveSubcategoryFilter('');
+      setGlobalSearchQuery(''); // Clear global search when returning to main menu
       return;
     }
+
+    // Clear global search when entering a category
+    setGlobalSearchQuery('');
 
     // Find the main category and get its first subcategory
     const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
@@ -254,7 +262,28 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
    * Get all products for search (calculated before useMenuSearch)
    */
   const searchableProducts = useMemo(() => {
-    if (!selectedMainCategory) return [];
+    // If no category is selected, search across ALL categories
+    if (!selectedMainCategory) {
+      let allProducts: Product[] = [];
+
+      categories.forEach(cat => {
+        // Add products from main category
+        if (cat.items) {
+          allProducts = allProducts.concat(cat.items);
+        }
+
+        // Add products from subcategories
+        if (cat.subcategories) {
+          cat.subcategories.forEach(subcat => {
+            if (subcat.items) {
+              allProducts = allProducts.concat(subcat.items);
+            }
+          });
+        }
+      });
+
+      return allProducts;
+    }
 
     // Find the main category using selectedMainCategory
     const mainCategory = categories.find(cat => cat.id === selectedMainCategory && cat.isMainCategory === true);
@@ -479,11 +508,99 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, [currentCategories, language]);
 
   /**
+   * Get global search results (all products across all categories)
+   */
+  const globalSearchResults = useMemo(() => {
+    if (!globalSearchQuery || globalSearchQuery.trim().length === 0) {
+      return [];
+    }
+
+    let allProducts: Product[] = [];
+
+    // Collect all products from all categories and subcategories
+    categories.forEach(cat => {
+      if (cat.items) {
+        const productsWithCategory = cat.items
+          .filter(p => p.available !== false)
+          .map(p => ({ ...p, categoryId: cat.id, categoryName: cat.name }));
+        allProducts = allProducts.concat(productsWithCategory);
+      }
+      if (cat.subcategories) {
+        cat.subcategories.forEach(subcat => {
+          if (subcat.items) {
+            const productsWithCategory = subcat.items
+              .filter(p => p.available !== false)
+              .map(p => ({ ...p, categoryId: subcat.id, categoryName: subcat.name }));
+            allProducts = allProducts.concat(productsWithCategory);
+          }
+        });
+      }
+    });
+
+    // Filter products by search query
+    const searchLower = globalSearchQuery.toLowerCase();
+    return allProducts.filter(product => {
+      const name = typeof product.name === 'string'
+        ? product.name
+        : product.name[language] || product.name['de'];
+
+      const description = product.description
+        ? (typeof product.description === 'string'
+          ? product.description
+          : product.description[language] || product.description['de'] || '')
+        : '';
+
+      const brand = product.brand || '';
+      const productAny = product as any;
+      const ingredients = productAny.ingredients
+        ? (typeof productAny.ingredients === 'string'
+          ? productAny.ingredients
+          : productAny.ingredients[language] || productAny.ingredients['de'] || '')
+        : '';
+
+      const searchableText = `${name} ${description} ${brand} ${ingredients}`.toLowerCase();
+      return searchableText.includes(searchLower);
+    });
+  }, [globalSearchQuery, categories, language]);
+
+  /**
+   * Handle global search change
+   */
+  const handleGlobalSearchChange = useCallback((newFilters: FilterOptions) => {
+    setGlobalSearchQuery(newFilters.searchQuery);
+  }, []);
+
+  /**
+   * Get category name for a product
+   */
+  const getCategoryName = useCallback((product: Product): string => {
+    const productAny = product as any;
+    if (productAny.categoryName) {
+      const catName = productAny.categoryName;
+      if (typeof catName === 'string') {
+        return catName;
+      }
+      return catName[language] || catName.de || '';
+    }
+    return '';
+  }, [language]);
+
+  /**
+   * Clear global search
+   */
+  const clearGlobalSearch = useCallback(() => {
+    setGlobalSearchQuery('');
+  }, []);
+
+  /**
    * Render main category selection
    */
   const renderMainCategories = () => {
     if (selectedMainCategory || isLoading) return null;
-    
+
+    // Check if there's an active global search
+    const hasGlobalSearch = globalSearchQuery && globalSearchQuery.trim().length > 0;
+
     return (
       <>
         <MenuHeader
@@ -491,7 +608,33 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           language={language}
           onLanguageChange={setLanguage}
         />
-        
+
+        {/* Global Search Bar on Main Menu */}
+        <MenuFilters
+          filters={{ searchQuery: globalSearchQuery }}
+          onFiltersChange={handleGlobalSearchChange}
+          availableBrands={[]}
+          availableCategories={[]}
+          language={language}
+          resultsCount={hasGlobalSearch ? globalSearchResults.length : undefined}
+          showAdvancedFilters={false}
+          showQuickFilters={false}
+        />
+
+        {/* Search Results - pushes categories down */}
+        <AnimatePresence>
+          {hasGlobalSearch && (
+            <MenuSearchResults
+              products={globalSearchResults}
+              searchQuery={globalSearchQuery}
+              onClear={clearGlobalSearch}
+              getCategoryName={getCategoryName}
+              onProductClick={handleProductClick}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Category Navigation - gets pushed down by search results */}
         <CategoryNavigation
           mainCategories={enhancedMainCategories}
           categories={categories}

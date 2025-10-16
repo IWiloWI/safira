@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { FaMapMarkerAlt, FaClock, FaPhone } from 'react-icons/fa';
 import VideoBackground from '../components/Common/VideoBackground';
-import SearchBar from '../components/Menu/SearchBar';
-import HomeSearchResults from '../components/Home/HomeSearchResults';
-import { useProducts } from '../hooks/useProducts';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -15,13 +12,13 @@ const HomeContainer = styled.div`
 `;
 
 const HeroSection = styled.section`
+  min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 40px 20px;
-  margin-bottom: 40px;
 `;
 
 const LogoContainer = styled(motion.div)`
@@ -266,46 +263,7 @@ const CategoryName = styled.h3`
 `;
 
 const HomePage: React.FC = () => {
-  const { t, language } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState('');
-  const {
-    products,
-    getProductName,
-    getProductDescription,
-    isLoading
-  } = useProducts(language);
-
-  // Filter products based on search query and exclude "Menüs" category
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return [];
-    }
-
-    const query = searchQuery.toLowerCase();
-
-    return products.filter(product => {
-      // Exclude products from "safira-menus" category
-      if (product.categoryId === 'safira-menus') {
-        return false;
-      }
-
-      // Search in product name
-      const productName = getProductName(product.name, language).toLowerCase();
-      if (productName.includes(query)) {
-        return true;
-      }
-
-      // Search in product description
-      if (product.description) {
-        const productDesc = getProductDescription(product.description, language).toLowerCase();
-        if (productDesc.includes(query)) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-  }, [searchQuery, products, language, getProductName, getProductDescription]);
+  const { t } = useLanguage();
 
   const features = [
     {
@@ -373,30 +331,10 @@ const HomePage: React.FC = () => {
           />
         </LogoContainer>
 
-        {/* Search Section - direkt nach Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{
-            width: '100%',
-            maxWidth: '600px',
-            margin: '20px auto 40px'
-          }}
-        >
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Produkte durchsuchen..."
-            language={language}
-            showClear={true}
-          />
-        </motion.div>
-
         <Title
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
         >
           {t('hero.title')}
         </Title>
@@ -404,7 +342,7 @@ const HomePage: React.FC = () => {
         <Subtitle
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
         >
           {t('hero.subtitle')}
         </Subtitle>
@@ -412,7 +350,7 @@ const HomePage: React.FC = () => {
         <InfoContainer
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
           <InfoItem>
             <FaMapMarkerAlt />
@@ -431,7 +369,7 @@ const HomePage: React.FC = () => {
         <CTAContainer
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
           <CTAButton to="/menu">
             {t('hero.viewMenu')}
@@ -441,17 +379,6 @@ const HomePage: React.FC = () => {
           </CTAButton>
         </CTAContainer>
       </HeroSection>
-
-      {/* Search Results */}
-      {searchQuery && (
-        <HomeSearchResults
-          searchQuery={searchQuery}
-          products={searchResults}
-          onClearSearch={() => setSearchQuery('')}
-          getProductName={getProductName}
-          getProductDescription={getProductDescription}
-        />
-      )}
 
       <FeaturesSection>
         <motion.h2
@@ -486,13 +413,7 @@ const HomePage: React.FC = () => {
         </FeaturesGrid>
       </FeaturesSection>
 
-      <CategoriesSection
-        as={motion.section}
-        animate={{
-          marginTop: searchQuery && searchResults.length > 0 ? '20px' : '0px'
-        }}
-        transition={{ duration: 0.4 }}
-      >
+      <CategoriesSection>
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
