@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { FaMapMarkerAlt, FaClock, FaPhone } from 'react-icons/fa';
 import VideoBackground from '../components/Common/VideoBackground';
+import SearchBar from '../components/Menu/SearchBar';
+import HomeSearchResults from '../components/Home/HomeSearchResults';
+import { useProducts } from '../hooks/useProducts';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -263,7 +266,46 @@ const CategoryName = styled.h3`
 `;
 
 const HomePage: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    products,
+    getProductName,
+    getProductDescription,
+    isLoading
+  } = useProducts(language);
+
+  // Filter products based on search query and exclude "Menüs" category
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return [];
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return products.filter(product => {
+      // Exclude products from "safira-menus" category
+      if (product.categoryId === 'safira-menus') {
+        return false;
+      }
+
+      // Search in product name
+      const productName = getProductName(product.name, language).toLowerCase();
+      if (productName.includes(query)) {
+        return true;
+      }
+
+      // Search in product description
+      if (product.description) {
+        const productDesc = getProductDescription(product.description, language).toLowerCase();
+        if (productDesc.includes(query)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [searchQuery, products, language, getProductName, getProductDescription]);
 
   const features = [
     {
@@ -380,6 +422,38 @@ const HomePage: React.FC = () => {
         </CTAContainer>
       </HeroSection>
 
+      {/* Search Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1.0 }}
+        style={{
+          width: '100%',
+          maxWidth: '900px',
+          margin: '0 auto',
+          padding: '0 20px'
+        }}
+      >
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Produkte durchsuchen..."
+          language={language}
+          showClear={true}
+        />
+      </motion.div>
+
+      {/* Search Results */}
+      {searchQuery && (
+        <HomeSearchResults
+          searchQuery={searchQuery}
+          products={searchResults}
+          onClearSearch={() => setSearchQuery('')}
+          getProductName={getProductName}
+          getProductDescription={getProductDescription}
+        />
+      )}
+
       <FeaturesSection>
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
@@ -413,7 +487,13 @@ const HomePage: React.FC = () => {
         </FeaturesGrid>
       </FeaturesSection>
 
-      <CategoriesSection>
+      <CategoriesSection
+        as={motion.section}
+        animate={{
+          marginTop: searchQuery && searchResults.length > 0 ? '20px' : '0px'
+        }}
+        transition={{ duration: 0.4 }}
+      >
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
