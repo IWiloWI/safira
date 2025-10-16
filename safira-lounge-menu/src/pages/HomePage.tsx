@@ -15,13 +15,13 @@ const HomeContainer = styled.div`
 `;
 
 const HeroSection = styled.section`
-  min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 40px 20px;
+  margin-bottom: 40px;
 `;
 
 const LogoContainer = styled(motion.div)`
@@ -373,10 +373,30 @@ const HomePage: React.FC = () => {
           />
         </LogoContainer>
 
+        {/* Search Section - direkt nach Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          style={{
+            width: '100%',
+            maxWidth: '600px',
+            margin: '20px auto 40px'
+          }}
+        >
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Produkte durchsuchen..."
+            language={language}
+            showClear={true}
+          />
+        </motion.div>
+
         <Title
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
         >
           {t('hero.title')}
         </Title>
@@ -384,7 +404,7 @@ const HomePage: React.FC = () => {
         <Subtitle
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
           {t('hero.subtitle')}
         </Subtitle>
@@ -392,7 +412,7 @@ const HomePage: React.FC = () => {
         <InfoContainer
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
           <InfoItem>
             <FaMapMarkerAlt />
@@ -411,7 +431,7 @@ const HomePage: React.FC = () => {
         <CTAContainer
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 1.0 }}
         >
           <CTAButton to="/menu">
             {t('hero.viewMenu')}
@@ -421,27 +441,6 @@ const HomePage: React.FC = () => {
           </CTAButton>
         </CTAContainer>
       </HeroSection>
-
-      {/* Search Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 1.0 }}
-        style={{
-          width: '100%',
-          maxWidth: '900px',
-          margin: '0 auto',
-          padding: '0 20px'
-        }}
-      >
-        <SearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Produkte durchsuchen..."
-          language={language}
-          showClear={true}
-        />
-      </motion.div>
 
       {/* Search Results */}
       {searchQuery && (
