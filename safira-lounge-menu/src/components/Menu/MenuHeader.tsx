@@ -68,17 +68,17 @@ const MainHeading = styled.h1`
 `;
 
 const BackButton = styled(motion.button)`
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(255, 240, 255, 0.90));
-  border: 2px solid rgba(233, 30, 99, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 65, 251, 0.3);
   border-radius: 50%;
   width: 60px;
   height: 60px;
   font-family: 'Aldrich', sans-serif;
   font-size: 1.8rem;
-  color: #1A1A2E;
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  backdrop-filter: blur(25px);
+  backdrop-filter: blur(10px);
   position: fixed;
   top: 20px;
   left: 20px;
@@ -86,7 +86,7 @@ const BackButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   padding: 0;
 
   &::before {
@@ -95,11 +95,10 @@ const BackButton = styled(motion.button)`
   }
 
   &:hover {
-    border-color: rgba(233, 30, 99, 0.5);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 255, 0.98));
+    border-color: #FF41FB;
+    background: rgba(255, 65, 251, 0.2);
     transform: translateY(-2px) scale(1.05);
-    color: #E91E63;
-    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 65, 251, 0.4);
 
     &::before {
       transform: translateX(-2px);
@@ -147,7 +146,7 @@ const NavigationHint = styled(motion.div)`
 
 const CategoryTitle = styled(motion.h1)`
   font-family: 'Oswald', sans-serif;
-  font-size: 2.5rem;
+  font-size: clamp(1.6rem, 5vw, 2.5rem);
   font-weight: 700;
   color: #FFFFFF;
   text-align: center;
@@ -155,14 +154,12 @@ const CategoryTitle = styled(motion.h1)`
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   letter-spacing: 2px;
   text-transform: uppercase;
-  
+
   @media (max-width: 768px) {
-    font-size: 2rem;
     margin: 15px 0;
   }
-  
+
   @media (max-width: 480px) {
-    font-size: 1.6rem;
     margin: 10px 0;
   }
 `;

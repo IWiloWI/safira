@@ -23,16 +23,17 @@ const MainCategoriesContainer = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 30px;
   padding: 60px 20px;
-  width: 100%;
+  width: 90vw;
   max-width: 900px;
   margin: 0 auto;
   position: relative;
   z-index: 100;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 20px;
     padding: 40px 20px;
+    width: 90vw;
   }
 `;
 
@@ -217,7 +218,7 @@ export const CategoryNavigation: React.FC<CategoryNavigationProps> = React.memo(
               <img
                 src={config.image}
                 srcSet={generateSrcSet(config.image)}
-                sizes={getImageSizes(600)}
+                sizes="(max-width: 768px) 90vw, 45vw"
                 alt={categoryName}
                 width="600"
                 height="600"

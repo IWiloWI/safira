@@ -51,38 +51,32 @@ const ProductName = styled.h3`
   font-family: 'Aldrich', sans-serif;
   color: white;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: clamp(0.85rem, 2.2vw, 1.1rem);
   font-weight: normal;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  @media (max-width: 768px) {
-    font-size: 0.85rem;
-  }
 `;
 
 const ProductPrice = styled.div`
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
   margin-left: 20px;
   font-weight: 400;
 
   @media (max-width: 768px) {
-    font-size: 0.9rem;
     margin-left: 8px;
   }
 `;
 
 const ProductDescription = styled.div`
   color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
+  font-size: clamp(0.75rem, 2vw, 1rem);
   margin-top: 5px;
   font-family: 'Aldrich', sans-serif;
 
   @media (max-width: 768px) {
-    font-size: 0.75rem;
     margin-top: 2px;
   }
 `;
@@ -104,7 +98,7 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
   display: inline-block;
   padding: 4px 10px;
   border-radius: 20px;
-  font-size: 0.6rem;
+  font-size: clamp(0.5rem, 1.5vw, 0.6rem);
   font-family: 'Aldrich', sans-serif;
   font-weight: bold;
   text-transform: uppercase;
@@ -117,7 +111,6 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
   @media (max-width: 768px) {
     padding: 2px 6px;
     border-radius: 12px;
-    font-size: 0.5rem;
     letter-spacing: 0.5px;
   }
 
@@ -343,7 +336,7 @@ const VariantItem = styled.div`
   justify-content: space-between;
   align-items: center;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2vw, 1rem);
   color: rgba(255, 255, 255, 0.9);
   padding: 4px 0;
 `;
@@ -351,21 +344,21 @@ const VariantItem = styled.div`
 const VariantSize = styled.span`
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2vw, 1rem);
 `;
 
 const VariantPrice = styled.span`
   color: rgba(255, 255, 255, 0.95);
   font-weight: 400;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  font-size: 1.2rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
 `;
 
 const PriceRange = styled.span`
   color: #FF41FB;
   font-weight: 400;
   text-shadow: 0 0 8px rgba(255, 65, 251, 0.3);
-  font-size: 1.2rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
 `;
 
 const MenuItemsContainer = styled.div`
@@ -379,7 +372,7 @@ const MenuItem = styled.div`
   display: flex;
   align-items: center;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2vw, 1rem);
   color: rgba(255, 255, 255, 0.85);
   padding: 2px 0;
 
@@ -387,7 +380,7 @@ const MenuItem = styled.div`
     content: '▸';
     color: #FF41FB;
     margin-right: 8px;
-    font-size: 0.9rem;
+    font-size: clamp(0.75rem, 1.8vw, 0.9rem);
   }
 `;
 

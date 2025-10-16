@@ -5,11 +5,23 @@ import { useLanguage } from '../../contexts/LanguageContext';
 
 const SearchContainer = styled.div`
   position: relative;
-  max-width: 500px;
+  width: 90vw;
+  max-width: 900px;
   margin: 0 auto 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-  @media (max-width: 968px) {
-    max-width: 90%;
+  @media (max-width: 1024px) {
+    width: 90vw;
+  }
+
+  @media (max-width: 768px) {
+    width: 90vw;
+  }
+
+  @media (max-width: 480px) {
+    width: 90vw;
   }
 `;
 
@@ -43,22 +55,33 @@ const SearchTip = styled.div.withConfig({
   }
 `;
 
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
 const SearchInput = styled.input`
   width: 100%;
-  padding: 15px 50px 15px 20px;
+  padding: 15px 60px 15px 20px;
   background: rgba(255, 65, 251, 0.1);
   border: 2px solid rgba(255, 65, 251, 0.3);
   border-radius: 25px;
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 2vw, 1rem);
   line-height: 1.5;
   min-height: 50px;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  text-align: left;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.5);
+    text-align: left;
   }
 
   &:focus {
@@ -69,33 +92,34 @@ const SearchInput = styled.input`
   }
 
   @media (max-width: 1024px) {
-    padding: 18px 55px 18px 20px;
-    min-height: 54px;
-    font-size: 1rem;
+    padding: 16px 60px 16px 20px;
+    min-height: 52px;
   }
 
   @media (max-width: 768px) {
-    padding: 20px 55px 20px 20px;
-    min-height: 56px;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    padding: 16px 60px 16px 20px;
+    min-height: 52px;
   }
 
   @media (max-width: 480px) {
-    padding: 22px 55px 22px 18px;
-    min-height: 58px;
-    font-size: 0.9rem;
+    padding: 16px 60px 16px 20px;
+    min-height: 52px;
   }
 `;
 
 const SearchIconWrapper = styled.div`
   position: absolute;
-  right: 15px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  pointer-events: none;
+
+  button {
+    pointer-events: auto;
+  }
 `;
 
 const SearchIcon = styled(FaSearch)`
@@ -171,24 +195,26 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <SearchTip show={showTip}>
         Geben Sie Produktnamen oder Zutaten ein
       </SearchTip>
-      
-      <SearchInput
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={placeholder || t('common.search')}
-        autoFocus={autoFocus}
-      />
-      <SearchIconWrapper>
-        {value && showClear && (
-          <ClearButton onClick={handleClear} title="Suche löschen">
-            <FaTimes />
-          </ClearButton>
-        )}
-        <SearchIcon />
-      </SearchIconWrapper>
+
+      <InputWrapper>
+        <SearchInput
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={placeholder || t('common.search')}
+          autoFocus={autoFocus}
+        />
+        <SearchIconWrapper>
+          {value && showClear && (
+            <ClearButton onClick={handleClear} title="Suche löschen">
+              <FaTimes />
+            </ClearButton>
+          )}
+          <SearchIcon />
+        </SearchIconWrapper>
+      </InputWrapper>
     </SearchContainer>
   );
 };

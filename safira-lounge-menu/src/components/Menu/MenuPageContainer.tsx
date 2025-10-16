@@ -609,7 +609,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           onLanguageChange={setLanguage}
         />
 
-        {/* Global Search Bar on Main Menu */}
+        {/* Global Search Bar on Main Menu - DISABLED */}
         <MenuFilters
           filters={{ searchQuery: globalSearchQuery }}
           onFiltersChange={handleGlobalSearchChange}
@@ -619,6 +619,7 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           resultsCount={hasGlobalSearch ? globalSearchResults.length : undefined}
           showAdvancedFilters={false}
           showQuickFilters={false}
+          showSearchBar={false}
         />
 
         {/* Search Results - pushes categories down */}

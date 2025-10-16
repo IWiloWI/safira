@@ -6,10 +6,14 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import MenuProductCard from './MenuProductCard';
 
 const SearchResultsContainer = styled(motion.div)`
-  width: 100%;
-  max-width: 1200px;
+  width: 90vw;
+  max-width: 900px;
   margin: 0 auto 40px;
   padding: 0 20px;
+
+  @media (max-width: 768px) {
+    width: 90vw;
+  }
 `;
 
 const ResultsHeader = styled.div`
@@ -27,7 +31,7 @@ const ResultsHeader = styled.div`
 const ResultsCount = styled.h3`
   font-family: 'Aldrich', sans-serif;
   color: white;
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
   margin: 0;
 `;
 
@@ -38,7 +42,7 @@ const ClearButton = styled.button`
   padding: 8px 20px;
   color: white;
   font-family: 'Aldrich', sans-serif;
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 2vw, 0.9rem);
   cursor: pointer;
   transition: all 0.3s ease;
 
@@ -63,7 +67,7 @@ const CategoryHeader = styled.div`
 
 const CategoryTitle = styled.h3`
   font-family: 'Oswald', sans-serif;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
   color: white;
   text-transform: uppercase;
   margin: 0 0 15px 0;
@@ -84,13 +88,13 @@ const EmptyState = styled.div`
 `;
 
 const EmptyIcon = styled.div`
-  font-size: 4rem;
+  font-size: clamp(3rem, 8vw, 4rem);
   margin-bottom: 20px;
   opacity: 0.5;
 `;
 
 const EmptyText = styled.p`
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
   margin: 0;
 `;
 

@@ -12,15 +12,34 @@ import { useResponsive } from '../../hooks/useResponsive';
 
 // Styled components
 const FiltersContainer = styled(motion.div)`
-  width: 100%;
-  max-width: 800px;
+  width: 90vw;
+  max-width: 900px;
   margin: 0 auto 30px;
   position: relative;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @media (max-width: 1024px) {
+    width: 90vw;
+  }
+
+  @media (max-width: 768px) {
+    width: 90vw;
+  }
+
+  @media (max-width: 480px) {
+    width: 90vw;
+  }
 `;
 
 const SearchContainer = styled.div`
+  width: 100%;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const QuickFiltersContainer = styled(motion.div)`
@@ -274,6 +293,8 @@ export interface MenuFiltersProps {
   showAdvancedFilters?: boolean;
   /** Show quick filters */
   showQuickFilters?: boolean;
+  /** Show search bar */
+  showSearchBar?: boolean;
   /** Placeholder text for search */
   searchPlaceholder?: string;
   /** Debounce delay for search */
@@ -297,6 +318,7 @@ export const MenuFilters: React.FC<MenuFiltersProps> = React.memo(({
   resultsCount,
   showAdvancedFilters = true,
   showQuickFilters = true,
+  showSearchBar = true,
   searchPlaceholder,
   searchDebounce = 300,
   className,
@@ -590,17 +612,19 @@ export const MenuFilters: React.FC<MenuFiltersProps> = React.memo(({
       animate="visible"
     >
       {/* Search Bar */}
-      <SearchContainer>
-        <SearchBar
-          value={filters.searchQuery}
-          onChange={handleSearchChange}
-          placeholder={searchPlaceholder || getText('search')}
-          language={language}
-          debounceDelay={searchDebounce}
-          showClear
-          autoFocus={false}
-        />
-      </SearchContainer>
+      {showSearchBar && (
+        <SearchContainer>
+          <SearchBar
+            value={filters.searchQuery}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder || getText('search')}
+            language={language}
+            debounceDelay={searchDebounce}
+            showClear
+            autoFocus={false}
+          />
+        </SearchContainer>
+      )}
 
 
       {/* Advanced Filters Toggle */}
