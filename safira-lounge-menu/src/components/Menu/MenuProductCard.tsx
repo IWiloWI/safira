@@ -16,9 +16,13 @@ const ProductListItem = styled.div`
   margin-bottom: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:hover {
     opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: 8px;
   }
 `;
 
@@ -29,6 +33,11 @@ const ProductContent = styled.div`
   margin-bottom: 5px;
   flex-wrap: wrap;
   gap: 8px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 3px;
+    gap: 4px;
+  }
 `;
 
 const ProductNameContainer = styled.div`
@@ -47,6 +56,10 @@ const ProductName = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+  }
 `;
 
 const ProductPrice = styled.div`
@@ -55,6 +68,11 @@ const ProductPrice = styled.div`
   font-size: 1.2rem;
   margin-left: 20px;
   font-weight: 400;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-left: 8px;
+  }
 `;
 
 const ProductDescription = styled.div`
@@ -62,6 +80,11 @@ const ProductDescription = styled.div`
   font-size: 1rem;
   margin-top: 5px;
   font-family: 'Aldrich', sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
 `;
 
 const BadgesContainer = styled.div`
@@ -70,6 +93,11 @@ const BadgesContainer = styled.div`
   margin-left: 12px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 768px) {
+    gap: 4px;
+    margin-left: 6px;
+  }
 `;
 
 const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
@@ -85,6 +113,13 @@ const Badge = styled.span<{ $type: 'neu' | 'beliebt' | 'kurze_zeit' }>`
   overflow: hidden;
   border: 1px solid;
   backdrop-filter: blur(4px);
+
+  @media (max-width: 768px) {
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.5rem;
+    letter-spacing: 0.5px;
+  }
 
   ${props => {
     switch (props.$type) {

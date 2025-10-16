@@ -70,50 +70,60 @@ const MainHeading = styled.h1`
 const BackButton = styled(motion.button)`
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(255, 240, 255, 0.90));
   border: 2px solid rgba(233, 30, 99, 0.3);
-  border-radius: 25px;
-  padding: 12px 24px;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
   font-family: 'Aldrich', sans-serif;
-  font-size: 1rem;
+  font-size: 1.8rem;
   color: #1A1A2E;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(25px);
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  top: 20px;
+  left: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
 
   &::before {
     content: '←';
-    font-size: 1.2rem;
     transition: transform 0.3s ease;
   }
 
   &:hover {
     border-color: rgba(233, 30, 99, 0.5);
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 255, 0.98));
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.05);
     color: #E91E63;
-    box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
-    
+    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+
     &::before {
       transform: translateX(-2px);
     }
   }
 
   &:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
-  
+
   @media (max-width: 768px) {
-    padding: 10px 20px;
-    font-size: 0.9rem;
-    
-    &::before {
-      font-size: 1.1rem;
-    }
+    top: 15px;
+    left: 15px;
+    width: 55px;
+    height: 55px;
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 480px) {
+    top: 12px;
+    left: 12px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
   }
 `;
 
@@ -306,9 +316,7 @@ export const MenuHeader: React.FC<MenuHeaderProps> = React.memo(({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           aria-label={getBackButtonText()}
-        >
-          {getBackButtonText()}
-        </BackButton>
+        />
       )}
 
       {/* Category title */}

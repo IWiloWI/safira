@@ -28,7 +28,8 @@ const CardContainer = styled(motion.div)<{
   min-height: 44px;
 
   @media (max-width: 768px) {
-    padding: ${props => props.$isMenuBuilder ? '12px 60px 12px 12px' : '12px 0'};
+    padding: ${props => props.$isMenuBuilder ? '8px 60px 8px 12px' : '10px 0'};
+    min-height: 38px;
   }
   
   /* Focus styles for keyboard navigation */
@@ -84,6 +85,12 @@ const ProductBadgesContainer = styled.div`
   gap: 5px;
   align-items: center;
   margin-left: 10px;
+
+  @media (max-width: 768px) {
+    gap: 3px;
+    margin-left: 6px;
+    max-width: 140px;
+  }
 `;
 
 const ProductBadge = styled.span<{ badgeType: 'neu' | 'kurze_zeit' | 'beliebt' }>`
@@ -104,8 +111,10 @@ const ProductBadge = styled.span<{ badgeType: 'neu' | 'kurze_zeit' | 'beliebt' }
   font-weight: bold;
 
   @media (max-width: 768px) {
-    font-size: 0.55rem;
-    padding: 2px 6px;
+    font-size: 0.5rem;
+    padding: 2px 5px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
   }
   box-shadow: ${props => {
     switch (props.badgeType) {
@@ -165,9 +174,9 @@ const ProductName = styled.h3`
   flex: 1;
 
   @media (max-width: 768px) {
-    font-size: 0.85rem;
-    letter-spacing: 0.3px;
-    line-height: 1.3;
+    font-size: 0.8rem;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
   }
 `;
 
@@ -181,8 +190,8 @@ const SinglePrice = styled.div`
   margin-left: 10px;
 
   @media (max-width: 768px) {
-    font-size: 0.9rem;
-    margin-left: 8px;
+    font-size: 0.85rem;
+    margin-left: 6px;
   }
 `;
 
@@ -194,9 +203,9 @@ const ProductDescription = styled.div`
   line-height: 1.4;
 
   @media (max-width: 768px) {
-    font-size: 0.75rem;
-    line-height: 1.25;
-    margin-top: 3px;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    margin-top: 2px;
   }
 `;
 

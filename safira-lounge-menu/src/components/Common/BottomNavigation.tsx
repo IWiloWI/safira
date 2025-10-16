@@ -186,14 +186,18 @@ const FullWidthModal = styled(motion.div)`
     }
   }
 
-  /* Tablet: Volle Breite beibehalten */
-  @media (min-width: 768px) and (max-width: 1023px) {
-    max-height: 80vh;
+  /* Mobile & Tablet: Volle Breite am unteren Rand (bis 1024px) */
+  @media (max-width: 1024px) {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
     border-radius: 24px 24px 0 0;
+    max-height: 85vh;
   }
 
-  /* Desktop: Zentriert mit max-width */
-  @media (min-width: 1024px) {
+  /* Desktop: Zentriert mit max-width (ab 1025px) */
+  @media (min-width: 1025px) {
     max-width: 500px;
     left: 50%;
     transform: translateX(-50%);
@@ -560,8 +564,20 @@ const SocialButton = styled.a`
   justify-content: center;
   transition: all 0.3s ease;
   text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 
-  &:hover {
+  /* Reset any stuck states */
+  &:visited,
+  &:focus,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+
+  &:hover:not(:active) {
     transform: translateY(-4px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 
@@ -588,6 +604,14 @@ const SocialButton = styled.a`
 
   &:active {
     transform: translateY(-2px);
+    transition: transform 0.1s ease;
+  }
+
+  /* Force reset after click */
+  &:not(:hover):not(:active) {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(0);
   }
 
   svg {
@@ -717,20 +741,31 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       try {
         const API_URL = process.env.REACT_APP_API_URL || 'https://test.safira-lounge.de/safira-api-fixed.php';
 
-        const [languagesRes, wifiRes, socialRes] = await Promise.all([
-          axios.get(`${API_URL}?action=get_active_languages`),
-          axios.get('/api/settings/wifi').catch(() => ({ data: { success: false } })),
-          axios.get('/api/settings/social').catch(() => ({ data: { success: false } }))
-        ]);
+        const response = await axios.get(`${API_URL}?action=navigation_settings`);
 
-        if (languagesRes.data.success) {
-          setDynamicLanguages(languagesRes.data.data.active_languages || []);
-        }
-        if (wifiRes.data.success) {
-          setDynamicWifi(wifiRes.data.data);
-        }
-        if (socialRes.data.success) {
-          setDynamicSocial(socialRes.data.data);
+        if (response.data.success) {
+          const settings = response.data.data;
+
+          // Load languages
+          if (settings.languages && Array.isArray(settings.languages)) {
+            const activeLanguages = settings.languages.filter((lang: DynamicLanguage) => lang.enabled);
+            setDynamicLanguages(activeLanguages);
+          }
+
+          // Load WiFi settings
+          if (settings.wifi) {
+            setDynamicWifi({
+              ssid: settings.wifi.ssid || 'Safira Lounge',
+              password: settings.wifi.password || 'Safira123',
+              enabled: settings.wifi.enabled !== false
+            });
+          }
+
+          // Load Social Media settings
+          if (settings.socialMedia && Array.isArray(settings.socialMedia)) {
+            const enabledSocial = settings.socialMedia.filter((social: DynamicSocial) => social.enabled);
+            setDynamicSocial(enabledSocial);
+          }
         }
       } catch (error) {
         console.error('Error loading navigation settings:', error);
@@ -903,7 +938,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {categoryIcons[category.id] || <Sandwich />}
                       <span>
                         {typeof category.name === 'string'
                           ? category.name
@@ -1064,18 +1098,36 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 </ModalHeader>
 
                 <SocialLinks>
-                  {dynamicSocial.map((social) => (
-                    <SocialButton
-                      key={social.id}
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={social.id}
-                      aria-label={social.name}
-                    >
-                      <span style={{ fontSize: '20px' }}>{social.icon}</span>
-                    </SocialButton>
-                  ))}
+                  {dynamicSocial.map((social) => {
+                    // Map social media IDs to their Lucide React icons
+                    const getIcon = () => {
+                      switch(social.id.toLowerCase()) {
+                        case 'instagram':
+                          return <Instagram />;
+                        case 'facebook':
+                          return <Facebook />;
+                        case 'twitter':
+                          return <Twitter />;
+                        case 'youtube':
+                          return <Youtube />;
+                        default:
+                          return <span style={{ fontSize: '20px' }}>{social.icon}</span>;
+                      }
+                    };
+
+                    return (
+                      <SocialButton
+                        key={social.id}
+                        href={social.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={social.id}
+                        aria-label={social.name}
+                      >
+                        {getIcon()}
+                      </SocialButton>
+                    );
+                  })}
                 </SocialLinks>
 
                 <InfoText>@safiralounge</InfoText>

@@ -492,21 +492,40 @@ export const NavigationSettings: React.FC = () => {
     });
   };
 
-  const toggleWifi = () => {
-    setSettings({
+  const toggleWifi = async () => {
+    const updatedSettings = {
       ...settings,
       wifi: { ...settings.wifi, enabled: !settings.wifi.enabled }
-    });
+    };
+    setSettings(updatedSettings);
+
+    // Auto-save after toggle
+    try {
+      await api.put('?action=navigation_settings', updatedSettings);
+      setAlert({ type: 'success', message: 'WiFi Status aktualisiert!' });
+      setTimeout(() => setAlert(null), 2000);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Fehler beim Speichern!' });
+    }
   };
 
-  const addSocialMedia = () => {
+  const addSocialMedia = async () => {
+    console.log('🔍 addSocialMedia called with:', newSocial);
+
     if (!newSocial.platform || !newSocial.url) {
+      console.warn('⚠️ Validation failed:', { platform: newSocial.platform, url: newSocial.url });
       setAlert({ type: 'warning', message: 'Bitte alle Felder ausfüllen!' });
+      setTimeout(() => setAlert(null), 3000);
       return;
     }
 
     const platform = socialPlatforms.find(p => p.id === newSocial.platform);
-    if (!platform) return;
+    if (!platform) {
+      console.error('❌ Platform not found:', newSocial.platform);
+      return;
+    }
+
+    console.log('✅ Platform found:', platform);
 
     const newSocialMedia = {
       id: platform.id,
@@ -516,13 +535,28 @@ export const NavigationSettings: React.FC = () => {
       enabled: true
     };
 
-    setSettings({
+    const updatedSettings = {
       ...settings,
       socialMedia: [...settings.socialMedia, newSocialMedia]
-    });
+    };
+
+    console.log('💾 Saving updated settings:', updatedSettings);
+    setSettings(updatedSettings);
 
     setNewSocial({ platform: '', url: '' });
     setShowAddSocial(false);
+
+    // Auto-save after adding
+    try {
+      const response = await api.put('?action=navigation_settings', updatedSettings);
+      console.log('✅ Save response:', response.data);
+      setAlert({ type: 'success', message: 'Social Media Link hinzugefügt und gespeichert!' });
+      setTimeout(() => setAlert(null), 3000);
+    } catch (error) {
+      console.error('❌ Save error:', error);
+      setAlert({ type: 'error', message: 'Fehler beim Hinzufügen: ' + (error as any).message });
+      setTimeout(() => setAlert(null), 3000);
+    }
   };
 
   const updateSocialUrl = (id: string, url: string) => {
@@ -534,20 +568,40 @@ export const NavigationSettings: React.FC = () => {
     });
   };
 
-  const toggleSocial = (id: string) => {
-    setSettings({
+  const toggleSocial = async (id: string) => {
+    const updatedSettings = {
       ...settings,
       socialMedia: settings.socialMedia.map(social =>
         social.id === id ? { ...social, enabled: !social.enabled } : social
       )
-    });
+    };
+    setSettings(updatedSettings);
+
+    // Auto-save after toggle
+    try {
+      await api.put('?action=navigation_settings', updatedSettings);
+      setAlert({ type: 'success', message: 'Social Media Status aktualisiert!' });
+      setTimeout(() => setAlert(null), 2000);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Fehler beim Speichern!' });
+    }
   };
 
-  const removeSocial = (id: string) => {
-    setSettings({
+  const removeSocial = async (id: string) => {
+    const updatedSettings = {
       ...settings,
       socialMedia: settings.socialMedia.filter(social => social.id !== id)
-    });
+    };
+    setSettings(updatedSettings);
+
+    // Auto-save after removal
+    try {
+      await api.put('?action=navigation_settings', updatedSettings);
+      setAlert({ type: 'success', message: 'Social Media Link gelöscht!' });
+      setTimeout(() => setAlert(null), 2000);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Fehler beim Löschen!' });
+    }
   };
 
   return (
@@ -564,12 +618,19 @@ export const NavigationSettings: React.FC = () => {
       }}>
         Verwalten Sie Ihre Menü-Navigation und Einstellungen
       </p>
-      <Header style={{ display: 'none' }}>
+      <div style={{
+        position: 'sticky',
+        top: '20px',
+        zIndex: 100,
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: '20px'
+      }}>
         <Button onClick={saveSettings} disabled={loading}>
           {loading ? <Loader /> : <Save />}
-          Speichern
+          Alle Änderungen speichern
         </Button>
-      </Header>
+      </div>
 
       {alert && (
         <Alert $type={alert.type}>
