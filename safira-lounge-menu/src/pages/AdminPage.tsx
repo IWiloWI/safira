@@ -13,7 +13,8 @@ import CategoryManager from '../components/Admin/CategoryManager';
 import SubcategoryManager from '../components/Admin/SubcategoryManager';
 import NavigationSettings from '../components/Admin/NavigationSettings';
 import { KioskSettings } from '../components/Admin/KioskSettings';
-import { FaTachometerAlt, FaBoxes, FaLeaf, FaVideo, FaFolder, FaLayerGroup, FaCog, FaSignOutAlt, FaDesktop } from 'react-icons/fa';
+import EventManager from '../components/Admin/EventManager';
+import { FaTachometerAlt, FaBoxes, FaLeaf, FaVideo, FaFolder, FaLayerGroup, FaCog, FaSignOutAlt, FaDesktop, FaCalendarAlt } from 'react-icons/fa';
 import {
   ResponsiveContainer,
   ResponsivePageHeader,
@@ -51,6 +52,7 @@ const AdminPage: React.FC = () => {
     { path: '/admin/subcategories', label: 'Unterkategorien', icon: <FaLayerGroup /> },
     { path: '/admin/tobacco-catalog', label: 'Tabak-Katalog', icon: <FaLeaf /> },
     { path: '/admin/videos', label: 'Video-Manager', icon: <FaVideo /> },
+    { path: '/admin/events', label: 'Events', icon: <FaCalendarAlt /> },
     { path: '/admin/categories', label: 'Kategorien', icon: <FaFolder /> },
     { path: '/admin/navigation', label: 'Navigation', icon: <FaCog /> }
     // { path: '/admin/qr-codes', label: 'QR-Codes', icon: <FaQrcode /> },
@@ -97,6 +99,7 @@ const AdminPage: React.FC = () => {
           <Route path="/subcategories" element={<SubcategoryManager />} />
           <Route path="/tobacco-catalog" element={<ResponsiveTobaccoCatalog />} />
           <Route path="/videos" element={<VideoManager />} />
+          <Route path="/events" element={<EventManager />} />
           <Route path="/categories" element={<CategoryManager />} />
           <Route path="/navigation" element={<NavigationSettings />} />
           <Route path="/kiosk" element={<KioskSettings />} />

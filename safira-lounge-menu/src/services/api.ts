@@ -793,5 +793,52 @@ export const syncExistingTobacco = async () => {
   }
 };
 
+// ==========================================
+// UPCOMING EVENTS API
+// ==========================================
+export const getEvents = async (): Promise<any[]> => {
+  const response = await api.get('', {
+    params: { action: 'get_events' }
+  });
+  return response.data.data || response.data;
+};
+
+export const getActiveEvents = async (): Promise<any[]> => {
+  const response = await api.get('', {
+    params: { action: 'get_active_events' }
+  });
+  return response.data.data || response.data;
+};
+
+export const getEvent = async (eventId: string): Promise<any> => {
+  const response = await api.get('', {
+    params: { action: 'get_event', id: eventId }
+  });
+  return response.data.data || response.data;
+};
+
+export const createEvent = async (event: any): Promise<any> => {
+  const response = await api.post('', event, {
+    params: { action: 'create_event' }
+  });
+  apiCache.invalidate('events');
+  return response.data.data || response.data;
+};
+
+export const updateEvent = async (eventId: string, event: any): Promise<any> => {
+  const response = await api.post('', event, {
+    params: { action: 'update_event', id: eventId }
+  });
+  apiCache.invalidate('events');
+  return response.data.data || response.data;
+};
+
+export const deleteEvent = async (eventId: string): Promise<void> => {
+  await api.delete('', {
+    params: { action: 'delete_event', id: eventId }
+  });
+  apiCache.invalidate('events');
+};
+
 // Export the axios instance for custom requests
 export default api;

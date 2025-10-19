@@ -23,7 +23,9 @@ import ProductList from './ProductList';
 import SubcategoryTabs from './SubcategoryTabs';
 import { BottomNavigation } from '../Common/BottomNavigation';
 import MenuSearchResults from './MenuSearchResults';
+import UpcomingEvents from './UpcomingEvents';
 import { Product, Category, MainCategory, MultilingualText } from '../../types';
+import { Event } from '../../types/event.types';
 import productsData from '../../data/products.json';
 
 // Styled components
@@ -122,6 +124,9 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   // Subcategory filter state (separate from navigation)
   // Empty string means "show all", specific ID means filter by that subcategory
   const [activeSubcategoryFilter, setActiveSubcategoryFilter] = useState<string>('');
+
+  // Events state
+  const [events, setEvents] = useState<Event[]>([]);
 
   /**
    * Initialize menu data
@@ -348,6 +353,17 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   const handleProductClick = useCallback((product: Product) => {
     console.log('Product clicked:', product);
     // Could open product detail modal, add to cart, etc.
+  }, []);
+
+  /**
+   * Handle event click
+   */
+  const handleEventClick = useCallback((event: Event) => {
+    console.log('Event clicked:', event);
+    // Open event link if available
+    if (event.link) {
+      window.open(event.link, '_blank', 'noopener,noreferrer');
+    }
   }, []);
 
   /**
@@ -593,6 +609,24 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
   }, []);
 
   /**
+   * Load events from API
+   */
+  const loadEvents = useCallback(async () => {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { getActiveEvents } = await import('../../services/api');
+      const data = await getActiveEvents();
+      setEvents(data);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  /**
    * Render main category selection
    */
   const renderMainCategories = () => {
@@ -647,6 +681,13 @@ export const MenuPageContainer: React.FC<MenuPageContainerProps> = React.memo(({
           getCategoryIdsForMainCategory={getCategoryIdsForMainCategory}
           showMainCategories
           showSubcategories={false}
+        />
+
+        {/* Upcoming Events Section */}
+        <UpcomingEvents
+          events={events}
+          language={language}
+          onEventClick={handleEventClick}
         />
       </>
     );

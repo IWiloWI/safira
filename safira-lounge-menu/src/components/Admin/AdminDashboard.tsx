@@ -9,7 +9,8 @@ import {
   FaArrowUp,
   FaLeaf,
   FaVideo,
-  FaCog
+  FaCog,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -167,6 +168,12 @@ const AdminDashboard: React.FC = () => {
       title: 'Video-Manager',
       description: 'Hintergrundvideos für Kategorien verwalten und ersetzen',
       action: () => window.location.href = '/admin/videos'
+    },
+    {
+      icon: <FaCalendarAlt />,
+      title: 'Events verwalten',
+      description: 'Kommende Events erstellen und verwalten',
+      action: () => window.location.href = '/admin/events'
     }
     // QR-Codes und Analytics deaktiviert
     // {

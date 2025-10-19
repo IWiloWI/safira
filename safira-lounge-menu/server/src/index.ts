@@ -21,6 +21,7 @@ import translationRoutes from '@/routes/translation';
 import uploadRoutes from '@/routes/upload';
 import analyticsRoutes from '@/routes/analytics';
 import settingsRoutes from '@/routes/settings';
+import eventsRoutes from '@/routes/events';
 
 // Import utilities
 import { sendSuccess, sendError, sendNotFound } from '@/utils/responseUtils';
@@ -231,6 +232,7 @@ function setupRoutes(): void {
   app.use('/api/upload', uploadRoutes);
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/upcoming-events', eventsRoutes);
 
   // Tobacco catalog routes (simplified)
   app.get('/api/tobacco-catalog', async (_req: Request, res: Response) => {

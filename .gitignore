@@ -29,7 +29,7 @@ hive-mind-prompt-*.txt
 *.MP4
 safira-lounge-menu/public/videos/
 
-# Backups  
+# Backups
 *.tar.gz
 *backup*
 .claude-flow/metrics/system-metrics.json
@@ -38,3 +38,6 @@ safira-lounge-menu/public/videos/
 safira-lounge-menu/safira-api-fixed.php
 safira-lounge-menu/public/.htaccess
 safira-lounge-menu/.env.example.php
+
+# Builds folder (contains API keys)
+safira-lounge-menu/builds/
